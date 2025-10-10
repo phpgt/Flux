@@ -41,3 +41,9 @@ There used to be a library called _TurboLinks_, which heavily inspired the devel
 
 [WebEngine]: https://www.php.gt/webengine/
 [fetch]: https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API
+
+# Proudly sponsored by
+
+[JetBrains Open Source sponsorship program](https://www.jetbrains.com/community/opensource/)
+
+[![JetBrains logo.](https://resources.jetbrains.com/storage/products/company/brand/logos/jetbrains.svg)](https://www.jetbrains.com/community/opensource/)
