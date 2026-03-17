@@ -1,7 +1,7 @@
 import {Style} from "./Style.es6";
 import {ElementEventMapper} from "./ElementEventMapper.es6";
 
-export class Turbo {
+export class Flux {
 	static DEBUG = false;
 	style;
 	elementEventMapper;
@@ -27,105 +27,105 @@ export class Turbo {
 		this.elementEventMapper = elementEventMapper ?? new ElementEventMapper();
 		this.parser = parser ?? new DOMParser();
 
-		document.querySelectorAll("[data-turbo]").forEach(this.initTurboElement);
+		document.querySelectorAll("[data-flux]").forEach(this.initFluxElement);
 	}
 
 	/**
 	 * Initialise a single element in the document with its functionality
-	 * as specified by the data-turbo attribute.
+	 * as specified by the data-flux attribute.
 	 *
-	 * data-turbo="update" - Synonymous with update-outer
-	 * data-turbo="update-outer" - Updates the outerHTML of the element when
+	 * data-flux="update" - Synonymous with update-outer
+	 * data-flux="update-outer" - Updates the outerHTML of the element when
 	 * the page updates
-	 * data-turbo="update-inner" - Updates the innerHTML of the element when
+	 * data-flux="update-inner" - Updates the innerHTML of the element when
 	 * the page updates
-	 * data-turbo="autosave" - This element will become hidden, and any
+	 * data-flux="autosave" - This element will become hidden, and any
 	 * "change" event on any element within this element's containing form
 	 * will trigger a background save by clicking this button
-	 * data-turbo="submit" - When clicked, this element will submit its
+	 * data-flux="submit" - When clicked, this element will submit its
 	 * containing form in the background
 	 */
-	initTurboElement = (turboElement) => {
-		let turboType = turboElement.dataset["turbo"];
+	initFluxElement = (fluxElement) => {
+		let fluxType = fluxElement.dataset["flux"];
 
-		if(turboType === "") {
-			this.initAutoContainer(turboElement);
+		if(fluxType === "") {
+			this.initAutoContainer(fluxElement);
 		}
-		else if(turboType === "autosave") {
-			this.initAutoSave(turboElement);
+		else if(fluxType === "autosave") {
+			this.initAutoSave(fluxElement);
 		}
-		else if(turboType.startsWith("update")) {
+		else if(fluxType.startsWith("update")) {
 			let updateType = null;
 
-			if(turboType === "update" || turboType === "update-outer") {
+			if(fluxType === "update" || fluxType === "update-outer") {
 				updateType = "outer";
 			}
-			else if(turboType === "update-inner") {
+			else if(fluxType === "update-inner") {
 				updateType = "inner";
 			}
 
-			this.storeUpdateElement(turboElement, updateType);
+			this.storeUpdateElement(fluxElement, updateType);
 		}
-		else if(turboType === "submit") {
-			this.initAutoSubmit(turboElement);
+		else if(fluxType === "submit") {
+			this.initAutoSubmit(fluxElement);
 		}
-		else if(turboType === "link") {
-			this.initAutoLink(turboElement);
+		else if(fluxType === "link") {
+			this.initAutoLink(fluxElement);
 		}
 		else {
-			throw new TypeError(`Unknown turbo element type: ${turboType}`);
+			throw new TypeError(`Unknown flux element type: ${fluxType}`);
 		}
 	}
 
-	initAutoContainer = (turboElement) => {
-		if(turboElement instanceof HTMLFormElement) {
-			turboElement.addEventListener("submit", this.formSubmitAutoSave);
+	initAutoContainer = (fluxElement) => {
+		if(fluxElement instanceof HTMLFormElement) {
+			fluxElement.addEventListener("submit", this.formSubmitAutoSave);
 		}
 // TODO: Hook up any links within the container, or other sub forms, or that kind of thing.
 	}
 
-	initAutoSave = (turboElement) => {
-		if(!(turboElement instanceof HTMLButtonElement)) {
-			throw new TypeError("data-turbo type \"autosave\" must be applied to a button element.");
+	initAutoSave = (fluxElement) => {
+		if(!(fluxElement instanceof HTMLButtonElement)) {
+			throw new TypeError("data-flux type \"autosave\" must be applied to a button element.");
 		}
 
-		if(!turboElement.form) {
-			throw new TypeError("data-turbo type \"autosave\" must have a containing form element.");
+		if(!fluxElement.form) {
+			throw new TypeError("data-flux type \"autosave\" must have a containing form element.");
 		}
 
-		if(!turboElement.form.turboObj) {
-			turboElement.form.turboObj = {};
+		if(!fluxElement.form.fluxObj) {
+			fluxElement.form.fluxObj = {};
 		}
 
-		turboElement.form.turboObj.autoSave = {
-			key: turboElement.name,
-			value: turboElement.value,
+		fluxElement.form.fluxObj.autoSave = {
+			key: fluxElement.name,
+			value: fluxElement.value,
 		};
 
-		turboElement.form.dataset["turboObj"] = "";
-		turboElement.form.addEventListener("change", this.formChangeAutoSave);
-		turboElement.form.addEventListener("submit", this.formSubmitAutoSave);
-		Turbo.DEBUG && console.debug("initAutoSave completed", turboElement);
+		fluxElement.form.dataset["fluxObj"] = "";
+		fluxElement.form.addEventListener("change", this.formChangeAutoSave);
+		fluxElement.form.addEventListener("submit", this.formSubmitAutoSave);
+		Flux.DEBUG && console.debug("initAutoSave completed", fluxElement);
 	}
 
-	initAutoSubmit = (turboElement) => {
-		if(!(turboElement instanceof HTMLButtonElement)) {
-			throw new TypeError("data-turbo type \"submit\" must be applied to a button element.");
+	initAutoSubmit = (fluxElement) => {
+		if(!(fluxElement instanceof HTMLButtonElement)) {
+			throw new TypeError("data-flux type \"submit\" must be applied to a button element.");
 		}
 
-		if(!turboElement.form) {
-			throw new TypeError("data-turbo type \"submit\" must have a containing form element.");
+		if(!fluxElement.form) {
+			throw new TypeError("data-flux type \"submit\" must have a containing form element.");
 		}
 
-		turboElement.form.addEventListener("submit", this.autoSubmit);
+		fluxElement.form.addEventListener("submit", this.autoSubmit);
 	}
 
-	initAutoLink = (turboElement) => {
-		if(!(turboElement instanceof HTMLAnchorElement)) {
+	initAutoLink = (fluxElement) => {
+		if(!(fluxElement instanceof HTMLAnchorElement)) {
 			throw new TypeError("data-type type \"link\" must be applied to an anchor element.");
 		}
 
-		turboElement.addEventListener("click", this.autoClick);
+		fluxElement.addEventListener("click", this.autoClick);
 	}
 
 	/**
@@ -145,7 +145,7 @@ export class Turbo {
 		}
 
 		this.updateElementCollection[updateType].push(element);
-		Turbo.DEBUG && console.debug("storeUpdateElement completed", `Pushing into ${updateType}: `, element);
+		Flux.DEBUG && console.debug("storeUpdateElement completed", `Pushing into ${updateType}: `, element);
 	}
 
 	autoSubmit = (e) => {
@@ -232,10 +232,10 @@ export class Turbo {
 		if(submitter) {
 			formData.set(submitter.name, submitter.value);
 		}
-		else if(form.turboObj[type]) {
+		else if(form.fluxObj[type]) {
 			formData.set(
-				form.turboObj[type].key,
-				form.turboObj[type].value,
+				form.fluxObj[type].key,
+				form.fluxObj[type].value,
 			);
 		}
 
@@ -244,7 +244,7 @@ export class Turbo {
 
 	completeAutoSave = (newDocument) => {
 		if(newDocument.head.children.length === 0) {
-			if(Turbo.DEBUG) {
+			if(Flux.DEBUG) {
 				alert("Error processing new document!");
 			}
 
@@ -267,7 +267,7 @@ export class Turbo {
 		if(form.form instanceof HTMLFormElement) {
 			let element = form;
 			element.classList.add("input-changed");
-			element.setAttribute("data-turbo-active", "");
+			element.setAttribute("data-flux-active", "");
 			(function(c_element) {
 				setTimeout(function() {
 					c_element.classList.remove("input-changed");
@@ -292,8 +292,8 @@ export class Turbo {
 			form = form.form;
 		}
 
-		form.dataset["turboPath"] = getXPathForElement(form);
-		form.dataset["turboActive"] = getXPathForElement(
+		form.dataset["fluxPath"] = getXPathForElement(form);
+		form.dataset["fluxActive"] = getXPathForElement(
 			currentActiveElement,
 			form,
 		);
@@ -321,14 +321,14 @@ export class Turbo {
 	processUpdateElements = (newDocument) => {
 		let autofocusElement = newDocument.querySelector("[autofocus]");
 		if(autofocusElement) {
-			autofocusElement.dataset["turboAutofocus"] = "";
+			autofocusElement.dataset["fluxAutofocus"] = "";
 		}
 
 // Check if there's an active element in the current document, before altering it.
 		let newActiveElement = null;
-		let activeContainer = document.querySelector("[data-turbo-active]");
+		let activeContainer = document.querySelector("[data-flux-active]");
 		if(activeContainer) {
-			let activeContainerPath = activeContainer.dataset["turboPath"];
+			let activeContainerPath = activeContainer.dataset["fluxPath"];
 			if(activeContainerPath) {
 				let activeContainerXPathResult = newDocument.evaluate(
 					activeContainerPath,
@@ -340,7 +340,7 @@ export class Turbo {
 				let newActiveContainer = activeContainerXPathResult.singleNodeValue;
 
 				if(newActiveContainer) {
-					let activeElementPath = activeContainer.dataset["turboActive"];
+					let activeElementPath = activeContainer.dataset["fluxActive"];
 					if(activeElementPath) {
 						let activeElementXPathResult = newDocument.evaluate(
 							activeElementPath,
@@ -380,13 +380,13 @@ export class Turbo {
 					this.updateElementCollection[type][existingElementIndex] = newElement;
 					if(newElement) {
 						this.reattachEventListeners(existingElement, newElement);
-						this.reattachTurboElements(existingElement, newElement);
+						this.reattachFluxElements(existingElement, newElement);
 						existingElement.replaceWith(newElement);
 					}
 				}
 				else if(type === "inner") {
 					this.reattachEventListeners(existingElement, newElement);
-					this.reattachTurboElements(existingElement, newElement);
+					this.reattachFluxElements(existingElement, newElement);
 
 					while(existingElement.firstChild) {
 						existingElement.removeChild(existingElement.firstChild);
@@ -397,10 +397,10 @@ export class Turbo {
 				}
 
 				if(activeElement) {
-					Turbo.DEBUG && console.debug("Active element", activeElement);
+					Flux.DEBUG && console.debug("Active element", activeElement);
 					let elementToActivate = document.evaluate(activeElement, document.documentElement).iterateNext();
 					if(elementToActivate) {
-						Turbo.DEBUG && console.debug("Element to activate", elementToActivate, activeElementSelection);
+						Flux.DEBUG && console.debug("Element to activate", elementToActivate, activeElementSelection);
 						elementToActivate.focus();
 
 						if(elementToActivate.setSelectionRange) {
@@ -414,7 +414,7 @@ export class Turbo {
 							elementToActivate.removeEventListener("mouseup", completeClickFunction);
 
 							setTimeout(() => {
-								Turbo.DEBUG && console.debug("Completing click", elementToActivate);
+								Flux.DEBUG && console.debug("Completing click", elementToActivate);
 								elementToActivate.click();
 							}, 0)
 						};
@@ -431,10 +431,10 @@ export class Turbo {
 		if(newActiveElement) {
 			newActiveElement.focus();
 			newActiveElement.blur();
-			Turbo.DEBUG && console.debug("Focussed and blurred", newActiveElement);
+			Flux.DEBUG && console.debug("Focussed and blurred", newActiveElement);
 		}
 
-		document.querySelectorAll("[data-turbo-autofocus]").forEach(autofocusElement => {
+		document.querySelectorAll("[data-flux-autofocus]").forEach(autofocusElement => {
 			autofocusElement.focus();
 		});
 	}
@@ -447,23 +447,23 @@ export class Turbo {
 		let mapObj = this.elementEventMapper.get(oldElement);
 		for(let type of Object.keys(mapObj)) {
 			for(let listener of mapObj[type]) {
-				Turbo.DEBUG && console.debug("Listener for element:", oldElement, listener);
+				Flux.DEBUG && console.debug("Listener for element:", oldElement, listener);
 			}
 		}
 	}
 
-	reattachTurboElements = (oldElement, newElement) => {
+	reattachFluxElements = (oldElement, newElement) => {
 		if(!newElement) {
 			return;
 		}
 
-		newElement.querySelectorAll("[data-turbo]").forEach(this.initTurboElement);
-		oldElement.querySelectorAll("[data-turbo-obj]").forEach(turboElement => {
-			let xPath = getXPathForElement(turboElement, oldElement);
-			let newTurboElement = newElement.ownerDocument.evaluate(xPath, newElement).iterateNext();
-			if(newTurboElement) {
-				newTurboElement.turboObj = turboElement.turboObj;
-				newTurboElement.dataset["turboObj"] = "";
+		newElement.querySelectorAll("[data-flux]").forEach(this.initFluxElement);
+		oldElement.querySelectorAll("[data-flux-obj]").forEach(fluxElement => {
+			let xPath = getXPathForElement(fluxElement, oldElement);
+			let newFluxElement = newElement.ownerDocument.evaluate(xPath, newElement).iterateNext();
+			if(newFluxElement) {
+				newFluxElement.fluxObj = fluxElement.fluxObj;
+				newFluxElement.dataset["fluxObj"] = "";
 			}
 		});
 	}

@@ -1,5 +1,5 @@
 {
-	"name": "@phpgt/turbo",
+	"name": "@phpgt/flux",
 	"exports": "./src/main.es6",
 	"type": "module",
 	"dependencies": {
@@ -10,7 +10,7 @@
 		"jsdom": "^24.0.0"
 	},
 	"scripts": {
-		"build": "esbuild src/main.es6 --bundle --outfile=dist/turbo.js --format=esm --platform=browser --loader:.es6=js",
+		"build": "esbuild src/main.es6 --bundle --outfile=dist/flux.js --format=esm --platform=browser --loader:.es6=js",
 		"test": "vitest"
 	},
 	"vitest": {

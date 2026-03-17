@@ -7,7 +7,7 @@ export class Style {
 
 	setupElement() {
 		this.element = document.createElement("style");
-		this.element.id = "turbo-style";
+		this.element.id = "flux-style";
 		this.element.innerHTML = CSS_CONTENT;
 	}
 
@@ -17,7 +17,7 @@ export class Style {
 }
 
 const CSS_CONTENT = `
-[data-turbo="autosave"] {
+[data-flux="autosave"] {
 	display: none;
 }
 `;

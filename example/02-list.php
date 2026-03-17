@@ -4,7 +4,7 @@
  * enter, and that text will be added as a list item. Click the item in the list
  * to remove it.
  *
- * Due to how simple the HTML is, the page is already fast, so Turbo's effects
+ * Due to how simple the HTML is, the page is already fast, so Flux's effects
  * aren't obvious - however, there's a textarea on the page to prove that the
  * page state isn't reset when the form is submitted: type some content into the
  * textarea, and it will remain while the example is interacted with.
@@ -35,23 +35,23 @@ elseif($doAction === "delete") {
 
 ?><!doctype html>
 <meta charset="utf-8" />
-<title>PHPGT/Turbo example 02 list</title>
+<title>PHP.GT/Flux example 02 list</title>
 <style>
 textarea {
 	width: 24rem;
 }
 </style>
-<script type="module" src="../dist/turbo.js" defer></script>
+<script type="module" src="../dist/flux.js" defer></script>
 
-<textarea placeholder="Without Turbo, submitting the form would lose any content typed into this box.">
+<textarea placeholder="Without Flux, submitting the form would lose any content typed into this box.">
 </textarea>
 
-<form method="post" data-turbo="update-inner">
+<form method="post" data-flux="update-inner">
 	<ul>
 		<?php
 		foreach($list as $i => $item) {
 			echo "<li>";
-			echo "<a href='?do=delete&index=$i' data-turbo='link'>";
+			echo "<a href='?do=delete&index=$i' data-flux='link'>";
 			echo $item;
 			echo "</a>";
 			echo "</li>";
@@ -64,5 +64,5 @@ textarea {
 		<input name="new-item" required autofocus autocomplete="off" />
 	</label>
 
-	<button name="do" value="add" data-turbo="submit">Add</button>
+	<button name="do" value="add" data-flux="submit">Add</button>
 </form>

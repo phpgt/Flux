@@ -23,19 +23,19 @@ elseif($doAction === "decrement") {
 }
 ?><!doctype html>
 <meta charset="utf-8" />
-<title>PHPGT/Turbo example 01 increment</title>
+<title>PHP.GT/Flux example 01 increment</title>
 <style>
 textarea {
 	width: 24rem;
 }
 </style>
-<script type="module" src="../dist/turbo.js" defer></script>
+<script type="module" src="../dist/flux.js" defer></script>
 
-<textarea placeholder="Without Turbo, submitting the form would lose any content typed into this box.">
+<textarea placeholder="Without Flux, submitting the form would lose any content typed into this box.">
 </textarea>
 
 <form method="post">
-	<output data-turbo="update-inner"><?php echo number_format($num);?></output>
-	<button name="do" value="increment" data-turbo="submit">Increment</button>
-	<button name="do" value="decrement" data-turbo="submit">Decrement</button>
+	<output data-flux="update-inner"><?php echo number_format($num);?></output>
+	<button name="do" value="increment" data-flux="submit">Increment</button>
+	<button name="do" value="decrement" data-flux="submit">Decrement</button>
 </form>

@@ -4,7 +4,7 @@
  * page that all update simultaneously. Two forms have independent counters,
  * and an <output> element shows the sum of the two counters.
  *
- * The `data-turbo` attribute is added to the containing element, which updates
+ * The `data-flux` attribute is added to the containing element, which updates
  * the outerHTML of the container, but hooks into the contained forms' submit
  * events.
  */
@@ -42,18 +42,18 @@ elseif($doAction === "decrementB") {
 
 ?><!doctype html>
 <meta charset="utf-8" />
-<title>PHPGT/Turbo example 03 multiple forms</title>
+<title>PHP.GT/Flux example 03 multiple forms</title>
 <style>
 	textarea {
 		width: 24rem;
 	}
 </style>
-<script type="module" src="../dist/turbo.js" defer></script>
+<script type="module" src="../dist/flux.js" defer></script>
 
-<textarea placeholder="Without Turbo, submitting the form would lose any content typed into this box.">
+<textarea placeholder="Without Flux, submitting the form would lose any content typed into this box.">
 </textarea>
 
-<main data-turbo>
+<main data-flux>
 	<form method="post">
 		<h1>Counter A</h1>
 		<output><?php echo number_format($numA);?></output>

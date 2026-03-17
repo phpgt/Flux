@@ -1,4 +1,4 @@
-import {Turbo} from "./Turbo.es6";
+import {Flux} from "./Flux.es6";
 
 /**
  * The `addEventListener` behaviour of the DOM is overridden here to provide
@@ -7,12 +7,12 @@ import {Turbo} from "./Turbo.es6";
  * dynamically, their corresponding event listeners will need to be reattached
  * automatically.
  *
- * Only one instance of the ElementEventMapper is necessary per Turbo instance,
+ * Only one instance of the ElementEventMapper is necessary per Flux instance,
  * as the constructor handles the override.
  *
  * A reference to the original `addEventListener` functionality is stored in
  * `addEventListenerOriginal`, before it is replace by the function called
- * `addEventListenerTurbo`.
+ * `addEventListenerFlux`.
  *
  * The map property is a map of objects: the outer map's key is the HTMLElement,
  * which contains an object, where the keys are the type of event listener such
@@ -29,7 +29,7 @@ export class ElementEventMapper {
 
 		const self = this;
 		Element.prototype.addEventListener = function(type, listener, options) {
-			self.addEventListenerTurbo(type, listener, options, this);
+			self.addEventListenerFlux(type, listener, options, this);
 		};
 	}
 
@@ -43,7 +43,7 @@ export class ElementEventMapper {
 
 	/**
 	 * This function overrides the Element.addEventListener function. It is
-	 * required because Turbo needs to keep track of all events that are
+	 * required because Flux needs to keep track of all events that are
 	 * added to individual elements, so that when it updates the DOM and
 	 * replaces elements in place, it can re-attach any added events to the
 	 * newly replaced elements.
@@ -53,7 +53,7 @@ export class ElementEventMapper {
 	 * structure. Once we've kept a record of this, we call the original
 	 * addEventListener function of the browser.
 	 */
-	addEventListenerTurbo = (type, listener, options, element) => {
+	addEventListenerFlux = (type, listener, options, element) => {
 // TODO: Do we need to store the "options" in here as a tuple?
 		if(!this.mapTypeContains(element, type, listener)) {
 			this.addToMapType(element, type, listener);
@@ -65,7 +65,7 @@ export class ElementEventMapper {
 			options,
 		);
 
-		Turbo.DEBUG && console.debug(`Event ${type} added to element:`, element);
+		Flux.DEBUG && console.debug(`Event ${type} added to element:`, element);
 	}
 
 	mapTypeContains = (element, type, listener) => {

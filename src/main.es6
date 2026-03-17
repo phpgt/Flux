@@ -1,4 +1,4 @@
-import { Turbo } from "./Turbo.es6";
-export { TurboDebug } from "./TurboDebug.es6";
+import { Flux } from "./Flux.es6";
+export { FluxDebug } from "./FluxDebug.es6";
 
-new Turbo();
+new Flux();
