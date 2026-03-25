@@ -1,0 +1,21 @@
+{
+    "autoload-dev": {
+        "classmap": [
+            "test/behat/bootstrap/"
+        ]
+    },
+    "require-dev": {
+        "behat/behat": "^3.15",
+        "php-webdriver/webdriver": "^1.15"
+    },
+    "scripts": {
+        "behat": "test/bin/behat",
+        "behat:up": "test/bin/behat-up",
+        "behat:down": "test/bin/behat-down",
+        "test": [
+            "@behat:up",
+            "@behat",
+            "@behat:down"
+        ]
+    }
+}

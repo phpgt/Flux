@@ -1,0 +1,7 @@
+default:
+  suites:
+    default:
+      paths:
+        - test/behat
+      contexts:
+        - FeatureContext

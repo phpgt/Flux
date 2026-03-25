@@ -1,0 +1,18 @@
+services:
+  app:
+    image: php:8.5-cli
+    container_name: flux-behat-app
+    working_dir: /app
+    command: php -d display_errors=0 -S 0.0.0.0:8000 -t /app
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+  firefox:
+    image: selenium/standalone-firefox:latest
+    container_name: flux-behat-firefox
+    depends_on:
+      - app
+    ports:
+      - "4444:4444"
+    shm_size: 2gb

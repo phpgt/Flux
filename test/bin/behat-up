@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+APP_PORT="${APP_PORT:-8000}"
+SELENIUM_PORT="${SELENIUM_PORT:-4444}"
+
+docker compose -f "$ROOT_DIR/compose.behat.yml" up -d app firefox >/dev/null
+
+for attempt in {1..50}; do
+	if curl -fsS "http://127.0.0.1:$APP_PORT/example/01-counter.php" >/dev/null; then
+		break
+	fi
+	sleep 0.2
+done
+
+for attempt in {1..100}; do
+	if curl -fsS "http://127.0.0.1:$SELENIUM_PORT/wd/hub/status" >/dev/null; then
+		break
+	fi
+	sleep 0.5
+done
+
+curl -fsS "http://127.0.0.1:$APP_PORT/example/01-counter.php" >/dev/null
+curl -fsS "http://127.0.0.1:$SELENIUM_PORT/wd/hub/status" >/dev/null
+
+echo "Behat dependencies are ready."
