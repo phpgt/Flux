@@ -211,7 +211,7 @@ var Flux = class _Flux {
   autoClick = (e) => {
     e.preventDefault();
     setTimeout(() => {
-      this.clickLink(e.target, this.completeAutoSave);
+      this.clickLink(e.currentTarget, this.completeAutoSave);
     }, 0);
   };
   submitForm = (form, callback, submitter) => {
@@ -272,7 +272,7 @@ var Flux = class _Flux {
     let formData = new FormData(form);
     if (submitter) {
       formData.set(submitter.name, submitter.value);
-    } else if (form.fluxObj[type]) {
+    } else if (form.fluxObj && form.fluxObj[type]) {
       formData.set(
         form.fluxObj[type].key,
         form.fluxObj[type].value

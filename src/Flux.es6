@@ -170,7 +170,7 @@ export class Flux {
 		e.preventDefault();
 
 		setTimeout(() => {
-			this.clickLink(e.target, this.completeAutoSave);
+			this.clickLink(e.currentTarget, this.completeAutoSave);
 		}, 0);
 	}
 
@@ -239,7 +239,7 @@ export class Flux {
 		if(submitter) {
 			formData.set(submitter.name, submitter.value);
 		}
-		else if(form.fluxObj[type]) {
+		else if(form.fluxObj && form.fluxObj[type]) {
 			formData.set(
 				form.fluxObj[type].key,
 				form.fluxObj[type].value,
