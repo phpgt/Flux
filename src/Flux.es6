@@ -117,6 +117,11 @@ export class Flux {
 			throw new TypeError("data-flux type \"submit\" must have a containing form element.");
 		}
 
+		if(fluxElement.form.dataset["fluxSubmitInit"] !== undefined) {
+			return;
+		}
+
+		fluxElement.form.dataset["fluxSubmitInit"] = "";
 		fluxElement.form.addEventListener("submit", this.autoSubmit);
 	}
 

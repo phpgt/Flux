@@ -173,6 +173,10 @@ var Flux = class _Flux {
     if (!fluxElement.form) {
       throw new TypeError('data-flux type "submit" must have a containing form element.');
     }
+    if (fluxElement.form.dataset["fluxSubmitInit"] !== void 0) {
+      return;
+    }
+    fluxElement.form.dataset["fluxSubmitInit"] = "";
     fluxElement.form.addEventListener("submit", this.autoSubmit);
   };
   initAutoLink = (fluxElement) => {
