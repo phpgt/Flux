@@ -417,18 +417,6 @@ var Flux = class _Flux {
             if (elementToActivate.setSelectionRange) {
               elementToActivate.setSelectionRange(activeElementSelection[0], activeElementSelection[1]);
             }
-            let completeClickFunction = () => {
-              elementToActivate.removeEventListener("mouseup", completeClickFunction);
-              setTimeout(() => {
-                _Flux.DEBUG && console.debug("Completing click", elementToActivate);
-                elementToActivate.click();
-              }, 0);
-            };
-            this.elementEventMapper.addEventListenerOriginal.call(
-              elementToActivate,
-              "mouseup",
-              completeClickFunction
-            );
           }
         }
       });
