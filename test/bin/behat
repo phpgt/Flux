@@ -2,15 +2,13 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-export APP_PORT="${APP_PORT:-8000}"
-export SELENIUM_PORT="${SELENIUM_PORT:-4444}"
-export WEBDRIVER_URL="${WEBDRIVER_URL:-http://127.0.0.1:${SELENIUM_PORT}/wd/hub}"
 
 "$ROOT_DIR/test/bin/behat-up"
 
-APP_HOST="${APP_HOST:-$(docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' flux-behat-app)}"
-export APP_URL="${APP_URL:-http://${APP_HOST}:${APP_PORT}/example}"
-
 cd "$ROOT_DIR"
 npm run build >/dev/null
-exec "$ROOT_DIR/vendor/bin/behat" -c "$ROOT_DIR/behat.yml.dist" "$@"
+exec docker exec \
+	flux-behat-chrome \
+	/code/vendor/bin/behat \
+	-c /code/behat.yml.dist \
+	"$@"

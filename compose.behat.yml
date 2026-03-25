@@ -8,11 +8,19 @@ services:
       - .:/app
     ports:
       - "8000:8000"
-  firefox:
-    image: selenium/standalone-firefox:latest
-    container_name: flux-behat-firefox
+  chrome:
+    image: registry.gitlab.com/behat-chrome/docker-chrome-headless:latest
+    container_name: flux-behat-chrome
     depends_on:
       - app
-    ports:
-      - "4444:4444"
-    shm_size: 2gb
+    volumes:
+      - .:/code
+    command:
+      - google-chrome-stable
+      - --headless
+      - --disable-gpu
+      - --disable-dev-shm-usage
+      - --disable-extensions
+      - --no-sandbox
+      - --remote-debugging-host=0.0.0.0
+      - --remote-debugging-port=9222

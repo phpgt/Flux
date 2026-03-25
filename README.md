@@ -10,7 +10,7 @@ The difference is that your application still uses the same straightforward serv
 
 ## Behat browser tests
 
-This repository now includes a Behat setup for end-to-end testing the examples in `example/` with both the PHP app server and Firefox WebDriver running inside Docker, so no local Java installation is required.
+This repository now includes a Behat setup for end-to-end testing the examples in `example/` with both the PHP app server and a headless Chrome instance running inside Docker, so no local Java installation is required.
 
 Install PHP dependencies with:
 
@@ -36,7 +36,7 @@ Stop the Behat Docker services:
 composer behat:down
 ```
 
-Feature files live in `test/behat/*.feature`. The runner serves the project at `http://app:8000` inside the Behat Docker network and points Firefox at the example pages under `/example`.
+Feature files live in `test/behat/*.feature`. The runner serves the project at `http://app:8000` inside the Behat Docker network and points the browser at the example pages under `/example`.
 
 To use Flux, convert a "regular" HTML form into a _flux form_ by adding the `data-flux` attribute:
 
