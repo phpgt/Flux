@@ -188,9 +188,7 @@ export class Flux {
 			body: formData,
 		}).then(response => {
 			if(!response.ok) {
-				form.classList.remove("submitting");
-				console.error("Form submission error", response);
-				return;
+				throw new Error(`Form submission error: ${response.status} ${response.statusText}`);
 			}
 
 			history.pushState({
@@ -203,6 +201,9 @@ export class Flux {
 				"text/html"
 			));
 			form.classList.remove("submitting");
+		}).catch(error => {
+			form.classList.remove("submitting");
+			console.error(error);
 		});
 	}
 
@@ -213,11 +214,8 @@ export class Flux {
 		fetch(url, {
 			credentials: "same-origin"
 		}).then(response => {
-			link.classList.remove("submitting");
-
 			if(!response.ok) {
-				console.error("Link fetch error", response);
-				return;
+				throw new Error(`Link fetch error: ${response.status} ${response.statusText}`);
 			}
 
 			history.pushState({
@@ -229,6 +227,10 @@ export class Flux {
 				html,
 				"text/html"
 			));
+			link.classList.remove("submitting");
+		}).catch(error => {
+			link.classList.remove("submitting");
+			console.error(error);
 		});
 	}
 
