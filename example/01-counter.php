@@ -24,11 +24,7 @@ elseif($doAction === "decrement") {
 ?><!doctype html>
 <meta charset="utf-8" />
 <title>PHP.GT/Flux example 01 increment</title>
-<style>
-textarea {
-	width: 24rem;
-}
-</style>
+<link rel="stylesheet" href="./style.css" />
 <script type="module" src="../dist/flux.js" defer></script>
 
 <textarea placeholder="Without Flux, submitting the form would lose any content typed into this box.">
