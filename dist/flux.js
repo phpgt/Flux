@@ -210,8 +210,9 @@ var Flux = class _Flux {
   };
   autoClick = (e) => {
     e.preventDefault();
+    let link = e.currentTarget;
     setTimeout(() => {
-      this.clickLink(e.currentTarget, this.completeAutoSave);
+      this.clickLink(link, this.completeAutoSave);
     }, 0);
   };
   submitForm = (form, callback, submitter) => {

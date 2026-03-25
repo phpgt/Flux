@@ -168,9 +168,10 @@ export class Flux {
 
 	autoClick = (e) => {
 		e.preventDefault();
+		let link = e.currentTarget;
 
 		setTimeout(() => {
-			this.clickLink(e.currentTarget, this.completeAutoSave);
+			this.clickLink(link, this.completeAutoSave);
 		}, 0);
 	}
 
