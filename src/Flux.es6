@@ -445,6 +445,29 @@ export class Flux {
 	}
 
 	reattachEventListeners = (oldElement, newElement) => {
+		if(!newElement) {
+			return;
+		}
+
+		this.reattachElementListeners(oldElement, newElement);
+
+		oldElement.querySelectorAll("*").forEach(oldChild => {
+			let xPath = getXPathForElement(oldChild, oldElement);
+			let newChild = newElement.ownerDocument.evaluate(
+				xPath,
+				newElement,
+				null,
+				XPathResult.FIRST_ORDERED_NODE_TYPE,
+				null,
+			).singleNodeValue;
+
+			if(newChild instanceof Element) {
+				this.reattachElementListeners(oldChild, newChild);
+			}
+		});
+	}
+
+	reattachElementListeners = (oldElement, newElement) => {
 		if(!this.elementEventMapper.has(oldElement)) {
 			return;
 		}
@@ -452,7 +475,8 @@ export class Flux {
 		let mapObj = this.elementEventMapper.get(oldElement);
 		for(let type of Object.keys(mapObj)) {
 			for(let listener of mapObj[type]) {
-				Flux.DEBUG && console.debug("Listener for element:", oldElement, listener);
+				newElement.addEventListener(type, listener);
+				Flux.DEBUG && console.debug("Reattached listener to element:", newElement, listener);
 			}
 		}
 	}
