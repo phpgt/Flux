@@ -354,6 +354,59 @@ var DocumentUpdater = class {
   }
 };
 
+// src/FluxDirectiveRegistry.es6
+var DIRECTIVE_DEFINITIONS = Object.freeze({
+  "": {
+    handler: "autoContainer",
+    description: "Initialise a container element for automatic Flux interactions."
+  },
+  "autosave": {
+    handler: "autoSave",
+    description: "Enable automatic background form submission on change."
+  },
+  "update": {
+    handler: "updateOuter",
+    description: "Register the element for outerHTML replacement on updates."
+  },
+  "update-outer": {
+    handler: "updateOuter",
+    description: "Register the element for outerHTML replacement on updates."
+  },
+  "update-inner": {
+    handler: "updateInner",
+    description: "Register the element for innerHTML replacement on updates."
+  },
+  "submit": {
+    handler: "autoSubmit",
+    description: "Submit the containing form in the background."
+  },
+  "link": {
+    handler: "autoLink",
+    description: "Follow the link in the background."
+  }
+});
+var FluxDirectiveRegistry = class _FluxDirectiveRegistry {
+  static DEFINITIONS = DIRECTIVE_DEFINITIONS;
+  constructor(handlers) {
+    this.handlers = handlers;
+  }
+  initElement(fluxElement) {
+    let fluxType = fluxElement.dataset["flux"];
+    let definition = _FluxDirectiveRegistry.DEFINITIONS[fluxType];
+    if (!definition) {
+      throw new TypeError(`Unknown flux element type: ${fluxType}`);
+    }
+    let handler = this.handlers[definition.handler];
+    if (typeof handler !== "function") {
+      throw new TypeError(`Missing Flux directive handler: ${definition.handler}`);
+    }
+    handler(fluxElement);
+  }
+  getDefinitions() {
+    return _FluxDirectiveRegistry.DEFINITIONS;
+  }
+};
+
 // src/Flux.es6
 var Flux = class _Flux {
   static DEBUG = false;
@@ -363,7 +416,8 @@ var Flux = class _Flux {
   updateTargetRegistry;
   focusStateManager;
   documentUpdater;
-  constructor(style = void 0, elementEventMapper = void 0, parser = void 0, navigationController = void 0, updateTargetRegistry = void 0, focusStateManager = void 0, documentUpdater = void 0) {
+  directiveRegistry;
+  constructor(style = void 0, elementEventMapper = void 0, parser = void 0, navigationController = void 0, updateTargetRegistry = void 0, focusStateManager = void 0, documentUpdater = void 0, directiveRegistry = void 0) {
     handleWindowPopState();
     style = style ?? new Style();
     style.addToDocument();
@@ -381,44 +435,21 @@ var Flux = class _Flux {
       console,
       _Flux.DEBUG
     );
+    this.directiveRegistry = directiveRegistry ?? new FluxDirectiveRegistry({
+      autoContainer: this.initAutoContainer,
+      autoSave: this.initAutoSave,
+      updateOuter: this.storeOuterUpdateElement,
+      updateInner: this.storeInnerUpdateElement,
+      autoSubmit: this.initAutoSubmit,
+      autoLink: this.initAutoLink
+    });
     document.querySelectorAll("[data-flux]").forEach(this.initFluxElement);
   }
   /**
-   * Initialise a single element in the document with its functionality
-   * as specified by the data-flux attribute.
-   *
-   * data-flux="update" - Synonymous with update-outer
-   * data-flux="update-outer" - Updates the outerHTML of the element when
-   * the page updates
-   * data-flux="update-inner" - Updates the innerHTML of the element when
-   * the page updates
-   * data-flux="autosave" - This element will become hidden, and any
-   * "change" event on any element within this element's containing form
-   * will trigger a background save by clicking this button
-   * data-flux="submit" - When clicked, this element will submit its
-   * containing form in the background
+   * Initialise a single element using the central Flux directive registry.
    */
   initFluxElement = (fluxElement) => {
-    let fluxType = fluxElement.dataset["flux"];
-    if (fluxType === "") {
-      this.initAutoContainer(fluxElement);
-    } else if (fluxType === "autosave") {
-      this.initAutoSave(fluxElement);
-    } else if (fluxType.startsWith("update")) {
-      let updateType = null;
-      if (fluxType === "update" || fluxType === "update-outer") {
-        updateType = "outer";
-      } else if (fluxType === "update-inner") {
-        updateType = "inner";
-      }
-      this.storeUpdateElement(fluxElement, updateType);
-    } else if (fluxType === "submit") {
-      this.initAutoSubmit(fluxElement);
-    } else if (fluxType === "link") {
-      this.initAutoLink(fluxElement);
-    } else {
-      throw new TypeError(`Unknown flux element type: ${fluxType}`);
-    }
+    this.directiveRegistry.initElement(fluxElement);
   };
   initAutoContainer = (fluxElement) => {
     if (fluxElement instanceof HTMLFormElement) {
@@ -470,6 +501,12 @@ var Flux = class _Flux {
   storeUpdateElement = (element, updateType) => {
     this.updateTargetRegistry.add(element, updateType);
     _Flux.DEBUG && console.debug("storeUpdateElement completed", `Pushing into ${updateType}: `, element);
+  };
+  storeOuterUpdateElement = (element) => {
+    this.storeUpdateElement(element, "outer");
+  };
+  storeInnerUpdateElement = (element) => {
+    this.storeUpdateElement(element, "inner");
   };
   autoSubmit = (e) => {
     e.preventDefault();

@@ -6,6 +6,7 @@ import {UpdateTargetRegistry} from "../src/UpdateTargetRegistry.es6";
 import {FocusStateManager} from "../src/FocusStateManager.es6";
 import {NavigationController} from "../src/NavigationController.es6";
 import {DocumentUpdater} from "../src/DocumentUpdater.es6";
+import {FluxDirectiveRegistry} from "../src/FluxDirectiveRegistry.es6";
 
 beforeEach(() => {
 	document.body.innerHTML = "";
@@ -258,5 +259,54 @@ describe("DocumentUpdater", () => {
 
 		expect(document.querySelector("section")).toBe(existingElement);
 		expect(existingElement.innerHTML).toBe("<strong>New</strong>");
+	});
+});
+
+describe("FluxDirectiveRegistry", () => {
+	it("defines every supported data-flux value in one place", () => {
+		expect(FluxDirectiveRegistry.DEFINITIONS).toEqual({
+			"": expect.objectContaining({handler: "autoContainer"}),
+			"autosave": expect.objectContaining({handler: "autoSave"}),
+			"update": expect.objectContaining({handler: "updateOuter"}),
+			"update-outer": expect.objectContaining({handler: "updateOuter"}),
+			"update-inner": expect.objectContaining({handler: "updateInner"}),
+			"submit": expect.objectContaining({handler: "autoSubmit"}),
+			"link": expect.objectContaining({handler: "autoLink"}),
+		});
+	});
+
+	it("dispatches an element to the configured directive handler", () => {
+		document.body.innerHTML = `<button data-flux="autosave"></button>`;
+
+		let autoSave = vi.fn();
+		let registry = new FluxDirectiveRegistry({
+			autoContainer: vi.fn(),
+			autoSave,
+			updateOuter: vi.fn(),
+			updateInner: vi.fn(),
+			autoSubmit: vi.fn(),
+			autoLink: vi.fn(),
+		});
+
+		registry.initElement(document.querySelector("button"));
+
+		expect(autoSave).toHaveBeenCalledWith(expect.any(HTMLButtonElement));
+	});
+
+	it("throws when a data-flux value is not registered", () => {
+		document.body.innerHTML = `<div data-flux="unknown"></div>`;
+
+		let registry = new FluxDirectiveRegistry({
+			autoContainer: vi.fn(),
+			autoSave: vi.fn(),
+			updateOuter: vi.fn(),
+			updateInner: vi.fn(),
+			autoSubmit: vi.fn(),
+			autoLink: vi.fn(),
+		});
+
+		expect(() => registry.initElement(document.querySelector("div"))).toThrow(
+			"Unknown flux element type: unknown",
+		);
 	});
 });
