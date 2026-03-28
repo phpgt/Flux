@@ -19,6 +19,10 @@ const DIRECTIVE_DEFINITIONS = Object.freeze({
 		handler: "updateInner",
 		description: "Register the element for innerHTML replacement on updates.",
 	},
+	"update-attributes": {
+		handler: "updateAttributes",
+		description: "Register the element for attribute-only updates on refresh.",
+	},
 	"submit": {
 		handler: "autoSubmit",
 		description: "Submit the containing form in the background.",

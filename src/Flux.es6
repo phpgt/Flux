@@ -87,6 +87,7 @@ export class Flux {
 			autoSave: this.formHandler.initAutoSave,
 			updateOuter: this.storeOuterUpdateElement,
 			updateInner: this.storeInnerUpdateElement,
+			updateAttributes: this.storeAttributesUpdateElement,
 			autoSubmit: this.formHandler.initAutoSubmit,
 			autoLink: this.linkHandler.initAutoLink,
 		});
@@ -129,6 +130,10 @@ export class Flux {
 
 	storeInnerUpdateElement = (element) => {
 		this.storeUpdateElement(element, "inner");
+	}
+
+	storeAttributesUpdateElement = (element) => {
+		this.storeUpdateElement(element, "attributes");
 	}
 
 	submitForm = (form, submitter) => {

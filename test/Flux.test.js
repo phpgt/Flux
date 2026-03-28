@@ -288,6 +288,45 @@ describe("DocumentUpdater", () => {
 		expect(document.querySelector("section")).toBe(existingElement);
 		expect(existingElement.innerHTML).toBe("<strong>New</strong>");
 	});
+
+	it("updates only the element attributes when using update-attributes", () => {
+		document.body.innerHTML = `
+		<body class="page-a" data-theme="light" data-flux="update-attributes">
+			<main><span>Old content</span></main>
+		</body>
+		`;
+
+		let existingElement = document.body;
+		let originalHtml = existingElement.innerHTML;
+		let updateTargetRegistry = new UpdateTargetRegistry();
+		updateTargetRegistry.add(existingElement, "attributes");
+		let documentUpdater = new DocumentUpdater(
+			updateTargetRegistry,
+			{
+				markAutofocus: vi.fn(),
+				capturePendingActiveElement: vi.fn().mockReturnValue(null),
+				captureElementState: vi.fn().mockReturnValue(null),
+				restoreElementState: vi.fn(),
+				restorePendingActiveElement: vi.fn(),
+				focusMarkedAutofocusElements: vi.fn(),
+			},
+			vi.fn(),
+		);
+		let newDocument = new DOMParser().parseFromString(`
+			<html>
+				<body class="page-b" data-state="loaded" data-flux="update-attributes">
+					<main><span>New content</span></main>
+				</body>
+			</html>
+		`, "text/html");
+
+		documentUpdater.apply(newDocument);
+
+		expect(existingElement.getAttribute("class")).toBe("page-b");
+		expect(existingElement.getAttribute("data-state")).toBe("loaded");
+		expect(existingElement.hasAttribute("data-theme")).toBe(false);
+		expect(existingElement.innerHTML).toBe(originalHtml);
+	});
 });
 
 describe("FluxDirectiveRegistry", () => {
@@ -298,6 +337,7 @@ describe("FluxDirectiveRegistry", () => {
 			"update": expect.objectContaining({handler: "updateOuter"}),
 			"update-outer": expect.objectContaining({handler: "updateOuter"}),
 			"update-inner": expect.objectContaining({handler: "updateInner"}),
+			"update-attributes": expect.objectContaining({handler: "updateAttributes"}),
 			"submit": expect.objectContaining({handler: "autoSubmit"}),
 			"link": expect.objectContaining({handler: "autoLink"}),
 		});
@@ -312,6 +352,7 @@ describe("FluxDirectiveRegistry", () => {
 			autoSave,
 			updateOuter: vi.fn(),
 			updateInner: vi.fn(),
+			updateAttributes: vi.fn(),
 			autoSubmit: vi.fn(),
 			autoLink: vi.fn(),
 		});
@@ -329,6 +370,7 @@ describe("FluxDirectiveRegistry", () => {
 			autoSave: vi.fn(),
 			updateOuter: vi.fn(),
 			updateInner: vi.fn(),
+			updateAttributes: vi.fn(),
 			autoSubmit: vi.fn(),
 			autoLink: vi.fn(),
 		});

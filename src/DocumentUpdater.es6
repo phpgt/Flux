@@ -49,6 +49,9 @@ export class DocumentUpdater {
 		else if(type === "inner") {
 			this.applyInnerUpdate(existingElement, newElement);
 		}
+		else if(type === "attributes") {
+			this.applyAttributesUpdate(existingElement, newElement);
+		}
 
 		if(activeElementState) {
 			if(this.debug) {
@@ -77,5 +80,21 @@ export class DocumentUpdater {
 		while(newElement && newElement.firstChild) {
 			existingElement.appendChild(newElement.firstChild);
 		}
+	}
+
+	applyAttributesUpdate(existingElement, newElement) {
+		if(!newElement) {
+			return;
+		}
+
+		Array.from(existingElement.attributes).forEach(attribute => {
+			if(!newElement.hasAttribute(attribute.name)) {
+				existingElement.removeAttribute(attribute.name);
+			}
+		});
+
+		Array.from(newElement.attributes).forEach(attribute => {
+			existingElement.setAttribute(attribute.name, attribute.value);
+		});
 	}
 }

@@ -327,6 +327,8 @@ var DocumentUpdater = class {
       this.applyOuterUpdate(type, existingElement, newElement);
     } else if (type === "inner") {
       this.applyInnerUpdate(existingElement, newElement);
+    } else if (type === "attributes") {
+      this.applyAttributesUpdate(existingElement, newElement);
     }
     if (activeElementState) {
       if (this.debug) {
@@ -352,6 +354,19 @@ var DocumentUpdater = class {
       existingElement.appendChild(newElement.firstChild);
     }
   }
+  applyAttributesUpdate(existingElement, newElement) {
+    if (!newElement) {
+      return;
+    }
+    Array.from(existingElement.attributes).forEach((attribute) => {
+      if (!newElement.hasAttribute(attribute.name)) {
+        existingElement.removeAttribute(attribute.name);
+      }
+    });
+    Array.from(newElement.attributes).forEach((attribute) => {
+      existingElement.setAttribute(attribute.name, attribute.value);
+    });
+  }
 };
 
 // src/FluxDirectiveRegistry.es6
@@ -375,6 +390,10 @@ var DIRECTIVE_DEFINITIONS = Object.freeze({
   "update-inner": {
     handler: "updateInner",
     description: "Register the element for innerHTML replacement on updates."
+  },
+  "update-attributes": {
+    handler: "updateAttributes",
+    description: "Register the element for attribute-only updates on refresh."
   },
   "submit": {
     handler: "autoSubmit",
@@ -688,7 +707,6 @@ var Flux = class _Flux {
   responseHandler;
   logger;
   constructor(style = void 0, elementEventMapper = void 0, parser = void 0, navigationController = void 0, updateTargetRegistry = void 0, focusStateManager = void 0, documentUpdater = void 0, directiveRegistry = void 0, domBridge = void 0, formHandler = void 0, linkHandler = void 0, responseHandler = void 0, logger = void 0) {
-    console.log("GREG WAS HERE");
     handleWindowPopState();
     this.logger = logger ?? console;
     style = style ?? new Style();
@@ -735,6 +753,7 @@ var Flux = class _Flux {
       autoSave: this.formHandler.initAutoSave,
       updateOuter: this.storeOuterUpdateElement,
       updateInner: this.storeInnerUpdateElement,
+      updateAttributes: this.storeAttributesUpdateElement,
       autoSubmit: this.formHandler.initAutoSubmit,
       autoLink: this.linkHandler.initAutoLink
     });
@@ -770,6 +789,9 @@ var Flux = class _Flux {
   };
   storeInnerUpdateElement = (element) => {
     this.storeUpdateElement(element, "inner");
+  };
+  storeAttributesUpdateElement = (element) => {
+    this.storeUpdateElement(element, "attributes");
   };
   submitForm = (form, submitter) => {
     return this.formHandler.submitForm(form, submitter);
