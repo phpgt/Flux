@@ -1,7 +1,12 @@
 export class FluxLinkHandler {
-	constructor(navigationController, onDocument) {
+	constructor(
+		navigationController,
+		onDocument,
+		windowObject = globalThis.window,
+	) {
 		this.navigationController = navigationController;
 		this.onDocument = onDocument;
+		this.windowObject = windowObject;
 	}
 
 	initAutoLink = (fluxElement) => {
@@ -15,6 +20,7 @@ export class FluxLinkHandler {
 	autoClick = (e) => {
 		e.preventDefault();
 		let link = e.currentTarget;
+		this.scrollToTop();
 
 		setTimeout(() => {
 			this.clickLink(link);
@@ -23,5 +29,17 @@ export class FluxLinkHandler {
 
 	clickLink(link) {
 		return this.navigationController.clickLink(link, this.onDocument);
+	}
+
+	scrollToTop() {
+		if(!this.windowObject || typeof this.windowObject.scrollTo !== "function") {
+			return;
+		}
+
+		this.windowObject.scrollTo({
+			top: 0,
+			left: 0,
+			behavior: "smooth",
+		});
 	}
 }

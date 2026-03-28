@@ -573,9 +573,10 @@ var FluxFormHandler = class {
 
 // src/FluxLinkHandler.es6
 var FluxLinkHandler = class {
-  constructor(navigationController, onDocument) {
+  constructor(navigationController, onDocument, windowObject = globalThis.window) {
     this.navigationController = navigationController;
     this.onDocument = onDocument;
+    this.windowObject = windowObject;
   }
   initAutoLink = (fluxElement) => {
     if (!(fluxElement instanceof HTMLAnchorElement)) {
@@ -586,6 +587,7 @@ var FluxLinkHandler = class {
   autoClick = (e) => {
     e.preventDefault();
     let link = e.currentTarget;
+    this.scrollToTop();
     setTimeout(() => {
       this.clickLink(link);
     }, 0);
@@ -593,31 +595,81 @@ var FluxLinkHandler = class {
   clickLink(link) {
     return this.navigationController.clickLink(link, this.onDocument);
   }
+  scrollToTop() {
+    if (!this.windowObject || typeof this.windowObject.scrollTo !== "function") {
+      return;
+    }
+    this.windowObject.scrollTo({
+      top: 0,
+      left: 0,
+      behavior: "smooth"
+    });
+  }
 };
 
 // src/FluxResponseHandler.es6
 var FluxResponseHandler = class {
-  constructor(documentUpdater, logger = console, debug = false, scheduler = globalThis.setTimeout.bind(globalThis), reload = () => location.reload(), alerter = globalThis.alert?.bind(globalThis)) {
+  constructor(documentUpdater, logger = console, debug = false, scheduler = globalThis.setTimeout.bind(globalThis), reload = () => location.reload(), alerter = globalThis.alert?.bind(globalThis), windowObject = globalThis.window, animationFrame = globalThis.requestAnimationFrame?.bind(globalThis)) {
     this.documentUpdater = documentUpdater;
     this.logger = logger;
     this.debug = debug;
     this.scheduler = scheduler;
     this.reload = reload;
     this.alerter = alerter;
+    this.windowObject = windowObject;
+    this.animationFrame = animationFrame;
   }
   handleDocument = (newDocument) => {
-    if (newDocument.head.children.length === 0) {
-      if (this.debug && this.alerter) {
-        this.alerter("Error processing new document!");
-      }
-      this.logger.error("Error processing new document!");
-      this.reload();
+    if (!this.isProcessableDocument(newDocument)) {
       return;
     }
     this.scheduler(() => {
       this.documentUpdater.apply(newDocument);
     }, 0);
   };
+  handleLinkDocument = (newDocument) => {
+    if (!this.isProcessableDocument(newDocument)) {
+      return;
+    }
+    this.scheduler(() => {
+      this.documentUpdater.apply(newDocument);
+      this.scrollToTopAfterPaint();
+    }, 0);
+  };
+  isProcessableDocument(newDocument) {
+    if (newDocument.head.children.length === 0) {
+      if (this.debug && this.alerter) {
+        this.alerter("Error processing new document!");
+      }
+      this.logger.error("Error processing new document!");
+      this.reload();
+      return false;
+    }
+    return true;
+  }
+  scrollToTopImmediately() {
+    if (!this.windowObject || typeof this.windowObject.scrollTo !== "function") {
+      return;
+    }
+    this.windowObject.scrollTo({
+      top: 0,
+      left: 0,
+      behavior: "auto"
+    });
+  }
+  scrollToTopAfterPaint() {
+    if (typeof this.animationFrame !== "function") {
+      this.scheduler(() => {
+        this.scrollToTopImmediately();
+      }, 0);
+      return;
+    }
+    this.animationFrame(() => {
+      this.animationFrame(() => {
+        this.scrollToTopImmediately();
+      });
+    });
+  }
 };
 
 // src/Flux.es6
@@ -634,8 +686,11 @@ var Flux = class _Flux {
   formHandler;
   linkHandler;
   responseHandler;
-  constructor(style = void 0, elementEventMapper = void 0, parser = void 0, navigationController = void 0, updateTargetRegistry = void 0, focusStateManager = void 0, documentUpdater = void 0, directiveRegistry = void 0, domBridge = void 0, formHandler = void 0, linkHandler = void 0, responseHandler = void 0) {
+  logger;
+  constructor(style = void 0, elementEventMapper = void 0, parser = void 0, navigationController = void 0, updateTargetRegistry = void 0, focusStateManager = void 0, documentUpdater = void 0, directiveRegistry = void 0, domBridge = void 0, formHandler = void 0, linkHandler = void 0, responseHandler = void 0, logger = void 0) {
+    console.log("GREG WAS HERE");
     handleWindowPopState();
+    this.logger = logger ?? console;
     style = style ?? new Style();
     style.addToDocument();
     this.elementEventMapper = elementEventMapper ?? new ElementEventMapper();
@@ -666,13 +721,13 @@ var Flux = class _Flux {
     );
     this.linkHandler = linkHandler ?? new FluxLinkHandler(
       this.navigationController,
-      this.responseHandler.handleDocument
+      this.responseHandler.handleLinkDocument
     );
     this.domBridge = domBridge ?? new FluxDomBridge(
       this.elementEventMapper,
-      this.initFluxElement,
+      this.initFluxElementSafely,
       DomPath,
-      console,
+      this.logger,
       _Flux.DEBUG
     );
     this.directiveRegistry = directiveRegistry ?? new FluxDirectiveRegistry({
@@ -683,13 +738,24 @@ var Flux = class _Flux {
       autoSubmit: this.formHandler.initAutoSubmit,
       autoLink: this.linkHandler.initAutoLink
     });
-    document.querySelectorAll("[data-flux]").forEach(this.initFluxElement);
+    document.querySelectorAll("[data-flux]").forEach(this.initFluxElementSafely);
   }
   /**
    * Initialise a single element using the central Flux directive registry.
    */
   initFluxElement = (fluxElement) => {
     this.directiveRegistry.initElement(fluxElement);
+  };
+  initFluxElementSafely = (fluxElement) => {
+    try {
+      this.initFluxElement(fluxElement);
+    } catch (error) {
+      this.logger.error(
+        `Error initialising flux element: ${fluxElement.dataset["flux"]}`,
+        fluxElement,
+        error
+      );
+    }
   };
   /**
    * Store a DOM element that should be refreshed when Flux processes

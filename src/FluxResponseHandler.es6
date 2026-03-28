@@ -6,6 +6,8 @@ export class FluxResponseHandler {
 		scheduler = globalThis.setTimeout.bind(globalThis),
 		reload = () => location.reload(),
 		alerter = globalThis.alert?.bind(globalThis),
+		windowObject = globalThis.window,
+		animationFrame = globalThis.requestAnimationFrame?.bind(globalThis),
 	) {
 		this.documentUpdater = documentUpdater;
 		this.logger = logger;
@@ -13,9 +15,32 @@ export class FluxResponseHandler {
 		this.scheduler = scheduler;
 		this.reload = reload;
 		this.alerter = alerter;
+		this.windowObject = windowObject;
+		this.animationFrame = animationFrame;
 	}
 
 	handleDocument = (newDocument) => {
+		if(!this.isProcessableDocument(newDocument)) {
+			return;
+		}
+
+		this.scheduler(() => {
+			this.documentUpdater.apply(newDocument);
+		}, 0);
+	}
+
+	handleLinkDocument = (newDocument) => {
+		if(!this.isProcessableDocument(newDocument)) {
+			return;
+		}
+
+		this.scheduler(() => {
+			this.documentUpdater.apply(newDocument);
+			this.scrollToTopAfterPaint();
+		}, 0);
+	}
+
+	isProcessableDocument(newDocument) {
 		if(newDocument.head.children.length === 0) {
 			if(this.debug && this.alerter) {
 				this.alerter("Error processing new document!");
@@ -23,11 +48,39 @@ export class FluxResponseHandler {
 
 			this.logger.error("Error processing new document!");
 			this.reload();
+			return false;
+		}
+
+		return true;
+	}
+
+	scrollToTopImmediately() {
+		if(!this.windowObject || typeof this.windowObject.scrollTo !== "function") {
 			return;
 		}
 
-		this.scheduler(() => {
-			this.documentUpdater.apply(newDocument);
-		}, 0);
+		this.windowObject.scrollTo({
+			top: 0,
+			left: 0,
+			behavior: "auto",
+		});
+	}
+
+	scrollToTopAfterPaint() {
+		if(typeof this.animationFrame !== "function") {
+			this.scheduler(() => {
+				this.scrollToTopImmediately();
+			}, 0);
+			return;
+		}
+
+		// Wait until the updated DOM has been painted before forcing the final
+		// scroll position, otherwise the browser can preserve an in-flight
+		// scroll animation against the new layout.
+		this.animationFrame(() => {
+			this.animationFrame(() => {
+				this.scrollToTopImmediately();
+			});
+		});
 	}
 }

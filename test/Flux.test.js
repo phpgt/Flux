@@ -9,6 +9,7 @@ import {DocumentUpdater} from "../src/DocumentUpdater.es6";
 import {FluxDirectiveRegistry} from "../src/FluxDirectiveRegistry.es6";
 import {FluxDomBridge} from "../src/FluxDomBridge.es6";
 import {FluxFormHandler} from "../src/FluxFormHandler.es6";
+import {FluxLinkHandler} from "../src/FluxLinkHandler.es6";
 import {FluxResponseHandler} from "../src/FluxResponseHandler.es6";
 
 beforeEach(() => {
@@ -54,6 +55,30 @@ describe("Flux", () => {
 			"submit",
 			expect.any(Function),
 		);
+	});
+
+	it("logs unknown directives without halting other flux initialisation", () => {
+		document.body.innerHTML = `
+		<div data-flux="unknown"></div>
+		<form method="post" data-flux>
+			<button name="do" value="increment">Increment</button>
+		</form>
+		`;
+
+		let form = document.forms[0];
+		let addEventListenerSpy = vi.spyOn(form, "addEventListener");
+		let errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+		new Flux();
+
+		expect(errorSpy).toHaveBeenCalledWith(
+			"Error initialising flux element: unknown",
+			expect.any(HTMLElement),
+			expect.any(TypeError),
+		);
+		expect(addEventListenerSpy).toHaveBeenCalledWith("submit", expect.any(Function));
+
+		errorSpy.mockRestore();
 	});
 });
 
@@ -400,5 +425,66 @@ describe("FluxResponseHandler", () => {
 
 		expect(scheduler).toHaveBeenCalledWith(expect.any(Function), 0);
 		expect(apply).toHaveBeenCalledWith(newDocument);
+	});
+
+	it("forces the page to the top after link-driven document updates complete", () => {
+		let apply = vi.fn();
+		let scrollTo = vi.fn();
+		let scheduler = vi.fn((callback) => callback());
+		let animationFrame = vi.fn((callback) => callback());
+		let handler = new FluxResponseHandler(
+			{apply},
+			{error: vi.fn()},
+			false,
+			scheduler,
+			vi.fn(),
+			vi.fn(),
+			{scrollTo},
+			animationFrame,
+		);
+		let newDocument = new DOMParser().parseFromString(`
+			<html>
+				<head><title>Ok</title></head>
+				<body></body>
+			</html>
+		`, "text/html");
+
+		handler.handleLinkDocument(newDocument);
+
+		expect(apply).toHaveBeenCalledWith(newDocument);
+		expect(animationFrame).toHaveBeenCalledTimes(2);
+		expect(scrollTo).toHaveBeenCalledWith({
+			top: 0,
+			left: 0,
+			behavior: "auto",
+		});
+	});
+});
+
+describe("FluxLinkHandler", () => {
+	it("scrolls to the top smoothly as soon as a flux link is clicked", () => {
+		let scrollTo = vi.fn();
+		let navigationController = {clickLink: vi.fn()};
+		let handler = new FluxLinkHandler(
+			navigationController,
+			vi.fn(),
+			{scrollTo},
+		);
+		let preventDefault = vi.fn();
+		document.body.innerHTML = `<a href="/next" data-flux="link">Next</a>`;
+		let link = document.querySelector("a");
+
+		handler.autoClick({
+			preventDefault,
+			currentTarget: link,
+		});
+
+		expect(preventDefault).toHaveBeenCalled();
+		expect(scrollTo).toHaveBeenCalledWith({
+			top: 0,
+			left: 0,
+			behavior: "smooth",
+		});
+		expect(navigationController.clickLink).not.toHaveBeenCalled();
 	});
 });

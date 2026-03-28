@@ -24,6 +24,7 @@ export class Flux {
 	formHandler;
 	linkHandler;
 	responseHandler;
+	logger;
 
 	constructor(
 		style = undefined,
@@ -38,8 +39,10 @@ export class Flux {
 		formHandler = undefined,
 		linkHandler = undefined,
 		responseHandler = undefined,
+		logger = undefined,
 	) {
 		handleWindowPopState();
+		this.logger = logger ?? console;
 		style = style ?? new Style();
 		style.addToDocument();
 		this.elementEventMapper = elementEventMapper ?? new ElementEventMapper();
@@ -70,13 +73,13 @@ export class Flux {
 		);
 		this.linkHandler = linkHandler ?? new FluxLinkHandler(
 			this.navigationController,
-			this.responseHandler.handleDocument,
+			this.responseHandler.handleLinkDocument,
 		);
 		this.domBridge = domBridge ?? new FluxDomBridge(
 			this.elementEventMapper,
-			this.initFluxElement,
+			this.initFluxElementSafely,
 			DomPath,
-			console,
+			this.logger,
 			Flux.DEBUG,
 		);
 		this.directiveRegistry = directiveRegistry ?? new FluxDirectiveRegistry({
@@ -88,7 +91,7 @@ export class Flux {
 			autoLink: this.linkHandler.initAutoLink,
 		});
 
-		document.querySelectorAll("[data-flux]").forEach(this.initFluxElement);
+		document.querySelectorAll("[data-flux]").forEach(this.initFluxElementSafely);
 	}
 
 	/**
@@ -96,6 +99,19 @@ export class Flux {
 	 */
 	initFluxElement = (fluxElement) => {
 		this.directiveRegistry.initElement(fluxElement);
+	}
+
+	initFluxElementSafely = (fluxElement) => {
+		try {
+			this.initFluxElement(fluxElement);
+		}
+		catch(error) {
+			this.logger.error(
+				`Error initialising flux element: ${fluxElement.dataset["flux"]}`,
+				fluxElement,
+				error,
+			);
+		}
 	}
 
 	/**
