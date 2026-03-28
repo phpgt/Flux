@@ -83,26 +83,172 @@ var ElementEventMapper = class {
   };
 };
 
+// src/DomPath.es6
+var DomPath = class {
+  static getXPathForElement(element, context) {
+    let xpath = "";
+    if (context instanceof Document) {
+      context = context.documentElement;
+    }
+    if (!context) {
+      context = element.ownerDocument.documentElement;
+    }
+    while (element !== context) {
+      let pos = 0;
+      let sibling = element;
+      while (sibling) {
+        if (sibling.nodeName === element.nodeName) {
+          pos += 1;
+        }
+        sibling = sibling.previousElementSibling;
+      }
+      xpath = `./${element.nodeName}[${pos}]/${xpath}`;
+      element = element.parentElement;
+    }
+    return xpath.replace(/\/$/, "");
+  }
+  static findInDocument(document2, path) {
+    if (!path) {
+      return null;
+    }
+    return document2.evaluate(
+      path,
+      document2.documentElement,
+      null,
+      XPathResult.FIRST_ORDERED_NODE_TYPE,
+      null
+    ).singleNodeValue;
+  }
+  static findInContext(context, path) {
+    if (!path) {
+      return null;
+    }
+    return context.ownerDocument.evaluate(
+      path,
+      context,
+      null,
+      XPathResult.FIRST_ORDERED_NODE_TYPE,
+      null
+    ).singleNodeValue;
+  }
+};
+
+// src/UpdateTargetRegistry.es6
+var UpdateTargetRegistry = class {
+  collection = {};
+  add(element, updateType) {
+    let type = updateType ?? "_none";
+    if (this.collection[type] === void 0) {
+      this.collection[type] = [];
+    }
+    this.collection[type].push(element);
+  }
+  getTypes() {
+    return Object.keys(this.collection);
+  }
+  getElements(type) {
+    return this.collection[type] ?? [];
+  }
+  replace(type, existingElement, newElement) {
+    let index = this.getElements(type).indexOf(existingElement);
+    if (index < 0) {
+      return;
+    }
+    this.collection[type][index] = newElement;
+  }
+};
+
+// src/FocusStateManager.es6
+var FocusStateManager = class {
+  constructor(domPath = DomPath) {
+    this.domPath = domPath;
+  }
+  markAutofocus(newDocument) {
+    let autofocusElement = newDocument.querySelector("[autofocus]");
+    if (autofocusElement) {
+      autofocusElement.dataset["fluxAutofocus"] = "";
+    }
+  }
+  capturePendingActiveElement(newDocument) {
+    let activeContainer = document.querySelector("[data-flux-active]");
+    if (!activeContainer) {
+      return null;
+    }
+    let activeContainerPath = activeContainer.dataset["fluxPath"];
+    let newActiveContainer = this.domPath.findInDocument(newDocument, activeContainerPath);
+    if (!newActiveContainer) {
+      return null;
+    }
+    let activeElementPath = activeContainer.dataset["fluxActive"];
+    return this.domPath.findInContext(newActiveContainer, activeElementPath);
+  }
+  captureElementState(existingElement) {
+    if (!existingElement.contains(document.activeElement)) {
+      return null;
+    }
+    let activeElement = document.activeElement;
+    let selection = null;
+    if (activeElement.selectionStart >= 0 && activeElement.selectionEnd >= 0) {
+      selection = [activeElement.selectionStart, activeElement.selectionEnd];
+    }
+    return {
+      path: this.domPath.getXPathForElement(activeElement),
+      selection
+    };
+  }
+  restoreElementState(elementState) {
+    if (!elementState) {
+      return;
+    }
+    let elementToActivate = this.domPath.findInDocument(document, elementState.path);
+    if (!elementToActivate) {
+      return;
+    }
+    elementToActivate.focus();
+    if (elementState.selection && elementToActivate.setSelectionRange) {
+      elementToActivate.setSelectionRange(
+        elementState.selection[0],
+        elementState.selection[1]
+      );
+    }
+  }
+  restorePendingActiveElement(newActiveElement) {
+    if (!newActiveElement) {
+      return;
+    }
+    newActiveElement.focus();
+    newActiveElement.blur();
+  }
+  focusMarkedAutofocusElements() {
+    document.querySelectorAll("[data-flux-autofocus]").forEach((autofocusElement) => {
+      autofocusElement.focus();
+    });
+  }
+  storeFormState(form, activeElement) {
+    form.dataset["fluxPath"] = this.domPath.getXPathForElement(form);
+    form.dataset["fluxActive"] = this.domPath.getXPathForElement(
+      activeElement,
+      form
+    );
+  }
+};
+
 // src/Flux.es6
 var Flux = class _Flux {
   static DEBUG = false;
   style;
   elementEventMapper;
   parser;
-  /**
-   * An object storing collections of elements that need to be updated
-   * when the document undergoes changes. The keys of this object represent
-   * the update type (e.g., "inner", "outer", etc.), while the values are
-   * arrays containing the corresponding DOM elements that require updates.
-   * @type {Object.<string, HTMLElement[]>}
-   */
-  updateElementCollection = {};
-  constructor(style = void 0, elementEventMapper = void 0, parser = void 0) {
+  updateTargetRegistry;
+  focusStateManager;
+  constructor(style = void 0, elementEventMapper = void 0, parser = void 0, updateTargetRegistry = void 0, focusStateManager = void 0) {
     handleWindowPopState();
     style = style ?? new Style();
     style.addToDocument();
     this.elementEventMapper = elementEventMapper ?? new ElementEventMapper();
     this.parser = parser ?? new DOMParser();
+    this.updateTargetRegistry = updateTargetRegistry ?? new UpdateTargetRegistry();
+    this.focusStateManager = focusStateManager ?? new FocusStateManager();
     document.querySelectorAll("[data-flux]").forEach(this.initFluxElement);
   }
   /**
@@ -186,20 +332,11 @@ var Flux = class _Flux {
     fluxElement.addEventListener("click", this.autoClick);
   };
   /**
-   * The updateElementCollection arrays are lists of all elements that
-   * require updating when the document updates. When something happens
-   * that requires the document to update, the processUpdateElements
-   * function will iterate over these stored updateElements and update
-   * their content accordingly.
+   * Store a DOM element that should be refreshed when Flux processes
+   * a new HTML document after an interaction.
    */
   storeUpdateElement = (element, updateType) => {
-    if (!updateType) {
-      updateType = "_none";
-    }
-    if (this.updateElementCollection[updateType] === void 0) {
-      this.updateElementCollection[updateType] = [];
-    }
-    this.updateElementCollection[updateType].push(element);
+    this.updateTargetRegistry.add(element, updateType);
     _Flux.DEBUG && console.debug("storeUpdateElement completed", `Pushing into ${updateType}: `, element);
   };
   autoSubmit = (e) => {
@@ -318,11 +455,7 @@ var Flux = class _Flux {
     if (form.form instanceof HTMLFormElement) {
       form = form.form;
     }
-    form.dataset["fluxPath"] = getXPathForElement(form);
-    form.dataset["fluxActive"] = getXPathForElement(
-      currentActiveElement,
-      form
-    );
+    this.focusStateManager.storeFormState(form, currentActiveElement);
     let recentlyChangedInput = form.querySelectorAll(".input-changed");
     if (recentlyChangedInput.length > 0) {
       return;
@@ -334,65 +467,22 @@ var Flux = class _Flux {
     this.submitForm(form, this.completeAutoSave, submitter);
   };
   /**
-   * The updateElementCollection arrays are lists of all elements that
-   * require updating when the document updates. This function is
-   * triggered whenever the document's data changes, so the updateElements
-   * can be swapped out from the old document with the new document's
-   * counterpart elements.
+   * Apply the relevant pieces of a newly fetched document onto the
+   * current page using the registered update targets.
    */
   processUpdateElements = (newDocument) => {
-    let autofocusElement = newDocument.querySelector("[autofocus]");
-    if (autofocusElement) {
-      autofocusElement.dataset["fluxAutofocus"] = "";
-    }
-    let newActiveElement = null;
-    let activeContainer = document.querySelector("[data-flux-active]");
-    if (activeContainer) {
-      let activeContainerPath = activeContainer.dataset["fluxPath"];
-      if (activeContainerPath) {
-        let activeContainerXPathResult = newDocument.evaluate(
-          activeContainerPath,
-          newDocument.documentElement,
-          null,
-          XPathResult.FIRST_ORDERED_NODE_TYPE,
-          null
-        );
-        let newActiveContainer = activeContainerXPathResult.singleNodeValue;
-        if (newActiveContainer) {
-          let activeElementPath = activeContainer.dataset["fluxActive"];
-          if (activeElementPath) {
-            let activeElementXPathResult = newDocument.evaluate(
-              activeElementPath,
-              newActiveContainer,
-              null,
-              XPathResult.FIRST_ORDERED_NODE_TYPE,
-              null
-            );
-            newActiveElement = activeElementXPathResult.singleNodeValue;
-          }
-        }
-      }
-    }
-    for (let type of Object.keys(this.updateElementCollection)) {
-      this.updateElementCollection[type].forEach((existingElement) => {
+    this.focusStateManager.markAutofocus(newDocument);
+    let newActiveElement = this.focusStateManager.capturePendingActiveElement(newDocument);
+    for (let type of this.updateTargetRegistry.getTypes()) {
+      this.updateTargetRegistry.getElements(type).forEach((existingElement) => {
         if (!existingElement) {
           return;
         }
-        let activeElement = null;
-        let activeElementSelection = null;
-        if (existingElement.contains(document.activeElement)) {
-          activeElement = getXPathForElement(document.activeElement);
-          activeElementSelection = [];
-          if (document.activeElement.selectionStart >= 0 && document.activeElement.selectionEnd >= 0) {
-            activeElementSelection.push(document.activeElement.selectionStart, document.activeElement.selectionEnd);
-          }
-        }
-        let xPath = getXPathForElement(existingElement, document);
-        let xPathResult = newDocument.evaluate(xPath, newDocument.documentElement);
-        let newElement = xPathResult.iterateNext();
+        let activeElementState = this.focusStateManager.captureElementState(existingElement);
+        let xPath = DomPath.getXPathForElement(existingElement, document);
+        let newElement = DomPath.findInDocument(newDocument, xPath);
         if (type === "outer") {
-          let existingElementIndex = this.updateElementCollection[type].indexOf(existingElement);
-          this.updateElementCollection[type][existingElementIndex] = newElement;
+          this.updateTargetRegistry.replace(type, existingElement, newElement);
           if (newElement) {
             this.reattachEventListeners(existingElement, newElement);
             this.reattachFluxElements(existingElement, newElement);
@@ -408,27 +498,15 @@ var Flux = class _Flux {
             existingElement.appendChild(newElement.firstChild);
           }
         }
-        if (activeElement) {
-          _Flux.DEBUG && console.debug("Active element", activeElement);
-          let elementToActivate = document.evaluate(activeElement, document.documentElement).iterateNext();
-          if (elementToActivate) {
-            _Flux.DEBUG && console.debug("Element to activate", elementToActivate, activeElementSelection);
-            elementToActivate.focus();
-            if (elementToActivate.setSelectionRange) {
-              elementToActivate.setSelectionRange(activeElementSelection[0], activeElementSelection[1]);
-            }
-          }
+        if (activeElementState) {
+          _Flux.DEBUG && console.debug("Active element", activeElementState.path);
+          this.focusStateManager.restoreElementState(activeElementState);
         }
       });
     }
-    if (newActiveElement) {
-      newActiveElement.focus();
-      newActiveElement.blur();
-      _Flux.DEBUG && console.debug("Focussed and blurred", newActiveElement);
-    }
-    document.querySelectorAll("[data-flux-autofocus]").forEach((autofocusElement2) => {
-      autofocusElement2.focus();
-    });
+    this.focusStateManager.restorePendingActiveElement(newActiveElement);
+    _Flux.DEBUG && newActiveElement && console.debug("Focussed and blurred", newActiveElement);
+    this.focusStateManager.focusMarkedAutofocusElements();
   };
   reattachEventListeners = (oldElement, newElement) => {
     if (!newElement) {
@@ -436,14 +514,8 @@ var Flux = class _Flux {
     }
     this.reattachElementListeners(oldElement, newElement);
     oldElement.querySelectorAll("*").forEach((oldChild) => {
-      let xPath = getXPathForElement(oldChild, oldElement);
-      let newChild = newElement.ownerDocument.evaluate(
-        xPath,
-        newElement,
-        null,
-        XPathResult.FIRST_ORDERED_NODE_TYPE,
-        null
-      ).singleNodeValue;
+      let xPath = DomPath.getXPathForElement(oldChild, oldElement);
+      let newChild = DomPath.findInContext(newElement, xPath);
       if (newChild instanceof Element) {
         this.reattachElementListeners(oldChild, newChild);
       }
@@ -467,8 +539,8 @@ var Flux = class _Flux {
     }
     newElement.querySelectorAll("[data-flux]").forEach(this.initFluxElement);
     oldElement.querySelectorAll("[data-flux-obj]").forEach((fluxElement) => {
-      let xPath = getXPathForElement(fluxElement, oldElement);
-      let newFluxElement = newElement.ownerDocument.evaluate(xPath, newElement).iterateNext();
+      let xPath = DomPath.getXPathForElement(fluxElement, oldElement);
+      let newFluxElement = DomPath.findInContext(newElement, xPath);
       if (newFluxElement) {
         newFluxElement.fluxObj = fluxElement.fluxObj;
         newFluxElement.dataset["fluxObj"] = "";
@@ -480,29 +552,6 @@ function handleWindowPopState() {
   window.addEventListener("popstate", (e) => {
     location.href = document.location;
   });
-}
-function getXPathForElement(element, context) {
-  let xpath = "";
-  if (context instanceof Document) {
-    context = context.documentElement;
-  }
-  if (!context) {
-    context = element.ownerDocument.documentElement;
-  }
-  while (element !== context) {
-    let pos = 0;
-    let sibling = element;
-    while (sibling) {
-      if (sibling.nodeName === element.nodeName) {
-        pos += 1;
-      }
-      sibling = sibling.previousElementSibling;
-    }
-    xpath = `./${element.nodeName}[${pos}]/${xpath}`;
-    element = element.parentElement;
-  }
-  xpath = xpath.replace(/\/$/, "");
-  return xpath;
 }
 
 // src/FluxDebug.es6

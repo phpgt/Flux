@@ -1,31 +1,31 @@
 import {Style} from "./Style.es6";
 import {ElementEventMapper} from "./ElementEventMapper.es6";
+import {DomPath} from "./DomPath.es6";
+import {UpdateTargetRegistry} from "./UpdateTargetRegistry.es6";
+import {FocusStateManager} from "./FocusStateManager.es6";
 
 export class Flux {
 	static DEBUG = false;
 	style;
 	elementEventMapper;
 	parser;
-
-	/**
-	 * An object storing collections of elements that need to be updated
-	 * when the document undergoes changes. The keys of this object represent
-	 * the update type (e.g., "inner", "outer", etc.), while the values are
-	 * arrays containing the corresponding DOM elements that require updates.
-	 * @type {Object.<string, HTMLElement[]>}
-	 */
-	updateElementCollection = {};
+	updateTargetRegistry;
+	focusStateManager;
 
 	constructor(
 		style = undefined,
 		elementEventMapper = undefined,
 		parser = undefined,
+		updateTargetRegistry = undefined,
+		focusStateManager = undefined,
 	) {
 		handleWindowPopState();
 		style = style ?? new Style();
 		style.addToDocument();
 		this.elementEventMapper = elementEventMapper ?? new ElementEventMapper();
 		this.parser = parser ?? new DOMParser();
+		this.updateTargetRegistry = updateTargetRegistry ?? new UpdateTargetRegistry();
+		this.focusStateManager = focusStateManager ?? new FocusStateManager();
 
 		document.querySelectorAll("[data-flux]").forEach(this.initFluxElement);
 	}
@@ -134,22 +134,11 @@ export class Flux {
 	}
 
 	/**
-	 * The updateElementCollection arrays are lists of all elements that
-	 * require updating when the document updates. When something happens
-	 * that requires the document to update, the processUpdateElements
-	 * function will iterate over these stored updateElements and update
-	 * their content accordingly.
+	 * Store a DOM element that should be refreshed when Flux processes
+	 * a new HTML document after an interaction.
 	 */
 	storeUpdateElement = (element, updateType) => {
-		if(!updateType) {
-			updateType = "_none";
-		}
-
-		if(this.updateElementCollection[updateType] === undefined) {
-			this.updateElementCollection[updateType] = [];
-		}
-
-		this.updateElementCollection[updateType].push(element);
+		this.updateTargetRegistry.add(element, updateType);
 		Flux.DEBUG && console.debug("storeUpdateElement completed", `Pushing into ${updateType}: `, element);
 	}
 
@@ -300,11 +289,7 @@ export class Flux {
 			form = form.form;
 		}
 
-		form.dataset["fluxPath"] = getXPathForElement(form);
-		form.dataset["fluxActive"] = getXPathForElement(
-			currentActiveElement,
-			form,
-		);
+		this.focusStateManager.storeFormState(form, currentActiveElement);
 
 		let recentlyChangedInput = form.querySelectorAll(".input-changed");
 		if(recentlyChangedInput.length > 0) {
@@ -320,72 +305,25 @@ export class Flux {
 	}
 
 	/**
-	 * The updateElementCollection arrays are lists of all elements that
-	 * require updating when the document updates. This function is
-	 * triggered whenever the document's data changes, so the updateElements
-	 * can be swapped out from the old document with the new document's
-	 * counterpart elements.
+	 * Apply the relevant pieces of a newly fetched document onto the
+	 * current page using the registered update targets.
 	 */
 	processUpdateElements = (newDocument) => {
-		let autofocusElement = newDocument.querySelector("[autofocus]");
-		if(autofocusElement) {
-			autofocusElement.dataset["fluxAutofocus"] = "";
-		}
+		this.focusStateManager.markAutofocus(newDocument);
+		let newActiveElement = this.focusStateManager.capturePendingActiveElement(newDocument);
 
-// Check if there's an active element in the current document, before altering it.
-		let newActiveElement = null;
-		let activeContainer = document.querySelector("[data-flux-active]");
-		if(activeContainer) {
-			let activeContainerPath = activeContainer.dataset["fluxPath"];
-			if(activeContainerPath) {
-				let activeContainerXPathResult = newDocument.evaluate(
-					activeContainerPath,
-					newDocument.documentElement,
-					null,
-					XPathResult.FIRST_ORDERED_NODE_TYPE,
-					null
-				);
-				let newActiveContainer = activeContainerXPathResult.singleNodeValue;
-
-				if(newActiveContainer) {
-					let activeElementPath = activeContainer.dataset["fluxActive"];
-					if(activeElementPath) {
-						let activeElementXPathResult = newDocument.evaluate(
-							activeElementPath,
-							newActiveContainer,
-							null,
-							XPathResult.FIRST_ORDERED_NODE_TYPE,
-							null
-						);
-						newActiveElement = activeElementXPathResult.singleNodeValue;
-					}
-				}
-			}
-
-		}
-
-		for(let type of Object.keys(this.updateElementCollection)) {
-			this.updateElementCollection[type].forEach(existingElement => {
+		for(let type of this.updateTargetRegistry.getTypes()) {
+			this.updateTargetRegistry.getElements(type).forEach(existingElement => {
 				if(!existingElement) {
 					return;
 				}
 
-				let activeElement = null;
-				let activeElementSelection = null;
-				if(existingElement.contains(document.activeElement)) {
-					activeElement = getXPathForElement(document.activeElement);
-					activeElementSelection = [];
-					if(document.activeElement.selectionStart >= 0 && document.activeElement.selectionEnd >= 0) {
-						activeElementSelection.push(document.activeElement.selectionStart, document.activeElement.selectionEnd);
-					}
-				}
-				let xPath = getXPathForElement(existingElement, document);
-				let xPathResult = newDocument.evaluate(xPath, newDocument.documentElement);
-				let newElement = xPathResult.iterateNext();
+				let activeElementState = this.focusStateManager.captureElementState(existingElement);
+				let xPath = DomPath.getXPathForElement(existingElement, document);
+				let newElement = DomPath.findInDocument(newDocument, xPath);
 
 				if(type === "outer") {
-					let existingElementIndex = this.updateElementCollection[type].indexOf(existingElement);
-					this.updateElementCollection[type][existingElementIndex] = newElement;
+					this.updateTargetRegistry.replace(type, existingElement, newElement);
 					if(newElement) {
 						this.reattachEventListeners(existingElement, newElement);
 						this.reattachFluxElements(existingElement, newElement);
@@ -404,31 +342,16 @@ export class Flux {
 					}
 				}
 
-				if(activeElement) {
-					Flux.DEBUG && console.debug("Active element", activeElement);
-					let elementToActivate = document.evaluate(activeElement, document.documentElement).iterateNext();
-					if(elementToActivate) {
-						Flux.DEBUG && console.debug("Element to activate", elementToActivate, activeElementSelection);
-						elementToActivate.focus();
-
-						if(elementToActivate.setSelectionRange) {
-							elementToActivate.setSelectionRange(activeElementSelection[0], activeElementSelection[1]);
-						}
-
-					}
+				if(activeElementState) {
+					Flux.DEBUG && console.debug("Active element", activeElementState.path);
+					this.focusStateManager.restoreElementState(activeElementState);
 				}
 			});
 		}
 
-		if(newActiveElement) {
-			newActiveElement.focus();
-			newActiveElement.blur();
-			Flux.DEBUG && console.debug("Focussed and blurred", newActiveElement);
-		}
-
-		document.querySelectorAll("[data-flux-autofocus]").forEach(autofocusElement => {
-			autofocusElement.focus();
-		});
+		this.focusStateManager.restorePendingActiveElement(newActiveElement);
+		Flux.DEBUG && newActiveElement && console.debug("Focussed and blurred", newActiveElement);
+		this.focusStateManager.focusMarkedAutofocusElements();
 	}
 
 	reattachEventListeners = (oldElement, newElement) => {
@@ -439,14 +362,8 @@ export class Flux {
 		this.reattachElementListeners(oldElement, newElement);
 
 		oldElement.querySelectorAll("*").forEach(oldChild => {
-			let xPath = getXPathForElement(oldChild, oldElement);
-			let newChild = newElement.ownerDocument.evaluate(
-				xPath,
-				newElement,
-				null,
-				XPathResult.FIRST_ORDERED_NODE_TYPE,
-				null,
-			).singleNodeValue;
+			let xPath = DomPath.getXPathForElement(oldChild, oldElement);
+			let newChild = DomPath.findInContext(newElement, xPath);
 
 			if(newChild instanceof Element) {
 				this.reattachElementListeners(oldChild, newChild);
@@ -475,8 +392,8 @@ export class Flux {
 
 		newElement.querySelectorAll("[data-flux]").forEach(this.initFluxElement);
 		oldElement.querySelectorAll("[data-flux-obj]").forEach(fluxElement => {
-			let xPath = getXPathForElement(fluxElement, oldElement);
-			let newFluxElement = newElement.ownerDocument.evaluate(xPath, newElement).iterateNext();
+			let xPath = DomPath.getXPathForElement(fluxElement, oldElement);
+			let newFluxElement = DomPath.findInContext(newElement, xPath);
 			if(newFluxElement) {
 				newFluxElement.fluxObj = fluxElement.fluxObj;
 				newFluxElement.dataset["fluxObj"] = "";
@@ -494,31 +411,4 @@ function handleWindowPopState() {
 	window.addEventListener("popstate", e => {
 		location.href = document.location;
 	});
-}
-
-/** This was adapted from https://developer.mozilla.org/en-US/docs/Web/XPath/Snippets */
-function getXPathForElement(element, context) {
-	let xpath = "";
-	if(context instanceof Document) {
-		context = context.documentElement;
-	}
-	if(!context) {
-		context = element.ownerDocument.documentElement;
-	}
-
-	while(element !== context) {
-		let pos = 0;
-		let sibling = element;
-		while(sibling) {
-			if(sibling.nodeName === element.nodeName) {
-				pos += 1;
-			}
-			sibling = sibling.previousElementSibling;
-		}
-
-		xpath = `./${element.nodeName}[${pos}]/${xpath}`;
-		element = element.parentElement;
-	}
-	xpath = xpath.replace(/\/$/, "");
-	return xpath;
 }
