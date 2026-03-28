@@ -6,6 +6,10 @@ import {FocusStateManager} from "./FocusStateManager.es6";
 import {NavigationController} from "./NavigationController.es6";
 import {DocumentUpdater} from "./DocumentUpdater.es6";
 import {FluxDirectiveRegistry} from "./FluxDirectiveRegistry.es6";
+import {FluxDomBridge} from "./FluxDomBridge.es6";
+import {FluxFormHandler} from "./FluxFormHandler.es6";
+import {FluxLinkHandler} from "./FluxLinkHandler.es6";
+import {FluxResponseHandler} from "./FluxResponseHandler.es6";
 
 export class Flux {
 	static DEBUG = false;
@@ -16,6 +20,10 @@ export class Flux {
 	focusStateManager;
 	documentUpdater;
 	directiveRegistry;
+	domBridge;
+	formHandler;
+	linkHandler;
+	responseHandler;
 
 	constructor(
 		style = undefined,
@@ -26,6 +34,10 @@ export class Flux {
 		focusStateManager = undefined,
 		documentUpdater = undefined,
 		directiveRegistry = undefined,
+		domBridge = undefined,
+		formHandler = undefined,
+		linkHandler = undefined,
+		responseHandler = undefined,
 	) {
 		handleWindowPopState();
 		style = style ?? new Style();
@@ -39,18 +51,41 @@ export class Flux {
 		this.documentUpdater = documentUpdater ?? new DocumentUpdater(
 			this.updateTargetRegistry,
 			this.focusStateManager,
-			this.prepareElementUpdate,
+			(oldElement, newElement) => this.domBridge.prepareElementUpdate(oldElement, newElement),
+			DomPath,
+			console,
+			Flux.DEBUG,
+		);
+		this.responseHandler = responseHandler ?? new FluxResponseHandler(
+			this.documentUpdater,
+			console,
+			Flux.DEBUG,
+		);
+		this.formHandler = formHandler ?? new FluxFormHandler(
+			this.navigationController,
+			this.focusStateManager,
+			this.responseHandler.handleDocument,
+			console,
+			Flux.DEBUG,
+		);
+		this.linkHandler = linkHandler ?? new FluxLinkHandler(
+			this.navigationController,
+			this.responseHandler.handleDocument,
+		);
+		this.domBridge = domBridge ?? new FluxDomBridge(
+			this.elementEventMapper,
+			this.initFluxElement,
 			DomPath,
 			console,
 			Flux.DEBUG,
 		);
 		this.directiveRegistry = directiveRegistry ?? new FluxDirectiveRegistry({
-			autoContainer: this.initAutoContainer,
-			autoSave: this.initAutoSave,
+			autoContainer: this.formHandler.initAutoContainer,
+			autoSave: this.formHandler.initAutoSave,
 			updateOuter: this.storeOuterUpdateElement,
 			updateInner: this.storeInnerUpdateElement,
-			autoSubmit: this.initAutoSubmit,
-			autoLink: this.initAutoLink,
+			autoSubmit: this.formHandler.initAutoSubmit,
+			autoLink: this.linkHandler.initAutoLink,
 		});
 
 		document.querySelectorAll("[data-flux]").forEach(this.initFluxElement);
@@ -61,62 +96,6 @@ export class Flux {
 	 */
 	initFluxElement = (fluxElement) => {
 		this.directiveRegistry.initElement(fluxElement);
-	}
-
-	initAutoContainer = (fluxElement) => {
-		if(fluxElement instanceof HTMLFormElement) {
-			fluxElement.addEventListener("submit", this.formSubmitAutoSave);
-		}
-// TODO: Hook up any links within the container, or other sub forms, or that kind of thing.
-	}
-
-	initAutoSave = (fluxElement) => {
-		if(!(fluxElement instanceof HTMLButtonElement)) {
-			throw new TypeError("data-flux type \"autosave\" must be applied to a button element.");
-		}
-
-		if(!fluxElement.form) {
-			throw new TypeError("data-flux type \"autosave\" must have a containing form element.");
-		}
-
-		if(!fluxElement.form.fluxObj) {
-			fluxElement.form.fluxObj = {};
-		}
-
-		fluxElement.form.fluxObj.autoSave = {
-			key: fluxElement.name,
-			value: fluxElement.value,
-		};
-
-		fluxElement.form.dataset["fluxObj"] = "";
-		fluxElement.form.addEventListener("change", this.formChangeAutoSave);
-		fluxElement.form.addEventListener("submit", this.formSubmitAutoSave);
-		Flux.DEBUG && console.debug("initAutoSave completed", fluxElement);
-	}
-
-	initAutoSubmit = (fluxElement) => {
-		if(!(fluxElement instanceof HTMLButtonElement)) {
-			throw new TypeError("data-flux type \"submit\" must be applied to a button element.");
-		}
-
-		if(!fluxElement.form) {
-			throw new TypeError("data-flux type \"submit\" must have a containing form element.");
-		}
-
-		if(fluxElement.form.dataset["fluxSubmitInit"] !== undefined) {
-			return;
-		}
-
-		fluxElement.form.dataset["fluxSubmitInit"] = "";
-		fluxElement.form.addEventListener("submit", this.autoSubmit);
-	}
-
-	initAutoLink = (fluxElement) => {
-		if(!(fluxElement instanceof HTMLAnchorElement)) {
-			throw new TypeError("data-type type \"link\" must be applied to an anchor element.");
-		}
-
-		fluxElement.addEventListener("click", this.autoClick);
 	}
 
 	/**
@@ -136,182 +115,28 @@ export class Flux {
 		this.storeUpdateElement(element, "inner");
 	}
 
-	autoSubmit = (e) => {
-		e.preventDefault();
-
-// A 0 timeout is used here to ensure the code inside the setTimeout
-// is executed asynchronously and after the current execution context
-// (i.e., the main event loop completes any ongoing operations).
-// This guarantees that the form submission logic is properly executed after any
-// other immediate synchronous operations tied to the event.
-		setTimeout(() => {
-			this.submitForm(e.target, e.submitter);
-		}, 0);
-	}
-
-	autoClick = (e) => {
-		e.preventDefault();
-		let link = e.currentTarget;
-
-		setTimeout(() => {
-			this.clickLink(link);
-		}, 0);
-	}
-
 	submitForm = (form, submitter) => {
-		let formData = this.getFormDataForButton(
-			form,
-			"autoSave",
-			submitter,
-		);
-		return this.navigationController.submitForm(
-			form,
-			formData,
-			this.completeAutoSave,
-		);
+		return this.formHandler.submitForm(form, submitter);
 	}
 
 	clickLink = (link) => {
-		return this.navigationController.clickLink(
-			link,
-			this.completeAutoSave,
-		);
+		return this.linkHandler.clickLink(link);
 	}
 
 	getFormDataForButton = (form, type, submitter) => {
-		let formData = new FormData(form);
-		if(submitter) {
-			formData.set(submitter.name, submitter.value);
-		}
-		else if(form.fluxObj && form.fluxObj[type]) {
-			formData.set(
-				form.fluxObj[type].key,
-				form.fluxObj[type].value,
-			);
-		}
-
-		return formData;
+		return this.formHandler.getFormDataForButton(form, type, submitter);
 	}
 
 	completeAutoSave = (newDocument) => {
-		if(newDocument.head.children.length === 0) {
-			if(Flux.DEBUG) {
-				alert("Error processing new document!");
-			}
-
-			console.error("Error processing new document!");
-			location.reload();
-		}
-
-// The setTimeout with 0 delay doesn't mean it would execute immediately, it
-// schedules the execution immediately after the running script to strive to
-// execute as soon as possible. This is also known as yielding to the browser.
-// It's necessary to allow for click events to be processed before updating the
-// DOM mid-click and causing clicks to be missed on children of updated elements.
-		setTimeout(() => {
-			this.documentUpdater.apply(newDocument);
-		}, 0);
+		this.responseHandler.handleDocument(newDocument);
 	}
 
 	formChangeAutoSave = (e) => {
-		let form = e.target;
-		if(form.form instanceof HTMLFormElement) {
-			let element = form;
-			element.classList.add("input-changed");
-			element.setAttribute("data-flux-active", "");
-			(function(c_element) {
-				setTimeout(function() {
-					c_element.classList.remove("input-changed");
-				}, 100);
-			})(element);
-
-			form = form.form;
-		}
-
-		this.submitForm(form);
+		this.formHandler.formChangeAutoSave(e);
 	}
 
 	formSubmitAutoSave = (e) => {
-		e.preventDefault();
-		let currentActiveElement = document.activeElement;
-		if(currentActiveElement) {
-			currentActiveElement.blur();
-		}
-
-		let form = e.target;
-		if(form.form instanceof HTMLFormElement) {
-			form = form.form;
-		}
-
-		this.focusStateManager.storeFormState(form, currentActiveElement);
-
-		let recentlyChangedInput = form.querySelectorAll(".input-changed");
-		if(recentlyChangedInput.length > 0) {
-			return;
-		}
-
-		let submitter = null;
-		if(e.submitter instanceof HTMLButtonElement) {
-			submitter = e.submitter;
-		}
-
-		this.submitForm(form, submitter);
-	}
-
-	prepareElementUpdate = (oldElement, newElement) => {
-		if(!newElement) {
-			return;
-		}
-
-		this.reattachEventListeners(oldElement, newElement);
-		this.reattachFluxElements(oldElement, newElement);
-	}
-
-	reattachEventListeners = (oldElement, newElement) => {
-		if(!newElement) {
-			return;
-		}
-
-		this.reattachElementListeners(oldElement, newElement);
-
-		oldElement.querySelectorAll("*").forEach(oldChild => {
-			let xPath = DomPath.getXPathForElement(oldChild, oldElement);
-			let newChild = DomPath.findInContext(newElement, xPath);
-
-			if(newChild instanceof Element) {
-				this.reattachElementListeners(oldChild, newChild);
-			}
-		});
-	}
-
-	reattachElementListeners = (oldElement, newElement) => {
-		if(!this.elementEventMapper.has(oldElement)) {
-			return;
-		}
-
-		let mapObj = this.elementEventMapper.get(oldElement);
-		for(let type of Object.keys(mapObj)) {
-			for(let listener of mapObj[type]) {
-				newElement.addEventListener(type, listener);
-				Flux.DEBUG && console.debug("Reattached listener to element:", newElement, listener);
-			}
-		}
-	}
-
-	reattachFluxElements = (oldElement, newElement) => {
-		if(!newElement) {
-			return;
-		}
-
-		newElement.querySelectorAll("[data-flux]").forEach(this.initFluxElement);
-		oldElement.querySelectorAll("[data-flux-obj]").forEach(fluxElement => {
-			let xPath = DomPath.getXPathForElement(fluxElement, oldElement);
-			let newFluxElement = DomPath.findInContext(newElement, xPath);
-			if(newFluxElement) {
-				newFluxElement.fluxObj = fluxElement.fluxObj;
-				newFluxElement.dataset["fluxObj"] = "";
-			}
-		});
+		this.formHandler.formSubmitAutoSave(e);
 	}
 }
 

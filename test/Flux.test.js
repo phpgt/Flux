@@ -7,6 +7,9 @@ import {FocusStateManager} from "../src/FocusStateManager.es6";
 import {NavigationController} from "../src/NavigationController.es6";
 import {DocumentUpdater} from "../src/DocumentUpdater.es6";
 import {FluxDirectiveRegistry} from "../src/FluxDirectiveRegistry.es6";
+import {FluxDomBridge} from "../src/FluxDomBridge.es6";
+import {FluxFormHandler} from "../src/FluxFormHandler.es6";
+import {FluxResponseHandler} from "../src/FluxResponseHandler.es6";
 
 beforeEach(() => {
 	document.body.innerHTML = "";
@@ -308,5 +311,94 @@ describe("FluxDirectiveRegistry", () => {
 		expect(() => registry.initElement(document.querySelector("div"))).toThrow(
 			"Unknown flux element type: unknown",
 		);
+	});
+});
+
+describe("FluxFormHandler", () => {
+	it("prepares autosave form data using the configured button fallback", () => {
+		document.body.innerHTML = `
+		<form>
+			<input name="title" value="One">
+			<button name="save" value="draft" data-flux="autosave"></button>
+		</form>
+		`;
+
+		let form = document.querySelector("form");
+		let button = document.querySelector("button");
+		let handler = new FluxFormHandler(
+			{submitForm: vi.fn()},
+			{storeFormState: vi.fn()},
+			vi.fn(),
+		);
+
+		handler.initAutoSave(button);
+		let formData = handler.getFormDataForButton(form, "autoSave");
+
+		expect(formData.get("save")).toBe("draft");
+	});
+});
+
+describe("FluxDomBridge", () => {
+	it("reinitialises flux elements and transfers fluxObj during element replacement", () => {
+		document.body.innerHTML = `
+		<div>
+			<form data-flux-obj="">
+				<button data-flux="submit">Save</button>
+			</form>
+		</div>
+		`;
+
+		let oldElement = document.querySelector("div");
+		let oldForm = document.querySelector("form");
+		oldForm.fluxObj = {autoSave: {key: "save", value: "draft"}};
+		let newDocument = new DOMParser().parseFromString(`
+			<html>
+				<body>
+					<div>
+						<form>
+							<button data-flux="submit">Save</button>
+						</form>
+					</div>
+				</body>
+			</html>
+		`, "text/html");
+		let newElement = newDocument.querySelector("div");
+		let initFluxElement = vi.fn();
+		let bridge = new FluxDomBridge(
+			{has: vi.fn().mockReturnValue(false), get: vi.fn()},
+			initFluxElement,
+		);
+
+		bridge.prepareElementUpdate(oldElement, newElement);
+
+		expect(initFluxElement).toHaveBeenCalledTimes(1);
+		expect(initFluxElement.mock.calls[0][0]).toBeInstanceOf(HTMLButtonElement);
+		expect(newElement.querySelector("form").fluxObj).toEqual(oldForm.fluxObj);
+	});
+});
+
+describe("FluxResponseHandler", () => {
+	it("schedules document updates when the response document is valid", () => {
+		let apply = vi.fn();
+		let scheduler = vi.fn((callback) => callback());
+		let handler = new FluxResponseHandler(
+			{apply},
+			{error: vi.fn()},
+			false,
+			scheduler,
+			vi.fn(),
+			vi.fn(),
+		);
+		let newDocument = new DOMParser().parseFromString(`
+			<html>
+				<head><title>Ok</title></head>
+				<body></body>
+			</html>
+		`, "text/html");
+
+		handler.handleDocument(newDocument);
+
+		expect(scheduler).toHaveBeenCalledWith(expect.any(Function), 0);
+		expect(apply).toHaveBeenCalledWith(newDocument);
 	});
 });
