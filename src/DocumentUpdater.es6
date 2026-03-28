@@ -1,0 +1,81 @@
+import {DomPath} from "./DomPath.es6";
+
+export class DocumentUpdater {
+	constructor(
+		updateTargetRegistry,
+		focusStateManager,
+		prepareElementUpdate = () => {},
+		domPath = DomPath,
+		logger = console,
+		debug = false,
+	) {
+		this.updateTargetRegistry = updateTargetRegistry;
+		this.focusStateManager = focusStateManager;
+		this.prepareElementUpdate = prepareElementUpdate;
+		this.domPath = domPath;
+		this.logger = logger;
+		this.debug = debug;
+	}
+
+	apply(newDocument) {
+		this.focusStateManager.markAutofocus(newDocument);
+		let newActiveElement = this.focusStateManager.capturePendingActiveElement(newDocument);
+
+		for(let type of this.updateTargetRegistry.getTypes()) {
+			this.updateTargetRegistry.getElements(type).forEach(existingElement => {
+				this.applyUpdateTarget(type, existingElement, newDocument);
+			});
+		}
+
+		this.focusStateManager.restorePendingActiveElement(newActiveElement);
+		if(this.debug && newActiveElement) {
+			this.logger.debug("Focussed and blurred", newActiveElement);
+		}
+		this.focusStateManager.focusMarkedAutofocusElements();
+	}
+
+	applyUpdateTarget(type, existingElement, newDocument) {
+		if(!existingElement) {
+			return;
+		}
+
+		let activeElementState = this.focusStateManager.captureElementState(existingElement);
+		let xPath = this.domPath.getXPathForElement(existingElement, document);
+		let newElement = this.domPath.findInDocument(newDocument, xPath);
+
+		if(type === "outer") {
+			this.applyOuterUpdate(type, existingElement, newElement);
+		}
+		else if(type === "inner") {
+			this.applyInnerUpdate(existingElement, newElement);
+		}
+
+		if(activeElementState) {
+			if(this.debug) {
+				this.logger.debug("Active element", activeElementState.path);
+			}
+			this.focusStateManager.restoreElementState(activeElementState);
+		}
+	}
+
+	applyOuterUpdate(type, existingElement, newElement) {
+		this.updateTargetRegistry.replace(type, existingElement, newElement);
+		if(!newElement) {
+			return;
+		}
+
+		this.prepareElementUpdate(existingElement, newElement);
+		existingElement.replaceWith(newElement);
+	}
+
+	applyInnerUpdate(existingElement, newElement) {
+		this.prepareElementUpdate(existingElement, newElement);
+
+		while(existingElement.firstChild) {
+			existingElement.removeChild(existingElement.firstChild);
+		}
+		while(newElement && newElement.firstChild) {
+			existingElement.appendChild(newElement.firstChild);
+		}
+	}
+}

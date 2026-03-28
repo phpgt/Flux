@@ -108,22 +108,19 @@ var DomPath = class {
     return xpath.replace(/\/$/, "");
   }
   static findInDocument(document2, path) {
-    if (!path) {
-      return null;
-    }
-    return document2.evaluate(
-      path,
-      document2.documentElement,
-      null,
-      XPathResult.FIRST_ORDERED_NODE_TYPE,
-      null
-    ).singleNodeValue;
+    return this.find(document2, document2.documentElement, path);
   }
   static findInContext(context, path) {
     if (!path) {
       return null;
     }
-    return context.ownerDocument.evaluate(
+    return this.find(context.ownerDocument, context, path);
+  }
+  static find(document2, context, path) {
+    if (!path) {
+      return null;
+    }
+    return document2.evaluate(
       path,
       context,
       null,
@@ -233,22 +230,157 @@ var FocusStateManager = class {
   }
 };
 
+// src/NavigationController.es6
+var NavigationController = class {
+  constructor(parser = new DOMParser(), fetcher = globalThis.fetch.bind(globalThis), historyObject = globalThis.history, logger = console) {
+    this.parser = parser;
+    this.fetcher = fetcher;
+    this.historyObject = historyObject;
+    this.logger = logger;
+  }
+  submitForm(form, formData, onDocument) {
+    return this.navigate(
+      form,
+      form.action,
+      {
+        method: form.getAttribute("method"),
+        credentials: "same-origin",
+        body: formData
+      },
+      {
+        action: "submitForm",
+        errorPrefix: "Form submission error"
+      },
+      onDocument
+    );
+  }
+  clickLink(link, onDocument) {
+    return this.navigate(
+      link,
+      link.href,
+      {
+        credentials: "same-origin"
+      },
+      {
+        action: "clickLink",
+        errorPrefix: "Link fetch error"
+      },
+      onDocument
+    );
+  }
+  async navigate(element, url, requestOptions, historyState, onDocument) {
+    element.classList.add("submitting");
+    try {
+      let response = await this.fetcher(url, requestOptions);
+      if (!response.ok) {
+        throw new Error(`${historyState.errorPrefix}: ${response.status} ${response.statusText}`);
+      }
+      this.historyObject.pushState({
+        action: historyState.action
+      }, "", response.url);
+      let html = await response.text();
+      let document2 = this.parser.parseFromString(html, "text/html");
+      onDocument(document2);
+      return document2;
+    } catch (error) {
+      this.logger.error(error);
+      return null;
+    } finally {
+      element.classList.remove("submitting");
+    }
+  }
+};
+
+// src/DocumentUpdater.es6
+var DocumentUpdater = class {
+  constructor(updateTargetRegistry, focusStateManager, prepareElementUpdate = () => {
+  }, domPath = DomPath, logger = console, debug = false) {
+    this.updateTargetRegistry = updateTargetRegistry;
+    this.focusStateManager = focusStateManager;
+    this.prepareElementUpdate = prepareElementUpdate;
+    this.domPath = domPath;
+    this.logger = logger;
+    this.debug = debug;
+  }
+  apply(newDocument) {
+    this.focusStateManager.markAutofocus(newDocument);
+    let newActiveElement = this.focusStateManager.capturePendingActiveElement(newDocument);
+    for (let type of this.updateTargetRegistry.getTypes()) {
+      this.updateTargetRegistry.getElements(type).forEach((existingElement) => {
+        this.applyUpdateTarget(type, existingElement, newDocument);
+      });
+    }
+    this.focusStateManager.restorePendingActiveElement(newActiveElement);
+    if (this.debug && newActiveElement) {
+      this.logger.debug("Focussed and blurred", newActiveElement);
+    }
+    this.focusStateManager.focusMarkedAutofocusElements();
+  }
+  applyUpdateTarget(type, existingElement, newDocument) {
+    if (!existingElement) {
+      return;
+    }
+    let activeElementState = this.focusStateManager.captureElementState(existingElement);
+    let xPath = this.domPath.getXPathForElement(existingElement, document);
+    let newElement = this.domPath.findInDocument(newDocument, xPath);
+    if (type === "outer") {
+      this.applyOuterUpdate(type, existingElement, newElement);
+    } else if (type === "inner") {
+      this.applyInnerUpdate(existingElement, newElement);
+    }
+    if (activeElementState) {
+      if (this.debug) {
+        this.logger.debug("Active element", activeElementState.path);
+      }
+      this.focusStateManager.restoreElementState(activeElementState);
+    }
+  }
+  applyOuterUpdate(type, existingElement, newElement) {
+    this.updateTargetRegistry.replace(type, existingElement, newElement);
+    if (!newElement) {
+      return;
+    }
+    this.prepareElementUpdate(existingElement, newElement);
+    existingElement.replaceWith(newElement);
+  }
+  applyInnerUpdate(existingElement, newElement) {
+    this.prepareElementUpdate(existingElement, newElement);
+    while (existingElement.firstChild) {
+      existingElement.removeChild(existingElement.firstChild);
+    }
+    while (newElement && newElement.firstChild) {
+      existingElement.appendChild(newElement.firstChild);
+    }
+  }
+};
+
 // src/Flux.es6
 var Flux = class _Flux {
   static DEBUG = false;
   style;
   elementEventMapper;
-  parser;
+  navigationController;
   updateTargetRegistry;
   focusStateManager;
-  constructor(style = void 0, elementEventMapper = void 0, parser = void 0, updateTargetRegistry = void 0, focusStateManager = void 0) {
+  documentUpdater;
+  constructor(style = void 0, elementEventMapper = void 0, parser = void 0, navigationController = void 0, updateTargetRegistry = void 0, focusStateManager = void 0, documentUpdater = void 0) {
     handleWindowPopState();
     style = style ?? new Style();
     style.addToDocument();
     this.elementEventMapper = elementEventMapper ?? new ElementEventMapper();
-    this.parser = parser ?? new DOMParser();
+    this.navigationController = navigationController ?? new NavigationController(
+      parser ?? new DOMParser()
+    );
     this.updateTargetRegistry = updateTargetRegistry ?? new UpdateTargetRegistry();
     this.focusStateManager = focusStateManager ?? new FocusStateManager();
+    this.documentUpdater = documentUpdater ?? new DocumentUpdater(
+      this.updateTargetRegistry,
+      this.focusStateManager,
+      this.prepareElementUpdate,
+      DomPath,
+      console,
+      _Flux.DEBUG
+    );
     document.querySelectorAll("[data-flux]").forEach(this.initFluxElement);
   }
   /**
@@ -342,69 +474,33 @@ var Flux = class _Flux {
   autoSubmit = (e) => {
     e.preventDefault();
     setTimeout(() => {
-      this.submitForm(e.target, this.completeAutoSave, e.submitter);
+      this.submitForm(e.target, e.submitter);
     }, 0);
   };
   autoClick = (e) => {
     e.preventDefault();
     let link = e.currentTarget;
     setTimeout(() => {
-      this.clickLink(link, this.completeAutoSave);
+      this.clickLink(link);
     }, 0);
   };
-  submitForm = (form, callback, submitter) => {
+  submitForm = (form, submitter) => {
     let formData = this.getFormDataForButton(
       form,
       "autoSave",
       submitter
     );
-    form.classList.add("submitting");
-    fetch(form.action, {
-      method: form.getAttribute("method"),
-      credentials: "same-origin",
-      body: formData
-    }).then((response) => {
-      if (!response.ok) {
-        throw new Error(`Form submission error: ${response.status} ${response.statusText}`);
-      }
-      history.pushState({
-        "action": "submitForm"
-      }, "", response.url);
-      return response.text();
-    }).then((html) => {
-      callback(this.parser.parseFromString(
-        html,
-        "text/html"
-      ));
-      form.classList.remove("submitting");
-    }).catch((error) => {
-      form.classList.remove("submitting");
-      console.error(error);
-    });
+    return this.navigationController.submitForm(
+      form,
+      formData,
+      this.completeAutoSave
+    );
   };
-  clickLink = (link, callback) => {
-    let url = link.href;
-    link.classList.add("submitting");
-    fetch(url, {
-      credentials: "same-origin"
-    }).then((response) => {
-      if (!response.ok) {
-        throw new Error(`Link fetch error: ${response.status} ${response.statusText}`);
-      }
-      history.pushState({
-        "action": "clickLink"
-      }, "", response.url);
-      return response.text();
-    }).then((html) => {
-      callback(this.parser.parseFromString(
-        html,
-        "text/html"
-      ));
-      link.classList.remove("submitting");
-    }).catch((error) => {
-      link.classList.remove("submitting");
-      console.error(error);
-    });
+  clickLink = (link) => {
+    return this.navigationController.clickLink(
+      link,
+      this.completeAutoSave
+    );
   };
   getFormDataForButton = (form, type, submitter) => {
     let formData = new FormData(form);
@@ -427,7 +523,7 @@ var Flux = class _Flux {
       location.reload();
     }
     setTimeout(() => {
-      this.processUpdateElements(newDocument);
+      this.documentUpdater.apply(newDocument);
     }, 0);
   };
   formChangeAutoSave = (e) => {
@@ -443,7 +539,7 @@ var Flux = class _Flux {
       })(element);
       form = form.form;
     }
-    this.submitForm(form, this.completeAutoSave);
+    this.submitForm(form);
   };
   formSubmitAutoSave = (e) => {
     e.preventDefault();
@@ -464,49 +560,14 @@ var Flux = class _Flux {
     if (e.submitter instanceof HTMLButtonElement) {
       submitter = e.submitter;
     }
-    this.submitForm(form, this.completeAutoSave, submitter);
+    this.submitForm(form, submitter);
   };
-  /**
-   * Apply the relevant pieces of a newly fetched document onto the
-   * current page using the registered update targets.
-   */
-  processUpdateElements = (newDocument) => {
-    this.focusStateManager.markAutofocus(newDocument);
-    let newActiveElement = this.focusStateManager.capturePendingActiveElement(newDocument);
-    for (let type of this.updateTargetRegistry.getTypes()) {
-      this.updateTargetRegistry.getElements(type).forEach((existingElement) => {
-        if (!existingElement) {
-          return;
-        }
-        let activeElementState = this.focusStateManager.captureElementState(existingElement);
-        let xPath = DomPath.getXPathForElement(existingElement, document);
-        let newElement = DomPath.findInDocument(newDocument, xPath);
-        if (type === "outer") {
-          this.updateTargetRegistry.replace(type, existingElement, newElement);
-          if (newElement) {
-            this.reattachEventListeners(existingElement, newElement);
-            this.reattachFluxElements(existingElement, newElement);
-            existingElement.replaceWith(newElement);
-          }
-        } else if (type === "inner") {
-          this.reattachEventListeners(existingElement, newElement);
-          this.reattachFluxElements(existingElement, newElement);
-          while (existingElement.firstChild) {
-            existingElement.removeChild(existingElement.firstChild);
-          }
-          while (newElement && newElement.firstChild) {
-            existingElement.appendChild(newElement.firstChild);
-          }
-        }
-        if (activeElementState) {
-          _Flux.DEBUG && console.debug("Active element", activeElementState.path);
-          this.focusStateManager.restoreElementState(activeElementState);
-        }
-      });
+  prepareElementUpdate = (oldElement, newElement) => {
+    if (!newElement) {
+      return;
     }
-    this.focusStateManager.restorePendingActiveElement(newActiveElement);
-    _Flux.DEBUG && newActiveElement && console.debug("Focussed and blurred", newActiveElement);
-    this.focusStateManager.focusMarkedAutofocusElements();
+    this.reattachEventListeners(oldElement, newElement);
+    this.reattachFluxElements(oldElement, newElement);
   };
   reattachEventListeners = (oldElement, newElement) => {
     if (!newElement) {
