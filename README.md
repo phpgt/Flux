@@ -18,37 +18,22 @@ Install PHP dependencies with:
 composer install
 ```
 
-To run the suite in a container setup that matches the GitHub Action, use the `php-actions/behat` checkout:
+Run the suite locally with:
 
 ```bash
-cd ~/Code/php-actions/behat
-GITHUB_ACTOR=local \
-GITHUB_REPOSITORY=PhpGt/Flux \
-GITHUB_WORKSPACE=~/Code/PhpGt/Flux \
-ACTION_TOKEN=dummy \
-ACTION_VERSION=latest \
-ACTION_PHP_VERSION=8.5 \
-ACTION_BEHAT_PATH=vendor/bin/behat \
-ACTION_APP_COMMAND='php -d display_errors=0 -S 0.0.0.0:8000 -t /app' \
-bash <(curl -s https://raw.githubusercontent.com/php-actions/php-build/v2/php-build.bash) behat
+composer behat
 ```
 
-Then execute the action script:
+Feature files live in `test/behat/*.feature`. The local wrapper at `test/bin/behat` delegates to your local `php-actions/behat` checkout, so local runs use the same container orchestration as CI.
 
-```bash
-cd ~/Code/php-actions/behat
-GITHUB_ACTOR=local \
-GITHUB_REPOSITORY=PhpGt/Flux \
-GITHUB_WORKSPACE=~/Code/PhpGt/Flux \
-ACTION_TOKEN=dummy \
-ACTION_VERSION=latest \
-ACTION_PHP_VERSION=8.5 \
-ACTION_BEHAT_PATH=vendor/bin/behat \
-ACTION_APP_COMMAND='php -d display_errors=0 -S 0.0.0.0:8000 -t /app' \
-./behat-action.bash
-```
+PhpStorm settings:
 
-Feature files live in `test/behat/*.feature`. The action starts a temporary PHP app container and a headless Chrome container on the host network, then rewrites the Behat config at runtime so the browser and test runner both use `127.0.0.1`.
+- Behat executable: `test/bin/behat`
+- Configuration file: `behat.yml`
+
+If your `php-actions/behat` checkout is not at `~/Code/php-actions/behat`, set `PHP_ACTIONS_BEHAT_DIR` to its location.
+
+If you want to dry-run the GitHub Action behavior itself, you can still invoke `php-actions/behat` directly from `~/Code/php-actions/behat`.
 
 To use Flux, convert a "regular" HTML form into a _flux form_ by adding the `data-flux` attribute:
 
