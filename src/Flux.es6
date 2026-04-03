@@ -68,6 +68,7 @@ export class Flux {
 			this.navigationController,
 			this.focusStateManager,
 			this.responseHandler.handleDocument,
+			this.responseHandler.handleLinkDocument,
 			console,
 			Flux.DEBUG,
 		);
@@ -83,10 +84,12 @@ export class Flux {
 			Flux.DEBUG,
 		);
 		this.directiveRegistry = directiveRegistry ?? new FluxDirectiveRegistry({
-			autoContainer: this.formHandler.initAutoContainer,
+			autoContainer: this.initAutoContainer,
 			autoSave: this.formHandler.initAutoSave,
 			updateOuter: this.storeOuterUpdateElement,
 			updateInner: this.storeInnerUpdateElement,
+			updateLinkOuter: this.storeLinkOuterUpdateElement,
+			updateLinkInner: this.storeLinkInnerUpdateElement,
 			updateAttributes: this.storeAttributesUpdateElement,
 			autoSubmit: this.formHandler.initAutoSubmit,
 			autoLink: this.linkHandler.initAutoLink,
@@ -115,6 +118,15 @@ export class Flux {
 		}
 	}
 
+	initAutoContainer = (fluxElement) => {
+		if(fluxElement instanceof HTMLFormElement) {
+			this.formHandler.initAutoContainer(fluxElement);
+		}
+		else if(fluxElement instanceof HTMLAnchorElement) {
+			this.linkHandler.initAutoLink(fluxElement);
+		}
+	}
+
 	/**
 	 * Store a DOM element that should be refreshed when Flux processes
 	 * a new HTML document after an interaction.
@@ -130,6 +142,14 @@ export class Flux {
 
 	storeInnerUpdateElement = (element) => {
 		this.storeUpdateElement(element, "inner");
+	}
+
+	storeLinkOuterUpdateElement = (element) => {
+		this.storeUpdateElement(element, "link-outer");
+	}
+
+	storeLinkInnerUpdateElement = (element) => {
+		this.storeUpdateElement(element, "link-inner");
 	}
 
 	storeAttributesUpdateElement = (element) => {

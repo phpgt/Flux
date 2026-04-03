@@ -34,6 +34,18 @@ describe("Flux", () => {
 		expect(spy).toHaveBeenCalledWith("submit", expect.any(Function));
 	});
 
+	it("treats data-flux on anchors as shorthand for data-flux=link", () => {
+		document.body.innerHTML = `
+		<h1>This is a test!</h1>
+		<a href="/next" data-flux>Next</a>
+		`;
+
+		let link = document.querySelector("a");
+		const spy = vi.spyOn(link, "addEventListener");
+		new Flux();
+		expect(spy).toHaveBeenCalledWith("click", expect.any(Function));
+	});
+
 	it("attaches event listeners to buttons with data-flux=submit", () => {
 		document.body.innerHTML = `
 		<h1>This is a test!</h1>
@@ -289,6 +301,51 @@ describe("DocumentUpdater", () => {
 		expect(existingElement.innerHTML).toBe("<strong>New</strong>");
 	});
 
+	it("applies link-only targets only when their types are allowed", () => {
+		document.body.innerHTML = `
+		<main data-flux="update-link"><span>Old outer</span></main>
+		<section data-flux="update-link-inner"><span>Old inner</span></section>
+		`;
+
+		let existingOuter = document.querySelector("main");
+		let existingInner = document.querySelector("section");
+		let updateTargetRegistry = new UpdateTargetRegistry();
+		updateTargetRegistry.add(existingOuter, "link-outer");
+		updateTargetRegistry.add(existingInner, "link-inner");
+		let documentUpdater = new DocumentUpdater(
+			updateTargetRegistry,
+			{
+				markAutofocus: vi.fn(),
+				capturePendingActiveElement: vi.fn().mockReturnValue(null),
+				captureElementState: vi.fn().mockReturnValue(null),
+				restoreElementState: vi.fn(),
+				restorePendingActiveElement: vi.fn(),
+				focusMarkedAutofocusElements: vi.fn(),
+			},
+			vi.fn(),
+		);
+		let newDocument = new DOMParser().parseFromString(`
+			<html>
+				<body>
+					<main data-flux="update-link"><span>New outer</span></main>
+					<section data-flux="update-link-inner"><strong>New inner</strong></section>
+				</body>
+			</html>
+		`, "text/html");
+
+		documentUpdater.apply(newDocument, ["outer", "inner", "attributes"]);
+
+		expect(document.querySelector("main")).toBe(existingOuter);
+		expect(existingOuter.textContent).toBe("Old outer");
+		expect(existingInner.innerHTML).toBe("<span>Old inner</span>");
+
+		documentUpdater.apply(newDocument, ["link-outer", "link-inner"]);
+
+		expect(document.querySelector("main")).not.toBe(existingOuter);
+		expect(document.querySelector("main").textContent).toBe("New outer");
+		expect(existingInner.innerHTML).toBe("<strong>New inner</strong>");
+	});
+
 	it("updates only the element attributes when using update-attributes", () => {
 		document.body.innerHTML = `
 		<body class="page-a" data-theme="light" data-flux="update-attributes">
@@ -337,6 +394,8 @@ describe("FluxDirectiveRegistry", () => {
 			"update": expect.objectContaining({handler: "updateOuter"}),
 			"update-outer": expect.objectContaining({handler: "updateOuter"}),
 			"update-inner": expect.objectContaining({handler: "updateInner"}),
+			"update-link": expect.objectContaining({handler: "updateLinkOuter"}),
+			"update-link-inner": expect.objectContaining({handler: "updateLinkInner"}),
 			"update-attributes": expect.objectContaining({handler: "updateAttributes"}),
 			"submit": expect.objectContaining({handler: "autoSubmit"}),
 			"link": expect.objectContaining({handler: "autoLink"}),
@@ -352,6 +411,8 @@ describe("FluxDirectiveRegistry", () => {
 			autoSave,
 			updateOuter: vi.fn(),
 			updateInner: vi.fn(),
+			updateLinkOuter: vi.fn(),
+			updateLinkInner: vi.fn(),
 			updateAttributes: vi.fn(),
 			autoSubmit: vi.fn(),
 			autoLink: vi.fn(),
@@ -362,6 +423,27 @@ describe("FluxDirectiveRegistry", () => {
 		expect(autoSave).toHaveBeenCalledWith(expect.any(HTMLButtonElement));
 	});
 
+	it("uses the autoContainer handler for empty data-flux values", () => {
+		document.body.innerHTML = `<a data-flux href="/next">Next</a>`;
+
+		let autoContainer = vi.fn();
+		let registry = new FluxDirectiveRegistry({
+			autoContainer,
+			autoSave: vi.fn(),
+			updateOuter: vi.fn(),
+			updateInner: vi.fn(),
+			updateLinkOuter: vi.fn(),
+			updateLinkInner: vi.fn(),
+			updateAttributes: vi.fn(),
+			autoSubmit: vi.fn(),
+			autoLink: vi.fn(),
+		});
+
+		registry.initElement(document.querySelector("a"));
+
+		expect(autoContainer).toHaveBeenCalledWith(expect.any(HTMLAnchorElement));
+	});
+
 	it("throws when a data-flux value is not registered", () => {
 		document.body.innerHTML = `<div data-flux="unknown"></div>`;
 
@@ -370,6 +452,8 @@ describe("FluxDirectiveRegistry", () => {
 			autoSave: vi.fn(),
 			updateOuter: vi.fn(),
 			updateInner: vi.fn(),
+			updateLinkOuter: vi.fn(),
+			updateLinkInner: vi.fn(),
 			updateAttributes: vi.fn(),
 			autoSubmit: vi.fn(),
 			autoLink: vi.fn(),
@@ -402,6 +486,60 @@ describe("FluxFormHandler", () => {
 		let formData = handler.getFormDataForButton(form, "autoSave");
 
 		expect(formData.get("save")).toBe("draft");
+	});
+
+	it("uses link-style document handling for forms with an explicit action attribute", () => {
+		document.body.innerHTML = `
+		<form action="/next" method="get">
+			<input name="title" value="One">
+		</form>
+		`;
+
+		let form = document.querySelector("form");
+		let onDocument = vi.fn();
+		let onNavigationDocument = vi.fn();
+		let navigationController = {submitForm: vi.fn()};
+		let handler = new FluxFormHandler(
+			navigationController,
+			{storeFormState: vi.fn()},
+			onDocument,
+			onNavigationDocument,
+		);
+
+		handler.submitForm(form);
+
+		expect(navigationController.submitForm).toHaveBeenCalledWith(
+			form,
+			expect.any(FormData),
+			onNavigationDocument,
+		);
+	});
+
+	it("keeps in-place document handling for forms without an explicit action attribute", () => {
+		document.body.innerHTML = `
+		<form method="post">
+			<input name="title" value="One">
+		</form>
+		`;
+
+		let form = document.querySelector("form");
+		let onDocument = vi.fn();
+		let onNavigationDocument = vi.fn();
+		let navigationController = {submitForm: vi.fn()};
+		let handler = new FluxFormHandler(
+			navigationController,
+			{storeFormState: vi.fn()},
+			onDocument,
+			onNavigationDocument,
+		);
+
+		handler.submitForm(form);
+
+		expect(navigationController.submitForm).toHaveBeenCalledWith(
+			form,
+			expect.any(FormData),
+			onDocument,
+		);
 	});
 });
 
@@ -466,7 +604,7 @@ describe("FluxResponseHandler", () => {
 		handler.handleDocument(newDocument);
 
 		expect(scheduler).toHaveBeenCalledWith(expect.any(Function), 0);
-		expect(apply).toHaveBeenCalledWith(newDocument);
+		expect(apply).toHaveBeenCalledWith(newDocument, ["outer", "inner", "attributes"]);
 	});
 
 	it("forces the page to the top after link-driven document updates complete", () => {
@@ -493,7 +631,7 @@ describe("FluxResponseHandler", () => {
 
 		handler.handleLinkDocument(newDocument);
 
-		expect(apply).toHaveBeenCalledWith(newDocument);
+		expect(apply).toHaveBeenCalledWith(newDocument, ["outer", "inner", "attributes", "link-outer", "link-inner"]);
 		expect(animationFrame).toHaveBeenCalledTimes(2);
 		expect(scrollTo).toHaveBeenCalledWith({
 			top: 0,

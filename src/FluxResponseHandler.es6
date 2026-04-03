@@ -1,4 +1,16 @@
 export class FluxResponseHandler {
+	static DEFAULT_UPDATE_TYPES = Object.freeze([
+		"outer",
+		"inner",
+		"attributes",
+	]);
+
+	static LINK_UPDATE_TYPES = Object.freeze([
+		...FluxResponseHandler.DEFAULT_UPDATE_TYPES,
+		"link-outer",
+		"link-inner",
+	]);
+
 	constructor(
 		documentUpdater,
 		logger = console,
@@ -25,7 +37,7 @@ export class FluxResponseHandler {
 		}
 
 		this.scheduler(() => {
-			this.documentUpdater.apply(newDocument);
+			this.documentUpdater.apply(newDocument, FluxResponseHandler.DEFAULT_UPDATE_TYPES);
 		}, 0);
 	}
 
@@ -35,7 +47,7 @@ export class FluxResponseHandler {
 		}
 
 		this.scheduler(() => {
-			this.documentUpdater.apply(newDocument);
+			this.documentUpdater.apply(newDocument, FluxResponseHandler.LINK_UPDATE_TYPES);
 			this.scrollToTopAfterPaint();
 		}, 0);
 	}

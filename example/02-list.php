@@ -36,8 +36,8 @@ elseif($doAction === "delete") {
 ?><!doctype html>
 <meta charset="utf-8" />
 <title>PHP.GT/Flux example 02 list</title>
-<link rel="stylesheet" href="./style.css" />
-<script type="module" src="../dist/flux.js" defer></script>
+<link rel="stylesheet" href="/example/style.css" />
+<script type="module" src="/dist/flux.js" defer></script>
 
 <textarea placeholder="Without Flux, submitting the form would lose any content typed into this box.">
 </textarea>

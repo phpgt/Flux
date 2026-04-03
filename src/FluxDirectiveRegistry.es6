@@ -19,6 +19,14 @@ const DIRECTIVE_DEFINITIONS = Object.freeze({
 		handler: "updateInner",
 		description: "Register the element for innerHTML replacement on updates.",
 	},
+	"update-link": {
+		handler: "updateLinkOuter",
+		description: "Register the element for outerHTML replacement on link updates only.",
+	},
+	"update-link-inner": {
+		handler: "updateLinkInner",
+		description: "Register the element for innerHTML replacement on link updates only.",
+	},
 	"update-attributes": {
 		handler: "updateAttributes",
 		description: "Register the element for attribute-only updates on refresh.",

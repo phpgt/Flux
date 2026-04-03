@@ -302,10 +302,14 @@ var DocumentUpdater = class {
     this.logger = logger;
     this.debug = debug;
   }
-  apply(newDocument) {
+  apply(newDocument, allowedTypes = void 0) {
     this.focusStateManager.markAutofocus(newDocument);
     let newActiveElement = this.focusStateManager.capturePendingActiveElement(newDocument);
+    let allowedTypeSet = allowedTypes ? new Set(allowedTypes) : null;
     for (let type of this.updateTargetRegistry.getTypes()) {
+      if (allowedTypeSet && !allowedTypeSet.has(type)) {
+        continue;
+      }
       this.updateTargetRegistry.getElements(type).forEach((existingElement) => {
         this.applyUpdateTarget(type, existingElement, newDocument);
       });
@@ -323,9 +327,9 @@ var DocumentUpdater = class {
     let activeElementState = this.focusStateManager.captureElementState(existingElement);
     let xPath = this.domPath.getXPathForElement(existingElement, document);
     let newElement = this.domPath.findInDocument(newDocument, xPath);
-    if (type === "outer") {
+    if (type === "outer" || type === "link-outer") {
       this.applyOuterUpdate(type, existingElement, newElement);
-    } else if (type === "inner") {
+    } else if (type === "inner" || type === "link-inner") {
       this.applyInnerUpdate(existingElement, newElement);
     } else if (type === "attributes") {
       this.applyAttributesUpdate(existingElement, newElement);
@@ -390,6 +394,14 @@ var DIRECTIVE_DEFINITIONS = Object.freeze({
   "update-inner": {
     handler: "updateInner",
     description: "Register the element for innerHTML replacement on updates."
+  },
+  "update-link": {
+    handler: "updateLinkOuter",
+    description: "Register the element for outerHTML replacement on link updates only."
+  },
+  "update-link-inner": {
+    handler: "updateLinkInner",
+    description: "Register the element for innerHTML replacement on link updates only."
   },
   "update-attributes": {
     handler: "updateAttributes",
@@ -487,10 +499,11 @@ var FluxDomBridge = class {
 
 // src/FluxFormHandler.es6
 var FluxFormHandler = class {
-  constructor(navigationController, focusStateManager, onDocument, logger = console, debug = false) {
+  constructor(navigationController, focusStateManager, onDocument, onNavigationDocument = onDocument, logger = console, debug = false) {
     this.navigationController = navigationController;
     this.focusStateManager = focusStateManager;
     this.onDocument = onDocument;
+    this.onNavigationDocument = onNavigationDocument;
     this.logger = logger;
     this.debug = debug;
   }
@@ -574,7 +587,8 @@ var FluxFormHandler = class {
   };
   submitForm(form, submitter) {
     let formData = this.getFormDataForButton(form, "autoSave", submitter);
-    return this.navigationController.submitForm(form, formData, this.onDocument);
+    let responseHandler = form.hasAttribute("action") ? this.onNavigationDocument : this.onDocument;
+    return this.navigationController.submitForm(form, formData, responseHandler);
   }
   getFormDataForButton(form, type, submitter) {
     let formData = new FormData(form);
@@ -627,7 +641,17 @@ var FluxLinkHandler = class {
 };
 
 // src/FluxResponseHandler.es6
-var FluxResponseHandler = class {
+var FluxResponseHandler = class _FluxResponseHandler {
+  static DEFAULT_UPDATE_TYPES = Object.freeze([
+    "outer",
+    "inner",
+    "attributes"
+  ]);
+  static LINK_UPDATE_TYPES = Object.freeze([
+    ..._FluxResponseHandler.DEFAULT_UPDATE_TYPES,
+    "link-outer",
+    "link-inner"
+  ]);
   constructor(documentUpdater, logger = console, debug = false, scheduler = globalThis.setTimeout.bind(globalThis), reload = () => location.reload(), alerter = globalThis.alert?.bind(globalThis), windowObject = globalThis.window, animationFrame = globalThis.requestAnimationFrame?.bind(globalThis)) {
     this.documentUpdater = documentUpdater;
     this.logger = logger;
@@ -643,7 +667,7 @@ var FluxResponseHandler = class {
       return;
     }
     this.scheduler(() => {
-      this.documentUpdater.apply(newDocument);
+      this.documentUpdater.apply(newDocument, _FluxResponseHandler.DEFAULT_UPDATE_TYPES);
     }, 0);
   };
   handleLinkDocument = (newDocument) => {
@@ -651,7 +675,7 @@ var FluxResponseHandler = class {
       return;
     }
     this.scheduler(() => {
-      this.documentUpdater.apply(newDocument);
+      this.documentUpdater.apply(newDocument, _FluxResponseHandler.LINK_UPDATE_TYPES);
       this.scrollToTopAfterPaint();
     }, 0);
   };
@@ -734,6 +758,7 @@ var Flux = class _Flux {
       this.navigationController,
       this.focusStateManager,
       this.responseHandler.handleDocument,
+      this.responseHandler.handleLinkDocument,
       console,
       _Flux.DEBUG
     );
@@ -749,10 +774,12 @@ var Flux = class _Flux {
       _Flux.DEBUG
     );
     this.directiveRegistry = directiveRegistry ?? new FluxDirectiveRegistry({
-      autoContainer: this.formHandler.initAutoContainer,
+      autoContainer: this.initAutoContainer,
       autoSave: this.formHandler.initAutoSave,
       updateOuter: this.storeOuterUpdateElement,
       updateInner: this.storeInnerUpdateElement,
+      updateLinkOuter: this.storeLinkOuterUpdateElement,
+      updateLinkInner: this.storeLinkInnerUpdateElement,
       updateAttributes: this.storeAttributesUpdateElement,
       autoSubmit: this.formHandler.initAutoSubmit,
       autoLink: this.linkHandler.initAutoLink
@@ -776,6 +803,13 @@ var Flux = class _Flux {
       );
     }
   };
+  initAutoContainer = (fluxElement) => {
+    if (fluxElement instanceof HTMLFormElement) {
+      this.formHandler.initAutoContainer(fluxElement);
+    } else if (fluxElement instanceof HTMLAnchorElement) {
+      this.linkHandler.initAutoLink(fluxElement);
+    }
+  };
   /**
    * Store a DOM element that should be refreshed when Flux processes
    * a new HTML document after an interaction.
@@ -789,6 +823,12 @@ var Flux = class _Flux {
   };
   storeInnerUpdateElement = (element) => {
     this.storeUpdateElement(element, "inner");
+  };
+  storeLinkOuterUpdateElement = (element) => {
+    this.storeUpdateElement(element, "link-outer");
+  };
+  storeLinkInnerUpdateElement = (element) => {
+    this.storeUpdateElement(element, "link-inner");
   };
   storeAttributesUpdateElement = (element) => {
     this.storeUpdateElement(element, "attributes");

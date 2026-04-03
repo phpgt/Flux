@@ -3,12 +3,14 @@ export class FluxFormHandler {
 		navigationController,
 		focusStateManager,
 		onDocument,
+		onNavigationDocument = onDocument,
 		logger = console,
 		debug = false,
 	) {
 		this.navigationController = navigationController;
 		this.focusStateManager = focusStateManager;
 		this.onDocument = onDocument;
+		this.onNavigationDocument = onNavigationDocument;
 		this.logger = logger;
 		this.debug = debug;
 	}
@@ -113,7 +115,10 @@ export class FluxFormHandler {
 
 	submitForm(form, submitter) {
 		let formData = this.getFormDataForButton(form, "autoSave", submitter);
-		return this.navigationController.submitForm(form, formData, this.onDocument);
+		let responseHandler = form.hasAttribute("action")
+			? this.onNavigationDocument
+			: this.onDocument;
+		return this.navigationController.submitForm(form, formData, responseHandler);
 	}
 
 	getFormDataForButton(form, type, submitter) {

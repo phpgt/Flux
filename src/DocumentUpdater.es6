@@ -17,11 +17,16 @@ export class DocumentUpdater {
 		this.debug = debug;
 	}
 
-	apply(newDocument) {
+	apply(newDocument, allowedTypes = undefined) {
 		this.focusStateManager.markAutofocus(newDocument);
 		let newActiveElement = this.focusStateManager.capturePendingActiveElement(newDocument);
+		let allowedTypeSet = allowedTypes ? new Set(allowedTypes) : null;
 
 		for(let type of this.updateTargetRegistry.getTypes()) {
+			if(allowedTypeSet && !allowedTypeSet.has(type)) {
+				continue;
+			}
+
 			this.updateTargetRegistry.getElements(type).forEach(existingElement => {
 				this.applyUpdateTarget(type, existingElement, newDocument);
 			});
@@ -43,10 +48,10 @@ export class DocumentUpdater {
 		let xPath = this.domPath.getXPathForElement(existingElement, document);
 		let newElement = this.domPath.findInDocument(newDocument, xPath);
 
-		if(type === "outer") {
+		if(type === "outer" || type === "link-outer") {
 			this.applyOuterUpdate(type, existingElement, newElement);
 		}
-		else if(type === "inner") {
+		else if(type === "inner" || type === "link-inner") {
 			this.applyInnerUpdate(existingElement, newElement);
 		}
 		else if(type === "attributes") {
