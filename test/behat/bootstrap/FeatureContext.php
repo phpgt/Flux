@@ -1,11 +1,14 @@
 <?php
 
+use Behat\Behat\Tester\Exception\PendingException;
 use Behat\Gherkin\Node\PyStringNode;
 use Behat\Mink\Element\NodeElement;
 use Behat\Mink\Exception\ExpectationException;
 use Behat\MinkExtension\Context\MinkContext;
 
 class FeatureContext extends MinkContext {
+	private DateTime $rememberedTime;
+
 	/**
 	 * @When I fill the element :selector with:
 	 */
@@ -64,6 +67,24 @@ class FeatureContext extends MinkContext {
 	}
 
 	/**
+	 * @Then I wait until the element :selector changes
+	 */
+	public function iWaitUntilTheElementChanges(string $selector):void {
+		$element = $this->findCssElement($selector);
+		$initialText = (string)$element->getText();
+		$escapedSelector = json_encode($selector, JSON_THROW_ON_ERROR);
+		$escapedText = json_encode($initialText, JSON_THROW_ON_ERROR);
+		$condition = <<<JS
+	(() => {
+	  const element = document.querySelector($escapedSelector);
+	  return !!element && element.textContent !== $escapedText;
+	})()
+	JS;
+
+		$this->waitForCondition($condition, sprintf('Timed out waiting for "%s" to change.', $selector));
+	}
+
+	/**
 	 * @Then Flux should be ready
 	 */
 	public function fluxShouldBeReady():void {
@@ -71,6 +92,38 @@ class FeatureContext extends MinkContext {
 			'document.getElementById("flux-style") !== null',
 			'Timed out waiting for Flux to initialise on the page.',
 		);
+	}
+
+	/**
+	 * @When /^I remember the time from the page$/
+	 */
+	public function iRememberTheTimeFromThePage() {
+		$time = $this->findCssElement("time");
+		$timeText = $time->getText();
+		$this->rememberedTime = new DateTime($timeText);
+	}
+
+	/**
+	 * @Then the remembered time should have advanced :numSeconds seconds
+	 */
+	public function theRememberedTimeShouldHaveAdvancedSeconds(int $numSeconds) {
+		$expected = $this->rememberedTime->add(new DateInterval("PT" . $numSeconds . "S"));
+		$expectedDateString = $expected->format("Y-m-d H:i:s");
+		$actualDateString = date("Y-m-d H:i:s");
+
+		if($expectedDateString !== $actualDateString) {
+			throw new ExpectationException(
+				sprintf('Expected time to be "%s", got "%s".', $expectedDateString, $actualDateString),
+				$this->getSession(),
+			);
+		}
+	}
+
+	/**
+	 * @Then I wait :numSeconds seconds
+	 */
+	public function iWaitSeconds(int $numSeconds) {
+		sleep($numSeconds);
 	}
 
 	private function fillCssElement(string $selector, string $value):void {

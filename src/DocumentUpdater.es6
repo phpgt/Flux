@@ -58,10 +58,10 @@ export class DocumentUpdater {
 		let xPath = this.domPath.getXPathForElement(existingElement, document);
 		let newElement = this.domPath.findInDocument(newDocument, xPath);
 
-		if(type === "outer" || type === "link-outer") {
+		if(type === "outer" || type === "link-outer" || type === "live-outer") {
 			this.applyOuterUpdate(type, existingElement, newElement);
 		}
-		else if(type === "inner" || type === "link-inner") {
+		else if(type === "inner" || type === "link-inner" || type === "live-inner") {
 			this.applyInnerUpdate(existingElement, newElement);
 		}
 		else if(type === "attributes") {

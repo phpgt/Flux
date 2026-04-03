@@ -138,6 +138,9 @@ var UpdateTargetRegistry = class {
     if (this.collection[type] === void 0) {
       this.collection[type] = [];
     }
+    if (this.collection[type].includes(element)) {
+      return;
+    }
     this.collection[type].push(element);
   }
   getTypes() {
@@ -239,11 +242,20 @@ var FocusStateManager = class {
 
 // src/NavigationController.es6
 var NavigationController = class {
-  constructor(parser = new DOMParser(), fetcher = globalThis.fetch.bind(globalThis), historyObject = globalThis.history, logger = console) {
+  constructor(parser = new DOMParser(), fetcher = globalThis.fetch.bind(globalThis), historyObject = globalThis.history, logger = console, scheduler = globalThis.setTimeout.bind(globalThis), clearScheduler = globalThis.clearTimeout.bind(globalThis), now = () => Date.now(), minRequestIntervalMs = 1e3) {
     this.parser = parser;
     this.fetcher = fetcher;
     this.historyObject = historyObject;
     this.logger = logger;
+    this.scheduler = scheduler;
+    this.clearScheduler = clearScheduler;
+    this.now = now;
+    this.minRequestIntervalMs = minRequestIntervalMs;
+    this.lastRequestTimestamp = -Infinity;
+    this.inFlight = false;
+    this.pendingRequest = null;
+    this.pendingTimerId = null;
+    this.responseCache = /* @__PURE__ */ new Map();
   }
   submitForm(form, formData, onDocument) {
     let method = (form.getAttribute("method") ?? "get").toLowerCase();
@@ -291,25 +303,176 @@ var NavigationController = class {
       onDocument
     );
   }
+  pollDocument(url, onDocument) {
+    return this.requestDocument(
+      url,
+      {
+        credentials: "same-origin"
+      },
+      {
+        action: null,
+        errorPrefix: "Live update error"
+      },
+      onDocument
+    );
+  }
   async navigate(element, url, requestOptions, historyState, onDocument) {
     element.classList.add("submitting");
     try {
-      let response = await this.fetcher(url, requestOptions);
-      if (!response.ok) {
-        throw new Error(`${historyState.errorPrefix}: ${response.status} ${response.statusText}`);
+      return await this.requestDocument(url, requestOptions, historyState, onDocument);
+    } catch (error) {
+      return null;
+    } finally {
+      element.classList.remove("submitting");
+    }
+  }
+  async requestDocument(url, requestOptions, historyState, onDocument) {
+    let request = this.createRequest(url, requestOptions, historyState, onDocument);
+    let cachedDocument = this.getFreshCachedDocument(request);
+    if (cachedDocument) {
+      this.applyResponse(cachedDocument, request.historyState, request.onDocument);
+      return cachedDocument.document;
+    }
+    if (this.canStartRequest()) {
+      return this.executeRequest(request);
+    }
+    return this.queueRequest(request);
+  }
+  createRequest(url, requestOptions, historyState, onDocument) {
+    let method = (requestOptions.method ?? "get").toLowerCase();
+    let absoluteUrl = new URL(url, globalThis.location?.href).toString();
+    let requestKey = `${method}:${absoluteUrl}:${this.serialiseRequestBody(requestOptions.body)}`;
+    return {
+      url: absoluteUrl,
+      requestOptions: {
+        ...requestOptions,
+        method
+      },
+      historyState,
+      onDocument,
+      requestKey
+    };
+  }
+  serialiseRequestBody(body) {
+    if (!body) {
+      return "";
+    }
+    if (body instanceof FormData) {
+      let searchParams = new URLSearchParams();
+      for (let [key, value] of body.entries()) {
+        searchParams.append(key, typeof value === "string" ? value : value.name);
       }
+      return searchParams.toString();
+    }
+    if (body instanceof URLSearchParams) {
+      return body.toString();
+    }
+    if (typeof body === "string") {
+      return body;
+    }
+    return String(body);
+  }
+  canStartRequest() {
+    return !this.inFlight && this.now() - this.lastRequestTimestamp >= this.minRequestIntervalMs;
+  }
+  queueRequest(request) {
+    return new Promise((resolve) => {
+      if (this.pendingRequest) {
+        this.pendingRequest.resolve(null);
+      }
+      this.pendingRequest = {
+        ...request,
+        resolve
+      };
+      this.schedulePendingRequest();
+    });
+  }
+  schedulePendingRequest() {
+    if (this.pendingTimerId !== null || !this.pendingRequest) {
+      return;
+    }
+    this.pendingTimerId = this.scheduler(() => {
+      this.pendingTimerId = null;
+      this.flushPendingRequest();
+    }, this.getPendingDelay());
+  }
+  getPendingDelay() {
+    if (this.inFlight) {
+      return 50;
+    }
+    return Math.max(0, this.minRequestIntervalMs - (this.now() - this.lastRequestTimestamp));
+  }
+  flushPendingRequest() {
+    if (!this.pendingRequest) {
+      return;
+    }
+    let cachedDocument = this.getFreshCachedDocument(this.pendingRequest);
+    if (cachedDocument) {
+      let pendingRequest2 = this.pendingRequest;
+      this.pendingRequest = null;
+      this.applyResponse(cachedDocument, pendingRequest2.historyState, pendingRequest2.onDocument);
+      pendingRequest2.resolve(cachedDocument.document);
+      return;
+    }
+    if (!this.canStartRequest()) {
+      this.schedulePendingRequest();
+      return;
+    }
+    let pendingRequest = this.pendingRequest;
+    this.pendingRequest = null;
+    this.executeRequest(pendingRequest).then(pendingRequest.resolve);
+  }
+  getFreshCachedDocument(request) {
+    let cachedResponse = this.responseCache.get(request.requestKey);
+    if (!cachedResponse) {
+      return null;
+    }
+    if (this.now() - cachedResponse.timestamp >= this.minRequestIntervalMs) {
+      this.responseCache.delete(request.requestKey);
+      return null;
+    }
+    return {
+      document: this.parser.parseFromString(cachedResponse.html, "text/html"),
+      responseUrl: cachedResponse.responseUrl
+    };
+  }
+  cacheResponse(request, response, html) {
+    this.responseCache.set(request.requestKey, {
+      html,
+      responseUrl: response.url,
+      timestamp: this.now()
+    });
+  }
+  applyResponse(responseDocument, historyState, onDocument) {
+    if (historyState.action) {
       this.historyObject.pushState({
         action: historyState.action
-      }, "", response.url);
+      }, "", responseDocument.responseUrl);
+    }
+    onDocument(responseDocument.document);
+  }
+  async executeRequest(request) {
+    this.inFlight = true;
+    this.lastRequestTimestamp = this.now();
+    try {
+      let response = await this.fetcher(request.url, request.requestOptions);
+      if (!response.ok) {
+        throw new Error(`${request.historyState.errorPrefix}: ${response.status} ${response.statusText}`);
+      }
       let html = await response.text();
+      this.cacheResponse(request, response, html);
       let document2 = this.parser.parseFromString(html, "text/html");
-      onDocument(document2);
+      this.applyResponse({
+        document: document2,
+        responseUrl: response.url
+      }, request.historyState, request.onDocument);
       return document2;
     } catch (error) {
       this.logger.error(error);
       return null;
     } finally {
-      element.classList.remove("submitting");
+      this.inFlight = false;
+      this.schedulePendingRequest();
     }
   }
 };
@@ -358,9 +521,9 @@ var DocumentUpdater = class {
     let activeElementState = this.focusStateManager.captureElementState(existingElement);
     let xPath = this.domPath.getXPathForElement(existingElement, document);
     let newElement = this.domPath.findInDocument(newDocument, xPath);
-    if (type === "outer" || type === "link-outer") {
+    if (type === "outer" || type === "link-outer" || type === "live-outer") {
       this.applyOuterUpdate(type, existingElement, newElement);
-    } else if (type === "inner" || type === "link-inner") {
+    } else if (type === "inner" || type === "link-inner" || type === "live-inner") {
       this.applyInnerUpdate(existingElement, newElement);
     } else if (type === "attributes") {
       this.applyAttributesUpdate(existingElement, newElement);
@@ -433,6 +596,18 @@ var DIRECTIVE_DEFINITIONS = Object.freeze({
   "update-link-inner": {
     handler: "updateLinkInner",
     description: "Register the element for innerHTML replacement on link updates only."
+  },
+  "live": {
+    handler: "liveOuter",
+    description: "Register the element for recurring outerHTML replacement using background polling."
+  },
+  "live-outer": {
+    handler: "liveOuter",
+    description: "Register the element for recurring outerHTML replacement using background polling."
+  },
+  "live-inner": {
+    handler: "liveInner",
+    description: "Register the element for recurring innerHTML replacement using background polling."
   },
   "update-attributes": {
     handler: "updateAttributes",
@@ -515,6 +690,9 @@ var FluxDomBridge = class {
   reattachFluxElements(oldElement, newElement) {
     if (!newElement) {
       return;
+    }
+    if (newElement.matches?.("[data-flux]")) {
+      this.initFluxElement(newElement);
     }
     newElement.querySelectorAll("[data-flux]").forEach(this.initFluxElement);
     oldElement.querySelectorAll("[data-flux-obj]").forEach((fluxElement) => {
@@ -683,6 +861,10 @@ var FluxResponseHandler = class _FluxResponseHandler {
     "link-outer",
     "link-inner"
   ]);
+  static LIVE_UPDATE_TYPES = Object.freeze([
+    "live-outer",
+    "live-inner"
+  ]);
   constructor(documentUpdater, logger = console, debug = false, scheduler = globalThis.setTimeout.bind(globalThis), reload = () => location.reload(), alerter = globalThis.alert?.bind(globalThis), windowObject = globalThis.window, animationFrame = globalThis.requestAnimationFrame?.bind(globalThis)) {
     this.documentUpdater = documentUpdater;
     this.logger = logger;
@@ -708,6 +890,14 @@ var FluxResponseHandler = class _FluxResponseHandler {
     this.scheduler(() => {
       this.documentUpdater.apply(newDocument, _FluxResponseHandler.LINK_UPDATE_TYPES);
       this.scrollToTopAfterPaint();
+    }, 0);
+  };
+  handleLiveDocument = (newDocument) => {
+    if (!this.isProcessableDocument(newDocument)) {
+      return;
+    }
+    this.scheduler(() => {
+      this.documentUpdater.apply(newDocument, _FluxResponseHandler.LIVE_UPDATE_TYPES);
     }, 0);
   };
   isProcessableDocument(newDocument) {
@@ -746,6 +936,80 @@ var FluxResponseHandler = class _FluxResponseHandler {
   }
 };
 
+// src/FluxLiveHandler.es6
+var FluxLiveHandler = class _FluxLiveHandler {
+  static UPDATE_TYPES = Object.freeze([
+    "live-outer",
+    "live-inner"
+  ]);
+  constructor(navigationController, updateTargetRegistry, onDocument, logger = console, debug = false, scheduler = globalThis.setTimeout.bind(globalThis), clearScheduler = globalThis.clearTimeout.bind(globalThis), locationObject = globalThis.location, intervalMs = 1e3) {
+    this.navigationController = navigationController;
+    this.updateTargetRegistry = updateTargetRegistry;
+    this.onDocument = onDocument;
+    this.logger = logger;
+    this.debug = debug;
+    this.scheduler = scheduler;
+    this.clearScheduler = clearScheduler;
+    this.locationObject = locationObject;
+    this.intervalMs = intervalMs;
+    this.timerId = null;
+    this.inFlight = false;
+  }
+  register(updateType, element) {
+    this.updateTargetRegistry.add(element, updateType);
+    this.ensureRunning();
+  }
+  ensureRunning() {
+    if (this.timerId !== null || !this.hasLiveElements()) {
+      return;
+    }
+    this.timerId = this.scheduler(this.pollDocument, this.intervalMs);
+  }
+  stop() {
+    if (this.timerId === null) {
+      return;
+    }
+    this.clearScheduler(this.timerId);
+    this.timerId = null;
+  }
+  pollDocument = async () => {
+    this.timerId = null;
+    if (!this.hasLiveElements()) {
+      return;
+    }
+    if (this.inFlight) {
+      this.ensureRunning();
+      return;
+    }
+    this.inFlight = true;
+    try {
+      await this.navigationController.pollDocument(
+        this.locationObject.href,
+        this.onDocument
+      );
+    } finally {
+      this.inFlight = false;
+      this.ensureRunning();
+    }
+  };
+  hasLiveElements() {
+    let hasLiveElements = false;
+    for (let type of _FluxLiveHandler.UPDATE_TYPES) {
+      for (let element of [...this.updateTargetRegistry.getElements(type)]) {
+        if (element?.isConnected) {
+          hasLiveElements = true;
+          continue;
+        }
+        this.updateTargetRegistry.remove(type, element);
+      }
+    }
+    if (this.debug) {
+      this.logger.debug("Flux live target count", hasLiveElements);
+    }
+    return hasLiveElements;
+  }
+};
+
 // src/Flux.es6
 var Flux = class _Flux {
   static DEBUG = false;
@@ -760,8 +1024,9 @@ var Flux = class _Flux {
   formHandler;
   linkHandler;
   responseHandler;
+  liveHandler;
   logger;
-  constructor(style = void 0, elementEventMapper = void 0, parser = void 0, navigationController = void 0, updateTargetRegistry = void 0, focusStateManager = void 0, documentUpdater = void 0, directiveRegistry = void 0, domBridge = void 0, formHandler = void 0, linkHandler = void 0, responseHandler = void 0, logger = void 0) {
+  constructor(style = void 0, elementEventMapper = void 0, parser = void 0, navigationController = void 0, updateTargetRegistry = void 0, focusStateManager = void 0, documentUpdater = void 0, directiveRegistry = void 0, domBridge = void 0, formHandler = void 0, linkHandler = void 0, responseHandler = void 0, liveHandler = void 0, logger = void 0) {
     handleWindowPopState();
     this.logger = logger ?? console;
     style = style ?? new Style();
@@ -797,6 +1062,13 @@ var Flux = class _Flux {
       this.navigationController,
       this.responseHandler.handleLinkDocument
     );
+    this.liveHandler = liveHandler ?? new FluxLiveHandler(
+      this.navigationController,
+      this.updateTargetRegistry,
+      this.responseHandler.handleLiveDocument,
+      console,
+      _Flux.DEBUG
+    );
     this.domBridge = domBridge ?? new FluxDomBridge(
       this.elementEventMapper,
       this.initFluxElementSafely,
@@ -811,6 +1083,8 @@ var Flux = class _Flux {
       updateInner: this.storeInnerUpdateElement,
       updateLinkOuter: this.storeLinkOuterUpdateElement,
       updateLinkInner: this.storeLinkInnerUpdateElement,
+      liveOuter: this.storeLiveOuterUpdateElement,
+      liveInner: this.storeLiveInnerUpdateElement,
       updateAttributes: this.storeAttributesUpdateElement,
       autoSubmit: this.formHandler.initAutoSubmit,
       autoLink: this.linkHandler.initAutoLink
@@ -860,6 +1134,12 @@ var Flux = class _Flux {
   };
   storeLinkInnerUpdateElement = (element) => {
     this.storeUpdateElement(element, "link-inner");
+  };
+  storeLiveOuterUpdateElement = (element) => {
+    this.liveHandler.register("live-outer", element);
+  };
+  storeLiveInnerUpdateElement = (element) => {
+    this.liveHandler.register("live-inner", element);
   };
   storeAttributesUpdateElement = (element) => {
     this.storeUpdateElement(element, "attributes");

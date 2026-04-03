@@ -53,6 +53,15 @@ To use Flux, convert a "regular" HTML form into a _flux form_ by adding the `dat
 
 When the above form submits, because it has been marked with the `data-flux` attribute, the default submit behaviour will be suppressed, and a [background fetch][fetch] will be emitted instead, submitting the POST data in the background. When the fetch completes, the default behaviour is to replace the form with the form's counterpart on the new HTML document (after submitting the page), but other behaviours can be configured.
 
+Flux also supports polling-based live regions:
+
+```html
+<time data-flux="live">12:00:00</time>
+<div data-flux="live-inner"><strong>Only this content is replaced.</strong></div>
+```
+
+`data-flux="live"` is shorthand for `data-flux="live-outer"`. If one or more live regions exist on the page, Flux performs a single background GET request every second against the current page URL and applies only the live updates from the returned HTML.
+
 ## Limitations compared to other libraries
 
 Flux is designed as a **progressive enhancement** tool that encourages plain HTTP techniques. Your web applications should function fully even without any JavaScript or CSS, ensuring simplicity and accessibility. This approach simplifies development by focusing on straightforward, reliable techniques, making the entire development experience more manageable.

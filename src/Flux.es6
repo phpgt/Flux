@@ -10,6 +10,7 @@ import {FluxDomBridge} from "./FluxDomBridge.es6";
 import {FluxFormHandler} from "./FluxFormHandler.es6";
 import {FluxLinkHandler} from "./FluxLinkHandler.es6";
 import {FluxResponseHandler} from "./FluxResponseHandler.es6";
+import {FluxLiveHandler} from "./FluxLiveHandler.es6";
 
 export class Flux {
 	static DEBUG = false;
@@ -24,6 +25,7 @@ export class Flux {
 	formHandler;
 	linkHandler;
 	responseHandler;
+	liveHandler;
 	logger;
 
 	constructor(
@@ -39,6 +41,7 @@ export class Flux {
 		formHandler = undefined,
 		linkHandler = undefined,
 		responseHandler = undefined,
+		liveHandler = undefined,
 		logger = undefined,
 	) {
 		handleWindowPopState();
@@ -76,6 +79,13 @@ export class Flux {
 			this.navigationController,
 			this.responseHandler.handleLinkDocument,
 		);
+		this.liveHandler = liveHandler ?? new FluxLiveHandler(
+			this.navigationController,
+			this.updateTargetRegistry,
+			this.responseHandler.handleLiveDocument,
+			console,
+			Flux.DEBUG,
+		);
 		this.domBridge = domBridge ?? new FluxDomBridge(
 			this.elementEventMapper,
 			this.initFluxElementSafely,
@@ -90,6 +100,8 @@ export class Flux {
 			updateInner: this.storeInnerUpdateElement,
 			updateLinkOuter: this.storeLinkOuterUpdateElement,
 			updateLinkInner: this.storeLinkInnerUpdateElement,
+			liveOuter: this.storeLiveOuterUpdateElement,
+			liveInner: this.storeLiveInnerUpdateElement,
 			updateAttributes: this.storeAttributesUpdateElement,
 			autoSubmit: this.formHandler.initAutoSubmit,
 			autoLink: this.linkHandler.initAutoLink,
@@ -150,6 +162,14 @@ export class Flux {
 
 	storeLinkInnerUpdateElement = (element) => {
 		this.storeUpdateElement(element, "link-inner");
+	}
+
+	storeLiveOuterUpdateElement = (element) => {
+		this.liveHandler.register("live-outer", element);
+	}
+
+	storeLiveInnerUpdateElement = (element) => {
+		this.liveHandler.register("live-inner", element);
 	}
 
 	storeAttributesUpdateElement = (element) => {

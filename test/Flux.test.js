@@ -11,6 +11,7 @@ import {FluxDomBridge} from "../src/FluxDomBridge.es6";
 import {FluxFormHandler} from "../src/FluxFormHandler.es6";
 import {FluxLinkHandler} from "../src/FluxLinkHandler.es6";
 import {FluxResponseHandler} from "../src/FluxResponseHandler.es6";
+import {FluxLiveHandler} from "../src/FluxLiveHandler.es6";
 
 beforeEach(() => {
 	document.body.innerHTML = "";
@@ -91,6 +92,36 @@ describe("Flux", () => {
 		expect(addEventListenerSpy).toHaveBeenCalledWith("submit", expect.any(Function));
 
 		errorSpy.mockRestore();
+	});
+
+	it("starts a single live polling loop even when multiple live elements exist", () => {
+		document.body.innerHTML = `
+		<section data-flux="live"></section>
+		<section data-flux="live-inner"></section>
+		`;
+
+		let liveHandler = {
+			register: vi.fn(),
+		};
+		new Flux(
+			undefined,
+			undefined,
+			undefined,
+			undefined,
+			undefined,
+			undefined,
+			undefined,
+			undefined,
+			undefined,
+			undefined,
+			undefined,
+			undefined,
+			liveHandler,
+		);
+
+		expect(liveHandler.register).toHaveBeenCalledTimes(2);
+		expect(liveHandler.register).toHaveBeenNthCalledWith(1, "live-outer", document.querySelectorAll("section")[0]);
+		expect(liveHandler.register).toHaveBeenNthCalledWith(2, "live-inner", document.querySelectorAll("section")[1]);
 	});
 });
 
@@ -270,6 +301,114 @@ describe("NavigationController", () => {
 		expect(logger.error).toHaveBeenCalledWith(expect.any(Error));
 		expect(link.classList.contains("submitting")).toBe(false);
 	});
+
+	it("coalesces bursty requests so only one fetch starts per second", async () => {
+		let now = 0;
+		let scheduledCallback = null;
+		let scheduler = vi.fn((callback) => {
+			scheduledCallback = callback;
+			return 1;
+		});
+		let fetcher = vi.fn()
+			.mockResolvedValueOnce({
+				ok: true,
+				url: "https://example.com/first",
+				text: vi.fn().mockResolvedValue("<html><head></head><body><main>First</main></body></html>"),
+			})
+			.mockResolvedValueOnce({
+				ok: true,
+				url: "https://example.com/second",
+				text: vi.fn().mockResolvedValue("<html><head></head><body><main>Second</main></body></html>"),
+			});
+		let navigationController = new NavigationController(
+			new DOMParser(),
+			fetcher,
+			{pushState: vi.fn()},
+			{error: vi.fn()},
+			scheduler,
+			vi.fn(),
+			() => now,
+			1000,
+		);
+
+		let firstRequest = navigationController.pollDocument("https://example.com/first", vi.fn());
+		let secondCallback = vi.fn();
+		let secondRequest = navigationController.pollDocument("https://example.com/second", secondCallback);
+
+		await firstRequest;
+
+		expect(fetcher).toHaveBeenCalledTimes(1);
+		expect(fetcher).toHaveBeenNthCalledWith(1, "https://example.com/first", {
+			credentials: "same-origin",
+			method: "get",
+		});
+		expect(scheduler).toHaveBeenCalledTimes(1);
+
+		now = 1000;
+		await scheduledCallback();
+		await secondRequest;
+
+		expect(fetcher).toHaveBeenCalledTimes(2);
+		expect(fetcher).toHaveBeenNthCalledWith(2, "https://example.com/second", {
+			credentials: "same-origin",
+			method: "get",
+		});
+		expect(secondCallback).toHaveBeenCalledWith(expect.any(Document));
+	});
+
+	it("reuses a fresh matching response instead of fetching again within the same second", async () => {
+		let now = 0;
+		let fetcher = vi.fn().mockResolvedValue({
+			ok: true,
+			url: "https://example.com/live",
+			text: vi.fn().mockResolvedValue("<html><head></head><body><main>Tick</main></body></html>"),
+		});
+		let navigationController = new NavigationController(
+			new DOMParser(),
+			fetcher,
+			{pushState: vi.fn()},
+			{error: vi.fn()},
+			vi.fn(),
+			vi.fn(),
+			() => now,
+			1000,
+		);
+		let firstCallback = vi.fn();
+		let secondCallback = vi.fn();
+
+		await navigationController.pollDocument("https://example.com/live", firstCallback);
+		now = 500;
+		await navigationController.pollDocument("https://example.com/live", secondCallback);
+
+		expect(fetcher).toHaveBeenCalledTimes(1);
+		expect(firstCallback).toHaveBeenCalledWith(expect.any(Document));
+		expect(secondCallback).toHaveBeenCalledWith(expect.any(Document));
+	});
+
+	it("polls the current document without pushing history state", async () => {
+		let callback = vi.fn();
+		let pushState = vi.fn();
+		let fetcher = vi.fn().mockResolvedValue({
+			ok: true,
+			url: "https://example.com/live",
+			text: vi.fn().mockResolvedValue("<html><head></head><body><main>Tick</main></body></html>"),
+		});
+		let navigationController = new NavigationController(
+			new DOMParser(),
+			fetcher,
+			{pushState},
+			{error: vi.fn()},
+		);
+
+		await navigationController.pollDocument("https://example.com/live", callback);
+
+		expect(fetcher).toHaveBeenCalledWith("https://example.com/live", {
+			credentials: "same-origin",
+			method: "get",
+		});
+		expect(pushState).not.toHaveBeenCalled();
+		expect(callback).toHaveBeenCalledWith(expect.any(Document));
+	});
 });
 
 describe("DocumentUpdater", () => {
@@ -381,6 +520,50 @@ describe("DocumentUpdater", () => {
 		expect(existingInner.innerHTML).toBe("<span>Old inner</span>");
 
 		documentUpdater.apply(newDocument, ["link-outer", "link-inner"]);
+
+		expect(document.querySelector("main")).not.toBe(existingOuter);
+		expect(document.querySelector("main").textContent).toBe("New outer");
+		expect(existingInner.innerHTML).toBe("<strong>New inner</strong>");
+	});
+
+	it("applies live targets only when the live update types are allowed", () => {
+		document.body.innerHTML = `
+		<main data-flux="live"><span>Old outer</span></main>
+		<section data-flux="live-inner"><span>Old inner</span></section>
+		`;
+
+		let existingOuter = document.querySelector("main");
+		let existingInner = document.querySelector("section");
+		let updateTargetRegistry = new UpdateTargetRegistry();
+		updateTargetRegistry.add(existingOuter, "live-outer");
+		updateTargetRegistry.add(existingInner, "live-inner");
+		let documentUpdater = new DocumentUpdater(
+			updateTargetRegistry,
+			{
+				markAutofocus: vi.fn(),
+				capturePendingActiveElement: vi.fn().mockReturnValue(null),
+				captureElementState: vi.fn().mockReturnValue(null),
+				restoreElementState: vi.fn(),
+				restorePendingActiveElement: vi.fn(),
+				focusMarkedAutofocusElements: vi.fn(),
+			},
+			vi.fn(),
+		);
+		let newDocument = new DOMParser().parseFromString(`
+			<html>
+				<body>
+					<main data-flux="live"><span>New outer</span></main>
+					<section data-flux="live-inner"><strong>New inner</strong></section>
+				</body>
+			</html>
+		`, "text/html");
+
+		documentUpdater.apply(newDocument, ["outer", "inner"]);
+
+		expect(document.querySelector("main")).toBe(existingOuter);
+		expect(existingInner.innerHTML).toBe("<span>Old inner</span>");
+
+		documentUpdater.apply(newDocument, ["live-outer", "live-inner"]);
 
 		expect(document.querySelector("main")).not.toBe(existingOuter);
 		expect(document.querySelector("main").textContent).toBe("New outer");
@@ -515,6 +698,9 @@ describe("FluxDirectiveRegistry", () => {
 			"update-inner": expect.objectContaining({handler: "updateInner"}),
 			"update-link": expect.objectContaining({handler: "updateLinkOuter"}),
 			"update-link-inner": expect.objectContaining({handler: "updateLinkInner"}),
+			"live": expect.objectContaining({handler: "liveOuter"}),
+			"live-outer": expect.objectContaining({handler: "liveOuter"}),
+			"live-inner": expect.objectContaining({handler: "liveInner"}),
 			"update-attributes": expect.objectContaining({handler: "updateAttributes"}),
 			"submit": expect.objectContaining({handler: "autoSubmit"}),
 			"link": expect.objectContaining({handler: "autoLink"}),
@@ -532,6 +718,8 @@ describe("FluxDirectiveRegistry", () => {
 			updateInner: vi.fn(),
 			updateLinkOuter: vi.fn(),
 			updateLinkInner: vi.fn(),
+			liveOuter: vi.fn(),
+			liveInner: vi.fn(),
 			updateAttributes: vi.fn(),
 			autoSubmit: vi.fn(),
 			autoLink: vi.fn(),
@@ -553,6 +741,8 @@ describe("FluxDirectiveRegistry", () => {
 			updateInner: vi.fn(),
 			updateLinkOuter: vi.fn(),
 			updateLinkInner: vi.fn(),
+			liveOuter: vi.fn(),
+			liveInner: vi.fn(),
 			updateAttributes: vi.fn(),
 			autoSubmit: vi.fn(),
 			autoLink: vi.fn(),
@@ -573,6 +763,8 @@ describe("FluxDirectiveRegistry", () => {
 			updateInner: vi.fn(),
 			updateLinkOuter: vi.fn(),
 			updateLinkInner: vi.fn(),
+			liveOuter: vi.fn(),
+			liveInner: vi.fn(),
 			updateAttributes: vi.fn(),
 			autoSubmit: vi.fn(),
 			autoLink: vi.fn(),
@@ -726,6 +918,29 @@ describe("FluxResponseHandler", () => {
 		expect(apply).toHaveBeenCalledWith(newDocument, ["outer", "inner", "attributes"]);
 	});
 
+	it("routes live refresh documents to the live update types only", () => {
+		let apply = vi.fn();
+		let scheduler = vi.fn((callback) => callback());
+		let handler = new FluxResponseHandler(
+			{apply},
+			{error: vi.fn()},
+			false,
+			scheduler,
+			vi.fn(),
+			vi.fn(),
+		);
+		let newDocument = new DOMParser().parseFromString(`
+			<html>
+				<head><title>Ok</title></head>
+				<body></body>
+			</html>
+		`, "text/html");
+
+		handler.handleLiveDocument(newDocument);
+
+		expect(apply).toHaveBeenCalledWith(newDocument, ["live-outer", "live-inner"]);
+	});
+
 	it("forces the page to the top after link-driven document updates complete", () => {
 		let apply = vi.fn();
 		let scrollTo = vi.fn();
@@ -785,5 +1000,89 @@ describe("FluxLinkHandler", () => {
 			behavior: "smooth",
 		});
 		expect(navigationController.clickLink).not.toHaveBeenCalled();
+	});
+});
+
+describe("FluxLiveHandler", () => {
+	it("uses one scheduled polling loop for multiple live elements", () => {
+		document.body.innerHTML = `
+		<main></main>
+		<section></section>
+		`;
+
+		let updateTargetRegistry = new UpdateTargetRegistry();
+		let scheduler = vi.fn().mockReturnValue(123);
+		let clearScheduler = vi.fn();
+		let handler = new FluxLiveHandler(
+			{pollDocument: vi.fn()},
+			updateTargetRegistry,
+			vi.fn(),
+			{debug: vi.fn()},
+			false,
+			scheduler,
+			clearScheduler,
+			{href: "https://example.com/live"},
+		);
+
+		handler.register("live-outer", document.querySelector("main"));
+		handler.register("live-inner", document.querySelector("section"));
+
+		expect(scheduler).toHaveBeenCalledTimes(1);
+		expect(clearScheduler).not.toHaveBeenCalled();
+	});
+
+	it("continues polling after a live outer element is replaced", async () => {
+		document.body.innerHTML = `<main data-flux="live">Old</main>`;
+
+		let existingElement = document.querySelector("main");
+		let updateTargetRegistry = new UpdateTargetRegistry();
+		let pollDocument = vi.fn().mockResolvedValue(null);
+		let onDocument = vi.fn((newDocument) => {
+			let documentUpdater = new DocumentUpdater(
+				updateTargetRegistry,
+				{
+					markAutofocus: vi.fn(),
+					capturePendingActiveElement: vi.fn().mockReturnValue(null),
+					captureElementState: vi.fn().mockReturnValue(null),
+					restoreElementState: vi.fn(),
+					restorePendingActiveElement: vi.fn(),
+					focusMarkedAutofocusElements: vi.fn(),
+				},
+				vi.fn(),
+			);
+			documentUpdater.apply(newDocument, ["live-outer"]);
+		});
+		let scheduler = vi.fn((callback) => {
+			return callback();
+		});
+		let handler = new FluxLiveHandler(
+			{pollDocument},
+			updateTargetRegistry,
+			onDocument,
+			{debug: vi.fn()},
+			false,
+			scheduler,
+			vi.fn(),
+			{href: "https://example.com/live"},
+		);
+		updateTargetRegistry.add(existingElement, "live-outer");
+
+		pollDocument.mockImplementation(async(url, callback) => {
+			let newDocument = new DOMParser().parseFromString(`
+				<html>
+					<body>
+						<main data-flux="live">New</main>
+					</body>
+				</html>
+			`, "text/html");
+			callback(newDocument);
+		});
+
+		await handler.pollDocument();
+
+		expect(pollDocument).toHaveBeenCalledWith("https://example.com/live", onDocument);
+		expect(updateTargetRegistry.getElements("live-outer")[0]).toBe(document.querySelector("main"));
+		expect(document.querySelector("main").textContent).toBe("New");
+		expect(scheduler).toHaveBeenCalled();
 	});
 });
