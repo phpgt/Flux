@@ -138,6 +138,9 @@ var UpdateTargetRegistry = class {
     if (this.collection[type] === void 0) {
       this.collection[type] = [];
     }
+    if (this.collection[type].includes(element)) {
+      return;
+    }
     this.collection[type].push(element);
   }
   getTypes() {
@@ -291,25 +294,52 @@ var NavigationController = class {
       onDocument
     );
   }
+  pollDocument(url, onDocument) {
+    return this.requestDocument(
+      url,
+      {
+        credentials: "same-origin"
+      },
+      {
+        action: null,
+        errorPrefix: "Live update error"
+      },
+      onDocument
+    );
+  }
   async navigate(element, url, requestOptions, historyState, onDocument) {
     element.classList.add("submitting");
     try {
-      let response = await this.fetcher(url, requestOptions);
+      return await this.requestDocument(url, requestOptions, historyState, onDocument);
+    } catch (error) {
+      return null;
+    } finally {
+      element.classList.remove("submitting");
+    }
+  }
+  async requestDocument(url, requestOptions, historyState, onDocument) {
+    let method = (requestOptions.method ?? "get").toLowerCase();
+    try {
+      let absoluteUrl = new URL(url, globalThis.location?.href).toString();
+      let response = await this.fetcher(absoluteUrl, {
+        ...requestOptions,
+        method
+      });
       if (!response.ok) {
         throw new Error(`${historyState.errorPrefix}: ${response.status} ${response.statusText}`);
       }
-      this.historyObject.pushState({
-        action: historyState.action
-      }, "", response.url);
       let html = await response.text();
       let document2 = this.parser.parseFromString(html, "text/html");
+      if (historyState.action) {
+        this.historyObject.pushState({
+          action: historyState.action
+        }, "", response.url);
+      }
       onDocument(document2);
       return document2;
     } catch (error) {
       this.logger.error(error);
       return null;
-    } finally {
-      element.classList.remove("submitting");
     }
   }
 };
@@ -358,9 +388,9 @@ var DocumentUpdater = class {
     let activeElementState = this.focusStateManager.captureElementState(existingElement);
     let xPath = this.domPath.getXPathForElement(existingElement, document);
     let newElement = this.domPath.findInDocument(newDocument, xPath);
-    if (type === "outer" || type === "link-outer") {
+    if (type === "outer" || type === "link-outer" || type === "live-outer") {
       this.applyOuterUpdate(type, existingElement, newElement);
-    } else if (type === "inner" || type === "link-inner") {
+    } else if (type === "inner" || type === "link-inner" || type === "live-inner") {
       this.applyInnerUpdate(existingElement, newElement);
     } else if (type === "attributes") {
       this.applyAttributesUpdate(existingElement, newElement);
@@ -433,6 +463,18 @@ var DIRECTIVE_DEFINITIONS = Object.freeze({
   "update-link-inner": {
     handler: "updateLinkInner",
     description: "Register the element for innerHTML replacement on link updates only."
+  },
+  "live": {
+    handler: "liveOuter",
+    description: "Register the element for recurring outerHTML replacement using background polling."
+  },
+  "live-outer": {
+    handler: "liveOuter",
+    description: "Register the element for recurring outerHTML replacement using background polling."
+  },
+  "live-inner": {
+    handler: "liveInner",
+    description: "Register the element for recurring innerHTML replacement using background polling."
   },
   "update-attributes": {
     handler: "updateAttributes",
@@ -516,6 +558,9 @@ var FluxDomBridge = class {
     if (!newElement) {
       return;
     }
+    if (newElement.matches?.("[data-flux]")) {
+      this.initFluxElement(newElement);
+    }
     newElement.querySelectorAll("[data-flux]").forEach(this.initFluxElement);
     oldElement.querySelectorAll("[data-flux-obj]").forEach((fluxElement) => {
       let xPath = this.domPath.getXPathForElement(fluxElement, oldElement);
@@ -530,13 +575,16 @@ var FluxDomBridge = class {
 
 // src/FluxFormHandler.es6
 var FluxFormHandler = class {
-  constructor(navigationController, focusStateManager, onDocument, onNavigationDocument = onDocument, logger = console, debug = false) {
+  constructor(navigationController, focusStateManager, onDocument, onNavigationDocument = onDocument, logger = console, debug = false, now = () => Date.now(), domPath = DomPath) {
     this.navigationController = navigationController;
     this.focusStateManager = focusStateManager;
     this.onDocument = onDocument;
     this.onNavigationDocument = onNavigationDocument;
     this.logger = logger;
     this.debug = debug;
+    this.now = now;
+    this.domPath = domPath;
+    this.rateLimitState = /* @__PURE__ */ new Map();
   }
   initAutoContainer = (fluxElement) => {
     if (fluxElement instanceof HTMLFormElement) {
@@ -617,9 +665,33 @@ var FluxFormHandler = class {
     this.submitForm(form, submitter);
   };
   submitForm(form, submitter) {
+    if (this.isRateLimited(submitter)) {
+      return Promise.resolve(null);
+    }
     let formData = this.getFormDataForButton(form, "autoSave", submitter);
     let responseHandler = form.hasAttribute("action") ? this.onNavigationDocument : this.onDocument;
     return this.navigationController.submitForm(form, formData, responseHandler);
+  }
+  isRateLimited(submitter) {
+    if (!(submitter instanceof HTMLElement)) {
+      return false;
+    }
+    let rate = Number.parseFloat(submitter.dataset["fluxRate"] ?? "");
+    if (!Number.isFinite(rate) || rate <= 0) {
+      return false;
+    }
+    let now = this.now();
+    let rateLimitKey = this.getRateLimitKey(submitter);
+    let lastSubmittedAt = this.rateLimitState.get(rateLimitKey) ?? -Infinity;
+    if (now - lastSubmittedAt < rate * 1e3) {
+      return true;
+    }
+    this.rateLimitState.set(rateLimitKey, now);
+    return false;
+  }
+  getRateLimitKey(submitter) {
+    let path = this.domPath.getXPathForElement(submitter, document);
+    return `submit:${path}`;
   }
   getFormDataForButton(form, type, submitter) {
     let formData = new FormData(form);
@@ -637,10 +709,13 @@ var FluxFormHandler = class {
 
 // src/FluxLinkHandler.es6
 var FluxLinkHandler = class {
-  constructor(navigationController, onDocument, windowObject = globalThis.window) {
+  constructor(navigationController, onDocument, windowObject = globalThis.window, now = () => Date.now(), domPath = DomPath) {
     this.navigationController = navigationController;
     this.onDocument = onDocument;
     this.windowObject = windowObject;
+    this.now = now;
+    this.domPath = domPath;
+    this.rateLimitState = /* @__PURE__ */ new Map();
   }
   initAutoLink = (fluxElement) => {
     if (!(fluxElement instanceof HTMLAnchorElement)) {
@@ -657,6 +732,9 @@ var FluxLinkHandler = class {
     }, 0);
   };
   clickLink(link) {
+    if (this.isRateLimited(link)) {
+      return Promise.resolve(null);
+    }
     return this.navigationController.clickLink(link, this.onDocument);
   }
   scrollToTop() {
@@ -668,6 +746,24 @@ var FluxLinkHandler = class {
       left: 0,
       behavior: "smooth"
     });
+  }
+  isRateLimited(link) {
+    let rate = Number.parseFloat(link.dataset["fluxRate"] ?? "");
+    if (!Number.isFinite(rate) || rate <= 0) {
+      return false;
+    }
+    let now = this.now();
+    let rateLimitKey = this.getRateLimitKey(link);
+    let lastClickedAt = this.rateLimitState.get(rateLimitKey) ?? -Infinity;
+    if (now - lastClickedAt < rate * 1e3) {
+      return true;
+    }
+    this.rateLimitState.set(rateLimitKey, now);
+    return false;
+  }
+  getRateLimitKey(link) {
+    let path = this.domPath.getXPathForElement(link, document);
+    return `link:${path}`;
   }
 };
 
@@ -682,6 +778,10 @@ var FluxResponseHandler = class _FluxResponseHandler {
     ..._FluxResponseHandler.DEFAULT_UPDATE_TYPES,
     "link-outer",
     "link-inner"
+  ]);
+  static LIVE_UPDATE_TYPES = Object.freeze([
+    "live-outer",
+    "live-inner"
   ]);
   constructor(documentUpdater, logger = console, debug = false, scheduler = globalThis.setTimeout.bind(globalThis), reload = () => location.reload(), alerter = globalThis.alert?.bind(globalThis), windowObject = globalThis.window, animationFrame = globalThis.requestAnimationFrame?.bind(globalThis)) {
     this.documentUpdater = documentUpdater;
@@ -708,6 +808,14 @@ var FluxResponseHandler = class _FluxResponseHandler {
     this.scheduler(() => {
       this.documentUpdater.apply(newDocument, _FluxResponseHandler.LINK_UPDATE_TYPES);
       this.scrollToTopAfterPaint();
+    }, 0);
+  };
+  handleLiveDocument = (newDocument) => {
+    if (!this.isProcessableDocument(newDocument)) {
+      return;
+    }
+    this.scheduler(() => {
+      this.documentUpdater.apply(newDocument, _FluxResponseHandler.LIVE_UPDATE_TYPES);
     }, 0);
   };
   isProcessableDocument(newDocument) {
@@ -746,6 +854,80 @@ var FluxResponseHandler = class _FluxResponseHandler {
   }
 };
 
+// src/FluxLiveHandler.es6
+var FluxLiveHandler = class _FluxLiveHandler {
+  static UPDATE_TYPES = Object.freeze([
+    "live-outer",
+    "live-inner"
+  ]);
+  constructor(navigationController, updateTargetRegistry, onDocument, logger = console, debug = false, scheduler = globalThis.setTimeout.bind(globalThis), clearScheduler = globalThis.clearTimeout.bind(globalThis), locationObject = globalThis.location, intervalMs = 1e3) {
+    this.navigationController = navigationController;
+    this.updateTargetRegistry = updateTargetRegistry;
+    this.onDocument = onDocument;
+    this.logger = logger;
+    this.debug = debug;
+    this.scheduler = scheduler;
+    this.clearScheduler = clearScheduler;
+    this.locationObject = locationObject;
+    this.intervalMs = intervalMs;
+    this.timerId = null;
+    this.inFlight = false;
+  }
+  register(updateType, element) {
+    this.updateTargetRegistry.add(element, updateType);
+    this.ensureRunning();
+  }
+  ensureRunning() {
+    if (this.timerId !== null || !this.hasLiveElements()) {
+      return;
+    }
+    this.timerId = this.scheduler(this.pollDocument, this.intervalMs);
+  }
+  stop() {
+    if (this.timerId === null) {
+      return;
+    }
+    this.clearScheduler(this.timerId);
+    this.timerId = null;
+  }
+  pollDocument = async () => {
+    this.timerId = null;
+    if (!this.hasLiveElements()) {
+      return;
+    }
+    if (this.inFlight) {
+      this.ensureRunning();
+      return;
+    }
+    this.inFlight = true;
+    try {
+      await this.navigationController.pollDocument(
+        this.locationObject.href,
+        this.onDocument
+      );
+    } finally {
+      this.inFlight = false;
+      this.ensureRunning();
+    }
+  };
+  hasLiveElements() {
+    let hasLiveElements = false;
+    for (let type of _FluxLiveHandler.UPDATE_TYPES) {
+      for (let element of [...this.updateTargetRegistry.getElements(type)]) {
+        if (element?.isConnected) {
+          hasLiveElements = true;
+          continue;
+        }
+        this.updateTargetRegistry.remove(type, element);
+      }
+    }
+    if (this.debug) {
+      this.logger.debug("Flux live target count", hasLiveElements);
+    }
+    return hasLiveElements;
+  }
+};
+
 // src/Flux.es6
 var Flux = class _Flux {
   static DEBUG = false;
@@ -760,8 +942,9 @@ var Flux = class _Flux {
   formHandler;
   linkHandler;
   responseHandler;
+  liveHandler;
   logger;
-  constructor(style = void 0, elementEventMapper = void 0, parser = void 0, navigationController = void 0, updateTargetRegistry = void 0, focusStateManager = void 0, documentUpdater = void 0, directiveRegistry = void 0, domBridge = void 0, formHandler = void 0, linkHandler = void 0, responseHandler = void 0, logger = void 0) {
+  constructor(style = void 0, elementEventMapper = void 0, parser = void 0, navigationController = void 0, updateTargetRegistry = void 0, focusStateManager = void 0, documentUpdater = void 0, directiveRegistry = void 0, domBridge = void 0, formHandler = void 0, linkHandler = void 0, responseHandler = void 0, liveHandler = void 0, logger = void 0) {
     handleWindowPopState();
     this.logger = logger ?? console;
     style = style ?? new Style();
@@ -797,6 +980,13 @@ var Flux = class _Flux {
       this.navigationController,
       this.responseHandler.handleLinkDocument
     );
+    this.liveHandler = liveHandler ?? new FluxLiveHandler(
+      this.navigationController,
+      this.updateTargetRegistry,
+      this.responseHandler.handleLiveDocument,
+      console,
+      _Flux.DEBUG
+    );
     this.domBridge = domBridge ?? new FluxDomBridge(
       this.elementEventMapper,
       this.initFluxElementSafely,
@@ -811,6 +1001,8 @@ var Flux = class _Flux {
       updateInner: this.storeInnerUpdateElement,
       updateLinkOuter: this.storeLinkOuterUpdateElement,
       updateLinkInner: this.storeLinkInnerUpdateElement,
+      liveOuter: this.storeLiveOuterUpdateElement,
+      liveInner: this.storeLiveInnerUpdateElement,
       updateAttributes: this.storeAttributesUpdateElement,
       autoSubmit: this.formHandler.initAutoSubmit,
       autoLink: this.linkHandler.initAutoLink
@@ -860,6 +1052,12 @@ var Flux = class _Flux {
   };
   storeLinkInnerUpdateElement = (element) => {
     this.storeUpdateElement(element, "link-inner");
+  };
+  storeLiveOuterUpdateElement = (element) => {
+    this.liveHandler.register("live-outer", element);
+  };
+  storeLiveInnerUpdateElement = (element) => {
+    this.liveHandler.register("live-inner", element);
   };
   storeAttributesUpdateElement = (element) => {
     this.storeUpdateElement(element, "attributes");

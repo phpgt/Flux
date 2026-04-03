@@ -1,3 +1,5 @@
+import {DomPath} from "./DomPath.es6";
+
 export class FluxFormHandler {
 	constructor(
 		navigationController,
@@ -6,6 +8,8 @@ export class FluxFormHandler {
 		onNavigationDocument = onDocument,
 		logger = console,
 		debug = false,
+		now = () => Date.now(),
+		domPath = DomPath,
 	) {
 		this.navigationController = navigationController;
 		this.focusStateManager = focusStateManager;
@@ -13,6 +17,9 @@ export class FluxFormHandler {
 		this.onNavigationDocument = onNavigationDocument;
 		this.logger = logger;
 		this.debug = debug;
+		this.now = now;
+		this.domPath = domPath;
+		this.rateLimitState = new Map();
 	}
 
 	initAutoContainer = (fluxElement) => {
@@ -114,11 +121,41 @@ export class FluxFormHandler {
 	}
 
 	submitForm(form, submitter) {
+		if(this.isRateLimited(submitter)) {
+			return Promise.resolve(null);
+		}
+
 		let formData = this.getFormDataForButton(form, "autoSave", submitter);
 		let responseHandler = form.hasAttribute("action")
 			? this.onNavigationDocument
 			: this.onDocument;
 		return this.navigationController.submitForm(form, formData, responseHandler);
+	}
+
+	isRateLimited(submitter) {
+		if(!(submitter instanceof HTMLElement)) {
+			return false;
+		}
+
+		let rate = Number.parseFloat(submitter.dataset["fluxRate"] ?? "");
+		if(!Number.isFinite(rate) || rate <= 0) {
+			return false;
+		}
+
+		let now = this.now();
+		let rateLimitKey = this.getRateLimitKey(submitter);
+		let lastSubmittedAt = this.rateLimitState.get(rateLimitKey) ?? -Infinity;
+		if(now - lastSubmittedAt < rate * 1000) {
+			return true;
+		}
+
+		this.rateLimitState.set(rateLimitKey, now);
+		return false;
+	}
+
+	getRateLimitKey(submitter) {
+		let path = this.domPath.getXPathForElement(submitter, document);
+		return `submit:${path}`;
 	}
 
 	getFormDataForButton(form, type, submitter) {

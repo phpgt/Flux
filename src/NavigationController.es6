@@ -65,30 +65,60 @@ export class NavigationController {
 		);
 	}
 
+	pollDocument(url, onDocument) {
+		return this.requestDocument(
+			url,
+			{
+				credentials: "same-origin",
+			},
+			{
+				action: null,
+				errorPrefix: "Live update error",
+			},
+			onDocument,
+		);
+	}
+
 	async navigate(element, url, requestOptions, historyState, onDocument) {
 		element.classList.add("submitting");
 
 		try {
-			let response = await this.fetcher(url, requestOptions);
+			return await this.requestDocument(url, requestOptions, historyState, onDocument);
+		}
+		catch(error) {
+			return null;
+		}
+		finally {
+			element.classList.remove("submitting");
+		}
+	}
+
+	async requestDocument(url, requestOptions, historyState, onDocument) {
+		let method = (requestOptions.method ?? "get").toLowerCase();
+		try {
+			let absoluteUrl = new URL(url, globalThis.location?.href).toString();
+			let response = await this.fetcher(absoluteUrl, {
+				...requestOptions,
+				method,
+			});
 			if(!response.ok) {
 				throw new Error(`${historyState.errorPrefix}: ${response.status} ${response.statusText}`);
 			}
 
-			this.historyObject.pushState({
-				action: historyState.action,
-			}, "", response.url);
-
 			let html = await response.text();
 			let document = this.parser.parseFromString(html, "text/html");
+			if(historyState.action) {
+				this.historyObject.pushState({
+					action: historyState.action,
+				}, "", response.url);
+			}
+
 			onDocument(document);
 			return document;
 		}
 		catch(error) {
 			this.logger.error(error);
 			return null;
-		}
-		finally {
-			element.classList.remove("submitting");
 		}
 	}
 }

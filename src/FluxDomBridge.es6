@@ -62,6 +62,10 @@ export class FluxDomBridge {
 			return;
 		}
 
+		if(newElement.matches?.("[data-flux]")) {
+			this.initFluxElement(newElement);
+		}
+
 		newElement.querySelectorAll("[data-flux]").forEach(this.initFluxElement);
 		oldElement.querySelectorAll("[data-flux-obj]").forEach(fluxElement => {
 			let xPath = this.domPath.getXPathForElement(fluxElement, oldElement);

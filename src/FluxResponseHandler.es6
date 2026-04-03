@@ -11,6 +11,11 @@ export class FluxResponseHandler {
 		"link-inner",
 	]);
 
+	static LIVE_UPDATE_TYPES = Object.freeze([
+		"live-outer",
+		"live-inner",
+	]);
+
 	constructor(
 		documentUpdater,
 		logger = console,
@@ -49,6 +54,16 @@ export class FluxResponseHandler {
 		this.scheduler(() => {
 			this.documentUpdater.apply(newDocument, FluxResponseHandler.LINK_UPDATE_TYPES);
 			this.scrollToTopAfterPaint();
+		}, 0);
+	}
+
+	handleLiveDocument = (newDocument) => {
+		if(!this.isProcessableDocument(newDocument)) {
+			return;
+		}
+
+		this.scheduler(() => {
+			this.documentUpdater.apply(newDocument, FluxResponseHandler.LIVE_UPDATE_TYPES);
 		}, 0);
 	}
 

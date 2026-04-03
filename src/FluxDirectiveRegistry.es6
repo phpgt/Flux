@@ -27,6 +27,18 @@ const DIRECTIVE_DEFINITIONS = Object.freeze({
 		handler: "updateLinkInner",
 		description: "Register the element for innerHTML replacement on link updates only.",
 	},
+	"live": {
+		handler: "liveOuter",
+		description: "Register the element for recurring outerHTML replacement using background polling.",
+	},
+	"live-outer": {
+		handler: "liveOuter",
+		description: "Register the element for recurring outerHTML replacement using background polling.",
+	},
+	"live-inner": {
+		handler: "liveInner",
+		description: "Register the element for recurring innerHTML replacement using background polling.",
+	},
 	"update-attributes": {
 		handler: "updateAttributes",
 		description: "Register the element for attribute-only updates on refresh.",

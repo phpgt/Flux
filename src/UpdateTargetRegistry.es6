@@ -7,6 +7,10 @@ export class UpdateTargetRegistry {
 			this.collection[type] = [];
 		}
 
+		if(this.collection[type].includes(element)) {
+			return;
+		}
+
 		this.collection[type].push(element);
 	}
 
