@@ -8,6 +8,33 @@ The difference is that your application still uses the same straightforward serv
 
 [Read the documentation](https://www.php.gt/flux/).
 
+## Behat browser tests
+
+This repository includes Behat end-to-end tests for the examples in `example/`.
+
+Install PHP dependencies with:
+
+```bash
+composer install
+```
+
+Run the suite locally with:
+
+```bash
+composer behat
+```
+
+Feature files live in `test/behat/*.feature`. The local wrapper at `test/bin/behat` delegates to your local `php-actions/behat` checkout, so local runs use the same container orchestration as CI.
+
+PhpStorm settings:
+
+- Behat executable: `test/bin/behat`
+- Configuration file: `behat.yml`
+
+If your `php-actions/behat` checkout is not at `~/Code/php-actions/behat`, set `PHP_ACTIONS_BEHAT_DIR` to its location.
+
+If you want to dry-run the GitHub Action behavior itself, you can still invoke `php-actions/behat` directly from `~/Code/php-actions/behat`.
+
 To use Flux, convert a "regular" HTML form into a _flux form_ by adding the `data-flux` attribute:
 
 ```html

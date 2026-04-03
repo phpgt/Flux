@@ -1,0 +1,19 @@
+default:
+  suites:
+    default:
+      paths:
+        - test/behat
+      contexts:
+        - FeatureContext
+  extensions:
+    DMore\ChromeExtension\Behat\ServiceContainer\ChromeExtension: ~
+    Behat\MinkExtension:
+      base_url: "http://app:8000"
+      default_session: chrome
+      javascript_session: chrome
+      browser_name: chrome
+      sessions:
+        chrome:
+          chrome:
+            api_url: "http://127.0.0.1:9222"
+            dom_wait_timeout: 5000

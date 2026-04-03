@@ -1,1 +1,4 @@
-/package-lock.json
+/.idea/
+/.behat-runtime/
+/node_modules/
+/vendor/

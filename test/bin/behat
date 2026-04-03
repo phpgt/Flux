@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+ACTION_DIR="${PHP_ACTIONS_BEHAT_DIR:-$HOME/Code/php-actions/behat}"
+
+if [[ ! -d "$ACTION_DIR" ]]; then
+	echo "php-actions/behat checkout not found at $ACTION_DIR" >&2
+	echo "Set PHP_ACTIONS_BEHAT_DIR to your local php-actions/behat checkout." >&2
+	exit 1
+fi
+
+cd "$ACTION_DIR"
+rm -f DOCKER_ENV output.log behat.phar docker_tag
+
+export GITHUB_ACTOR="${GITHUB_ACTOR:-local}"
+export GITHUB_REPOSITORY="${GITHUB_REPOSITORY:-PhpGt/Flux}"
+export GITHUB_WORKSPACE="$ROOT_DIR"
+export ACTION_TOKEN="${ACTION_TOKEN:-dummy}"
+export ACTION_VERSION="${ACTION_VERSION:-latest}"
+export ACTION_PHP_VERSION="${ACTION_PHP_VERSION:-8.5}"
+export ACTION_BEHAT_PATH="${ACTION_BEHAT_PATH:-vendor/bin/behat}"
+export ACTION_APP_COMMAND="${ACTION_APP_COMMAND:-php -d display_errors=0 -S 0.0.0.0:8000 -t /app}"
+export ACTION_ARGS="$*"
+
+bash <(curl -s https://raw.githubusercontent.com/php-actions/php-build/v2/php-build.bash) behat
+exec ./behat-action.bash

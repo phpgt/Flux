@@ -43,27 +43,27 @@ elseif($doAction === "decrementB") {
 ?><!doctype html>
 <meta charset="utf-8" />
 <title>PHP.GT/Flux example 03 multiple forms</title>
-<link rel="stylesheet" href="./style.css" />
-<script type="module" src="../dist/flux.js" defer></script>
+<link rel="stylesheet" href="/example/style.css" />
+<script type="module" src="/dist/flux.js" defer></script>
 
 <textarea placeholder="Without Flux, submitting the form would lose any content typed into this box.">
 </textarea>
 
-<main data-flux>
-	<form method="post">
+<main>
+	<form method="post" data-flux>
 		<h1>Counter A</h1>
-		<output><?php echo number_format($numA);?></output>
-		<button name="do" value="incrementA">Increment</button>
-		<button name="do" value="decrementA">Decrement</button>
+		<output data-flux="update" class="a"><?php echo number_format($numA);?></output>
+		<button name="do" value="incrementA">Increment A</button>
+		<button name="do" value="decrementA">Decrement A</button>
 	</form>
 
-	<form method="post">
+	<form method="post" data-flux>
 		<h1>Counter B</h1>
-		<output><?php echo number_format($numB);?></output>
-		<button name="do" value="incrementB">Increment</button>
-		<button name="do" value="decrementB">Decrement</button>
+		<output data-flux="update" class="b"><?php echo number_format($numB);?></output>
+		<button name="do" value="incrementB">Increment B</button>
+		<button name="do" value="decrementB">Decrement B</button>
 	</form>
 
 	<h1>A + B =</h1>
-	<output><?php echo $sum;?></output>
+	<output data-flux="update" class="ab"><?php echo $sum;?></output>
 </main>

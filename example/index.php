@@ -4,7 +4,7 @@
 	<meta charset="utf=8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1" />
 	<title>PHP.GT/Flux</title>
-	<link rel="stylesheet" href="./style.css" />
+	<link rel="stylesheet" href="/example/style.css" />
 </head>
 <body>
 
@@ -12,12 +12,13 @@
 	<ul>
 		<?php foreach(glob(__DIR__ . "/*.php") as $path) {
 			$fileName = pathinfo($path, PATHINFO_BASENAME);
-			if($fileName === "index.php") {
+			[$number] = explode("-", $fileName);
+			if(!is_numeric($number)) {
 				continue;
 			}
 		?>
 		<li>
-			<a target="frame" href="<?php echo $fileName;?>"><?php echo $fileName;?></a>
+			<a target="frame" href="/example/<?php echo $fileName;?>"><?php echo $fileName;?></a>
 		</li>
 		<?php }?>
 	</ul>
