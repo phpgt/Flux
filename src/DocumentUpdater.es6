@@ -17,10 +17,11 @@ export class DocumentUpdater {
 		this.debug = debug;
 	}
 
-	apply(newDocument, allowedTypes = undefined) {
+	apply(newDocument, allowedTypes = undefined, allowedTargetKeys = undefined) {
 		this.focusStateManager.markAutofocus(newDocument);
 		let newActiveElement = this.focusStateManager.capturePendingActiveElement(newDocument);
 		let allowedTypeSet = allowedTypes ? new Set(allowedTypes) : null;
+		let allowedTargetKeySet = allowedTargetKeys ? new Set(allowedTargetKeys) : null;
 		let updateTypeSnapshot = new Map();
 
 		for(let type of this.updateTargetRegistry.getTypes()) {
@@ -33,6 +34,13 @@ export class DocumentUpdater {
 
 		for(let [type, elements] of updateTypeSnapshot) {
 			elements.forEach(existingElement => {
+				if(allowedTargetKeySet) {
+					let targetKey = this.getTargetKey(type, existingElement);
+					if(!allowedTargetKeySet.has(targetKey)) {
+						return;
+					}
+				}
+
 				this.applyUpdateTarget(type, existingElement, newDocument);
 			});
 		}
@@ -111,5 +119,9 @@ export class DocumentUpdater {
 		Array.from(newElement.attributes).forEach(attribute => {
 			existingElement.setAttribute(attribute.name, attribute.value);
 		});
+	}
+
+	getTargetKey(type, element) {
+		return `${type}:${this.domPath.getXPathForElement(element, document)}`;
 	}
 }
