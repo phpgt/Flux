@@ -11,15 +11,5 @@
         "behat/mink": "^1.13",
         "dmore/chrome-mink-driver": "^2.9",
         "dmore/behat-chrome-extension": "^1.4"
-    },
-    "scripts": {
-        "behat": "test/bin/behat",
-        "behat:up": "test/bin/behat-up",
-        "behat:down": "test/bin/behat-down",
-        "test": [
-            "@behat:up",
-            "@behat",
-            "@behat:down"
-        ]
     }
 }

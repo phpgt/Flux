@@ -61,37 +61,9 @@ jobs:
       - name: Extract build archive
         run: tar -xvf /tmp/github-actions/build.tar ./
 
-      - name: Start Behat services
-        run: test/bin/behat-up
-
-      - name: Start Chrome DevTools proxy
-        run: docker exec -d flux-behat-chrome python3 /code/test/bin/chrome-devtools-proxy.py
-
-      - name: Wait for app and Chrome proxy
-        run: |
-          set -euo pipefail
-          for attempt in {1..50}; do
-            if curl -fsS http://127.0.0.1:8000/example/01-counter.php >/dev/null; then
-              break
-            fi
-            sleep 0.2
-          done
-          for attempt in {1..100}; do
-            if curl -fsS http://127.0.0.1:9223/json/version >/dev/null; then
-              break
-            fi
-            sleep 0.2
-          done
-          curl -fsS http://127.0.0.1:8000/example/01-counter.php >/dev/null
-          curl -fsS http://127.0.0.1:9223/json/version >/dev/null
-
       - name: Run Behat
         uses: php-actions/behat@chrome
         with:
           php_version: "8.5"
           vendored_behat_path: vendor/bin/behat
-          config: behat.yml.ci
-
-      - name: Stop Behat services
-        if: always()
-        run: test/bin/behat-down
+          app_command: php -d display_errors=0 -S 0.0.0.0:8000 -t /app

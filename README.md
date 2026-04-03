@@ -10,7 +10,7 @@ The difference is that your application still uses the same straightforward serv
 
 ## Behat browser tests
 
-This repository now includes a Behat setup for end-to-end testing the examples in `example/` with both the PHP app server and a headless Chrome instance running inside Docker, so no local Java installation is required.
+This repository includes Behat end-to-end tests for the examples in `example/`.
 
 Install PHP dependencies with:
 
@@ -18,25 +18,37 @@ Install PHP dependencies with:
 composer install
 ```
 
-Bring up the Behat dependencies:
+To run the suite in a container setup that matches the GitHub Action, use the `php-actions/behat` checkout:
 
 ```bash
-composer behat:up
+cd ~/Code/php-actions/behat
+GITHUB_ACTOR=local \
+GITHUB_REPOSITORY=PhpGt/Flux \
+GITHUB_WORKSPACE=~/Code/PhpGt/Flux \
+ACTION_TOKEN=dummy \
+ACTION_VERSION=latest \
+ACTION_PHP_VERSION=8.5 \
+ACTION_BEHAT_PATH=vendor/bin/behat \
+ACTION_APP_COMMAND='php -d display_errors=0 -S 0.0.0.0:8000 -t /app' \
+bash <(curl -s https://raw.githubusercontent.com/php-actions/php-build/v2/php-build.bash) behat
 ```
 
-Run the feature suite:
+Then execute the action script:
 
 ```bash
-composer behat
+cd ~/Code/php-actions/behat
+GITHUB_ACTOR=local \
+GITHUB_REPOSITORY=PhpGt/Flux \
+GITHUB_WORKSPACE=~/Code/PhpGt/Flux \
+ACTION_TOKEN=dummy \
+ACTION_VERSION=latest \
+ACTION_PHP_VERSION=8.5 \
+ACTION_BEHAT_PATH=vendor/bin/behat \
+ACTION_APP_COMMAND='php -d display_errors=0 -S 0.0.0.0:8000 -t /app' \
+./behat-action.bash
 ```
 
-Stop the Behat Docker services:
-
-```bash
-composer behat:down
-```
-
-Feature files live in `test/behat/*.feature`. The runner serves the project at `http://app:8000` inside the Behat Docker network and points the browser at the example pages under `/example`.
+Feature files live in `test/behat/*.feature`. The action starts a temporary PHP app container and a headless Chrome container on the host network, then rewrites the Behat config at runtime so the browser and test runner both use `127.0.0.1`.
 
 To use Flux, convert a "regular" HTML form into a _flux form_ by adding the `data-flux` attribute:
 
