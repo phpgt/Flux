@@ -13,66 +13,6 @@ $tag = $_GET["tag"] ?? "";
 <link rel="stylesheet" href="/example/style.css" />
 <script type="module" src="/dist/flux.js" defer></script>
 
-<style>
-body {
-	gap: 1.5rem;
-	margin: 0 auto;
-	max-width: 72rem;
-	padding: 1.5rem;
-}
-
-.scratchpad {
-	min-height: 8rem;
-	width: 100%;
-}
-
-.page-shell,
-.columns,
-form,
-label {
-	display: grid;
-	gap: 1rem;
-}
-
-.columns {
-	grid-template-columns: 2fr 1fr;
-}
-
-.hero,
-.panel,
-.log {
-	border: 1px solid #ccc;
-	border-radius: 0.5rem;
-	padding: 1rem;
-}
-
-.hero {
-	background: #eef6ff;
-}
-
-.link-row a {
-	margin-right: 0.75rem;
-}
-
-input,
-select,
-button,
-textarea {
-	font: inherit;
-	padding: 0.5rem;
-}
-
-button {
-	width: fit-content;
-}
-
-@media (max-width: 48rem) {
-	.columns {
-		grid-template-columns: 1fr;
-	}
-}
-</style>
-
 <textarea class="scratchpad" placeholder="Type here, then move between Page 1 and Page 2 using the Flux links below."></textarea>
 
 <main class="page-shell" data-flux="update-link">

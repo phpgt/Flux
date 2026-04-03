@@ -52,18 +52,18 @@ elseif($doAction === "decrementB") {
 <main>
 	<form method="post" data-flux>
 		<h1>Counter A</h1>
-		<output data-flux="update"><?php echo number_format($numA);?></output>
-		<button name="do" value="incrementA">Increment</button>
-		<button name="do" value="decrementA">Decrement</button>
+		<output data-flux="update" class="a"><?php echo number_format($numA);?></output>
+		<button name="do" value="incrementA">Increment A</button>
+		<button name="do" value="decrementA">Decrement A</button>
 	</form>
 
 	<form method="post" data-flux>
 		<h1>Counter B</h1>
-		<output data-flux="update"><?php echo number_format($numB);?></output>
-		<button name="do" value="incrementB">Increment</button>
-		<button name="do" value="decrementB">Decrement</button>
+		<output data-flux="update" class="b"><?php echo number_format($numB);?></output>
+		<button name="do" value="incrementB">Increment B</button>
+		<button name="do" value="decrementB">Decrement B</button>
 	</form>
 
 	<h1>A + B =</h1>
-	<output data-flux="update"><?php echo $sum;?></output>
+	<output data-flux="update" class="ab"><?php echo $sum;?></output>
 </main>

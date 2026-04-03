@@ -11,4 +11,5 @@ exec docker exec \
 	flux-behat-chrome \
 	/code/vendor/bin/behat \
 	-c /code/behat.yml.dist \
+	--colors \
 	"$@"

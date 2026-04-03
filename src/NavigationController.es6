@@ -12,20 +12,42 @@ export class NavigationController {
 	}
 
 	submitForm(form, formData, onDocument) {
+		let method = (form.getAttribute("method") ?? "get").toLowerCase();
+		let url = form.action;
+		let requestOptions = {
+			method,
+			credentials: "same-origin",
+		};
+
+		if(method === "get") {
+			url = this.appendFormDataToUrl(url, formData);
+		}
+		else {
+			requestOptions.body = formData;
+		}
+
 		return this.navigate(
 			form,
-			form.action,
-			{
-				method: form.getAttribute("method"),
-				credentials: "same-origin",
-				body: formData,
-			},
+			url,
+			requestOptions,
 			{
 				action: "submitForm",
 				errorPrefix: "Form submission error",
 			},
 			onDocument,
 		);
+	}
+
+	appendFormDataToUrl(url, formData) {
+		let urlObject = new URL(url, globalThis.location?.href);
+		let searchParams = new URLSearchParams(urlObject.search);
+
+		for(let [key, value] of formData.entries()) {
+			searchParams.append(key, value);
+		}
+
+		urlObject.search = searchParams.toString();
+		return urlObject.toString();
 	}
 
 	clickLink(link, onDocument) {

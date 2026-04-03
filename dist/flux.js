@@ -153,6 +153,13 @@ var UpdateTargetRegistry = class {
     }
     this.collection[type][index] = newElement;
   }
+  remove(type, existingElement) {
+    let index = this.getElements(type).indexOf(existingElement);
+    if (index < 0) {
+      return;
+    }
+    this.collection[type].splice(index, 1);
+  }
 };
 
 // src/FocusStateManager.es6
@@ -239,20 +246,36 @@ var NavigationController = class {
     this.logger = logger;
   }
   submitForm(form, formData, onDocument) {
+    let method = (form.getAttribute("method") ?? "get").toLowerCase();
+    let url = form.action;
+    let requestOptions = {
+      method,
+      credentials: "same-origin"
+    };
+    if (method === "get") {
+      url = this.appendFormDataToUrl(url, formData);
+    } else {
+      requestOptions.body = formData;
+    }
     return this.navigate(
       form,
-      form.action,
-      {
-        method: form.getAttribute("method"),
-        credentials: "same-origin",
-        body: formData
-      },
+      url,
+      requestOptions,
       {
         action: "submitForm",
         errorPrefix: "Form submission error"
       },
       onDocument
     );
+  }
+  appendFormDataToUrl(url, formData) {
+    let urlObject = new URL(url, globalThis.location?.href);
+    let searchParams = new URLSearchParams(urlObject.search);
+    for (let [key, value] of formData.entries()) {
+      searchParams.append(key, value);
+    }
+    urlObject.search = searchParams.toString();
+    return urlObject.toString();
   }
   clickLink(link, onDocument) {
     return this.navigate(
@@ -306,11 +329,15 @@ var DocumentUpdater = class {
     this.focusStateManager.markAutofocus(newDocument);
     let newActiveElement = this.focusStateManager.capturePendingActiveElement(newDocument);
     let allowedTypeSet = allowedTypes ? new Set(allowedTypes) : null;
+    let updateTypeSnapshot = /* @__PURE__ */ new Map();
     for (let type of this.updateTargetRegistry.getTypes()) {
       if (allowedTypeSet && !allowedTypeSet.has(type)) {
         continue;
       }
-      this.updateTargetRegistry.getElements(type).forEach((existingElement) => {
+      updateTypeSnapshot.set(type, Array.from(this.updateTargetRegistry.getElements(type)));
+    }
+    for (let [type, elements] of updateTypeSnapshot) {
+      elements.forEach((existingElement) => {
         this.applyUpdateTarget(type, existingElement, newDocument);
       });
     }
@@ -322,6 +349,10 @@ var DocumentUpdater = class {
   }
   applyUpdateTarget(type, existingElement, newDocument) {
     if (!existingElement) {
+      return;
+    }
+    if (!existingElement.isConnected) {
+      this.updateTargetRegistry.remove(type, existingElement);
       return;
     }
     let activeElementState = this.focusStateManager.captureElementState(existingElement);

@@ -21,13 +21,18 @@ export class DocumentUpdater {
 		this.focusStateManager.markAutofocus(newDocument);
 		let newActiveElement = this.focusStateManager.capturePendingActiveElement(newDocument);
 		let allowedTypeSet = allowedTypes ? new Set(allowedTypes) : null;
+		let updateTypeSnapshot = new Map();
 
 		for(let type of this.updateTargetRegistry.getTypes()) {
 			if(allowedTypeSet && !allowedTypeSet.has(type)) {
 				continue;
 			}
 
-			this.updateTargetRegistry.getElements(type).forEach(existingElement => {
+			updateTypeSnapshot.set(type, Array.from(this.updateTargetRegistry.getElements(type)));
+		}
+
+		for(let [type, elements] of updateTypeSnapshot) {
+			elements.forEach(existingElement => {
 				this.applyUpdateTarget(type, existingElement, newDocument);
 			});
 		}
@@ -41,6 +46,11 @@ export class DocumentUpdater {
 
 	applyUpdateTarget(type, existingElement, newDocument) {
 		if(!existingElement) {
+			return;
+		}
+
+		if(!existingElement.isConnected) {
+			this.updateTargetRegistry.remove(type, existingElement);
 			return;
 		}
 

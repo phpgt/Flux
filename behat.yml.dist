@@ -8,7 +8,7 @@ default:
   extensions:
     DMore\ChromeExtension\Behat\ServiceContainer\ChromeExtension: ~
     Behat\MinkExtension:
-      base_url: "http://app:8000/example"
+      base_url: "http://app:8000"
       default_session: chrome
       javascript_session: chrome
       browser_name: chrome

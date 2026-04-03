@@ -26,4 +26,13 @@ export class UpdateTargetRegistry {
 
 		this.collection[type][index] = newElement;
 	}
+
+	remove(type, existingElement) {
+		let index = this.getElements(type).indexOf(existingElement);
+		if(index < 0) {
+			return;
+		}
+
+		this.collection[type].splice(index, 1);
+	}
 }

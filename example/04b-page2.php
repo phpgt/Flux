@@ -13,60 +13,6 @@ $tone = $_GET["tone"] ?? "plain";
 <link rel="stylesheet" href="/example/style.css" />
 <script type="module" src="/dist/flux.js" defer></script>
 
-<style>
-body {
-	gap: 1.5rem;
-	margin: 0 auto;
-	max-width: 72rem;
-	padding: 1.5rem;
-}
-
-.scratchpad {
-	min-height: 8rem;
-	width: 100%;
-}
-
-.page-shell,
-.grid,
-form,
-label {
-	display: grid;
-	gap: 1rem;
-}
-
-.grid {
-	grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
-}
-
-.hero,
-.panel,
-.article {
-	border: 1px solid #ccc;
-	border-radius: 0.5rem;
-	padding: 1rem;
-}
-
-.hero {
-	background: #fff8eb;
-}
-
-.link-row a {
-	margin-right: 0.75rem;
-}
-
-input,
-select,
-button,
-textarea {
-	font: inherit;
-	padding: 0.5rem;
-}
-
-button {
-	width: fit-content;
-}
-</style>
-
 <textarea class="scratchpad" placeholder="This textarea remains outside the link-only update target."></textarea>
 
 <main class="page-shell" data-flux="update-link">

@@ -136,6 +136,16 @@ describe("UpdateTargetRegistry", () => {
 		expect(registry.getTypes()).toEqual(["outer"]);
 		expect(registry.getElements("outer")).toEqual([newElement]);
 	});
+
+	it("removes registered update targets by type", () => {
+		let registry = new UpdateTargetRegistry();
+		let existingElement = document.createElement("div");
+
+		registry.add(existingElement, "outer");
+		registry.remove("outer", existingElement);
+
+		expect(registry.getElements("outer")).toEqual([]);
+	});
 });
 
 describe("FocusStateManager", () => {
@@ -202,6 +212,37 @@ describe("NavigationController", () => {
 		expect(pushState).toHaveBeenCalledWith({action: "submitForm"}, "", "https://example.com/next");
 		expect(callback).toHaveBeenCalledWith(expect.any(Document));
 		expect(form.classList.contains("submitting")).toBe(false);
+	});
+
+	it("submits GET forms by encoding form data into the URL query string", async () => {
+		document.body.innerHTML = `
+		<form action="/search?scope=docs" method="get">
+			<input name="title" value="One">
+		</form>
+		`;
+
+		let form = document.querySelector("form");
+		let callback = vi.fn();
+		let fetcher = vi.fn().mockResolvedValue({
+			ok: true,
+			url: "https://example.com/search?scope=docs&title=One",
+			text: vi.fn().mockResolvedValue("<html><head></head><body><main>Next</main></body></html>"),
+		});
+		let navigationController = new NavigationController(
+			new DOMParser(),
+			fetcher,
+			{pushState: vi.fn()},
+			{error: vi.fn()},
+		);
+
+		await navigationController.submitForm(form, new FormData(form), callback);
+
+		expect(fetcher).toHaveBeenCalledTimes(1);
+		expect(fetcher.mock.calls[0][0]).toBe("http://localhost:3000/search?scope=docs&title=One");
+		expect(fetcher.mock.calls[0][1]).toEqual({
+			method: "get",
+			credentials: "same-origin",
+		});
 	});
 
 	it("logs request errors and clears the submitting state", async () => {
@@ -344,6 +385,84 @@ describe("DocumentUpdater", () => {
 		expect(document.querySelector("main")).not.toBe(existingOuter);
 		expect(document.querySelector("main").textContent).toBe("New outer");
 		expect(existingInner.innerHTML).toBe("<strong>New inner</strong>");
+	});
+
+	it("drops disconnected nested targets after an outer replacement", () => {
+		document.body.innerHTML = `
+		<main data-flux="update-link">
+			<section data-flux="update-inner"><span>Old inner</span></section>
+		</main>
+		`;
+
+		let existingOuter = document.querySelector("main");
+		let existingInner = document.querySelector("section");
+		let updateTargetRegistry = new UpdateTargetRegistry();
+		updateTargetRegistry.add(existingOuter, "link-outer");
+		updateTargetRegistry.add(existingInner, "inner");
+		let documentUpdater = new DocumentUpdater(
+			updateTargetRegistry,
+			{
+				markAutofocus: vi.fn(),
+				capturePendingActiveElement: vi.fn().mockReturnValue(null),
+				captureElementState: vi.fn().mockReturnValue(null),
+				restoreElementState: vi.fn(),
+				restorePendingActiveElement: vi.fn(),
+				focusMarkedAutofocusElements: vi.fn(),
+			},
+			vi.fn(),
+		);
+		let newDocument = new DOMParser().parseFromString(`
+			<html>
+				<body>
+					<main data-flux="update-link">
+						<section data-flux="update-inner"><strong>New inner</strong></section>
+					</main>
+				</body>
+			</html>
+		`, "text/html");
+
+		documentUpdater.apply(newDocument, ["inner", "link-outer"]);
+
+		expect(updateTargetRegistry.getElements("inner")).toEqual([]);
+		expect(document.querySelector("main").textContent).toContain("New inner");
+	});
+
+	it("does not process update targets added during the current apply pass", () => {
+		document.body.innerHTML = `<main data-flux="update-link"><section data-flux="update-inner"><span>Old</span></section></main>`;
+
+		let existingOuter = document.querySelector("main");
+		let updateTargetRegistry = new UpdateTargetRegistry();
+		updateTargetRegistry.add(existingOuter, "link-outer");
+		let documentUpdater = new DocumentUpdater(
+			updateTargetRegistry,
+			{
+				markAutofocus: vi.fn(),
+				capturePendingActiveElement: vi.fn().mockReturnValue(null),
+				captureElementState: vi.fn().mockReturnValue(null),
+				restoreElementState: vi.fn(),
+				restorePendingActiveElement: vi.fn(),
+				focusMarkedAutofocusElements: vi.fn(),
+			},
+			vi.fn((oldElement, newElement) => {
+				if(oldElement.tagName === "MAIN") {
+					updateTargetRegistry.add(newElement.querySelector("section"), "inner");
+				}
+			}),
+		);
+		let applyInnerUpdateSpy = vi.spyOn(documentUpdater, "applyInnerUpdate");
+		let newDocument = new DOMParser().parseFromString(`
+			<html>
+				<body>
+					<main data-flux="update-link"><section data-flux="update-inner"><strong>New</strong></section></main>
+				</body>
+			</html>
+		`, "text/html");
+
+		documentUpdater.apply(newDocument, ["link-outer", "inner"]);
+
+		expect(applyInnerUpdateSpy).not.toHaveBeenCalled();
+		expect(updateTargetRegistry.getElements("inner")).toHaveLength(1);
+		expect(document.querySelector("section").innerHTML).toBe("<strong>New</strong>");
 	});
 
 	it("updates only the element attributes when using update-attributes", () => {
