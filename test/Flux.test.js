@@ -302,89 +302,6 @@ describe("NavigationController", () => {
 		expect(link.classList.contains("submitting")).toBe(false);
 	});
 
-	it("coalesces bursty requests so only one fetch starts per second", async () => {
-		let now = 0;
-		let scheduledCallback = null;
-		let scheduler = vi.fn((callback) => {
-			scheduledCallback = callback;
-			return 1;
-		});
-		let fetcher = vi.fn()
-			.mockResolvedValueOnce({
-				ok: true,
-				url: "https://example.com/first",
-				text: vi.fn().mockResolvedValue("<html><head></head><body><main>First</main></body></html>"),
-			})
-			.mockResolvedValueOnce({
-				ok: true,
-				url: "https://example.com/second",
-				text: vi.fn().mockResolvedValue("<html><head></head><body><main>Second</main></body></html>"),
-			});
-		let navigationController = new NavigationController(
-			new DOMParser(),
-			fetcher,
-			{pushState: vi.fn()},
-			{error: vi.fn()},
-			scheduler,
-			vi.fn(),
-			() => now,
-			1000,
-		);
-
-		let firstRequest = navigationController.pollDocument("https://example.com/first", vi.fn());
-		let secondCallback = vi.fn();
-		let secondRequest = navigationController.pollDocument("https://example.com/second", secondCallback);
-
-		await firstRequest;
-
-		expect(fetcher).toHaveBeenCalledTimes(1);
-		expect(fetcher).toHaveBeenNthCalledWith(1, "https://example.com/first", {
-			credentials: "same-origin",
-			method: "get",
-		});
-		expect(scheduler).toHaveBeenCalledTimes(1);
-
-		now = 1000;
-		await scheduledCallback();
-		await secondRequest;
-
-		expect(fetcher).toHaveBeenCalledTimes(2);
-		expect(fetcher).toHaveBeenNthCalledWith(2, "https://example.com/second", {
-			credentials: "same-origin",
-			method: "get",
-		});
-		expect(secondCallback).toHaveBeenCalledWith(expect.any(Document));
-	});
-
-	it("reuses a fresh matching response instead of fetching again within the same second", async () => {
-		let now = 0;
-		let fetcher = vi.fn().mockResolvedValue({
-			ok: true,
-			url: "https://example.com/live",
-			text: vi.fn().mockResolvedValue("<html><head></head><body><main>Tick</main></body></html>"),
-		});
-		let navigationController = new NavigationController(
-			new DOMParser(),
-			fetcher,
-			{pushState: vi.fn()},
-			{error: vi.fn()},
-			vi.fn(),
-			vi.fn(),
-			() => now,
-			1000,
-		);
-		let firstCallback = vi.fn();
-		let secondCallback = vi.fn();
-
-		await navigationController.pollDocument("https://example.com/live", firstCallback);
-		now = 500;
-		await navigationController.pollDocument("https://example.com/live", secondCallback);
-
-		expect(fetcher).toHaveBeenCalledTimes(1);
-		expect(firstCallback).toHaveBeenCalledWith(expect.any(Document));
-		expect(secondCallback).toHaveBeenCalledWith(expect.any(Document));
-	});
-
 	it("polls the current document without pushing history state", async () => {
 		let callback = vi.fn();
 		let pushState = vi.fn();
@@ -852,6 +769,80 @@ describe("FluxFormHandler", () => {
 			onDocument,
 		);
 	});
+
+	it("rate limits submitter buttons when data-flux-rate is present", () => {
+		let now = 1000;
+		document.body.innerHTML = `
+		<form method="post">
+			<button data-flux="submit" data-flux-rate="1.5">Save</button>
+		</form>
+		`;
+
+		let form = document.querySelector("form");
+		let button = document.querySelector("button");
+		let navigationController = {submitForm: vi.fn()};
+		let handler = new FluxFormHandler(
+			navigationController,
+			{storeFormState: vi.fn()},
+			vi.fn(),
+			vi.fn(),
+			console,
+			false,
+			() => now,
+		);
+
+		handler.submitForm(form, button);
+		now = 2000;
+		handler.submitForm(form, button);
+		now = 2600;
+		handler.submitForm(form, button);
+
+		expect(navigationController.submitForm).toHaveBeenCalledTimes(2);
+	});
+
+	it("keeps submitter rate limiting after the button is replaced", () => {
+		let now = 1000;
+		document.body.innerHTML = `
+		<main>
+			<form method="post">
+				<button data-flux="submit" data-flux-rate="1">Save</button>
+			</form>
+		</main>
+		`;
+
+		let navigationController = {submitForm: vi.fn()};
+		let handler = new FluxFormHandler(
+			navigationController,
+			{storeFormState: vi.fn()},
+			vi.fn(),
+			vi.fn(),
+			console,
+			false,
+			() => now,
+		);
+
+		handler.submitForm(document.querySelector("form"), document.querySelector("button"));
+
+		let newDocument = new DOMParser().parseFromString(`
+			<html>
+				<body>
+					<main>
+						<form method="post">
+							<button data-flux="submit" data-flux-rate="1">Save</button>
+						</form>
+					</main>
+				</body>
+			</html>
+		`, "text/html");
+		document.querySelector("main").replaceWith(newDocument.querySelector("main"));
+
+		now = 1500;
+		handler.submitForm(document.querySelector("form"), document.querySelector("button"));
+		now = 2001;
+		handler.submitForm(document.querySelector("form"), document.querySelector("button"));
+
+		expect(navigationController.submitForm).toHaveBeenCalledTimes(2);
+	});
 });
 
 describe("FluxDomBridge", () => {
@@ -1000,6 +991,57 @@ describe("FluxLinkHandler", () => {
 			behavior: "smooth",
 		});
 		expect(navigationController.clickLink).not.toHaveBeenCalled();
+	});
+
+	it("rate limits links when data-flux-rate is present", () => {
+		let now = 1000;
+		let navigationController = {clickLink: vi.fn()};
+		let handler = new FluxLinkHandler(
+			navigationController,
+			vi.fn(),
+			{scrollTo: vi.fn()},
+			() => now,
+		);
+		document.body.innerHTML = `<a href="/next" data-flux="link" data-flux-rate="1">Next</a>`;
+		let link = document.querySelector("a");
+
+		handler.clickLink(link);
+		now = 1500;
+		handler.clickLink(link);
+		now = 2001;
+		handler.clickLink(link);
+
+		expect(navigationController.clickLink).toHaveBeenCalledTimes(2);
+	});
+
+	it("keeps link rate limiting after the link element is replaced", () => {
+		let now = 1000;
+		let navigationController = {clickLink: vi.fn()};
+		let handler = new FluxLinkHandler(
+			navigationController,
+			vi.fn(),
+			{scrollTo: vi.fn()},
+			() => now,
+		);
+		document.body.innerHTML = `<main><a href="/next" data-flux="link" data-flux-rate="1">Next</a></main>`;
+
+		handler.clickLink(document.querySelector("a"));
+
+		let newDocument = new DOMParser().parseFromString(`
+			<html>
+				<body>
+					<main><a href="/next" data-flux="link" data-flux-rate="1">Next</a></main>
+				</body>
+			</html>
+		`, "text/html");
+		document.querySelector("main").replaceWith(newDocument.querySelector("main"));
+
+		now = 1500;
+		handler.clickLink(document.querySelector("a"));
+		now = 2001;
+		handler.clickLink(document.querySelector("a"));
+
+		expect(navigationController.clickLink).toHaveBeenCalledTimes(2);
 	});
 });
 

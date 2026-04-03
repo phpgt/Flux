@@ -242,20 +242,11 @@ var FocusStateManager = class {
 
 // src/NavigationController.es6
 var NavigationController = class {
-  constructor(parser = new DOMParser(), fetcher = globalThis.fetch.bind(globalThis), historyObject = globalThis.history, logger = console, scheduler = globalThis.setTimeout.bind(globalThis), clearScheduler = globalThis.clearTimeout.bind(globalThis), now = () => Date.now(), minRequestIntervalMs = 1e3) {
+  constructor(parser = new DOMParser(), fetcher = globalThis.fetch.bind(globalThis), historyObject = globalThis.history, logger = console) {
     this.parser = parser;
     this.fetcher = fetcher;
     this.historyObject = historyObject;
     this.logger = logger;
-    this.scheduler = scheduler;
-    this.clearScheduler = clearScheduler;
-    this.now = now;
-    this.minRequestIntervalMs = minRequestIntervalMs;
-    this.lastRequestTimestamp = -Infinity;
-    this.inFlight = false;
-    this.pendingRequest = null;
-    this.pendingTimerId = null;
-    this.responseCache = /* @__PURE__ */ new Map();
   }
   submitForm(form, formData, onDocument) {
     let method = (form.getAttribute("method") ?? "get").toLowerCase();
@@ -327,152 +318,28 @@ var NavigationController = class {
     }
   }
   async requestDocument(url, requestOptions, historyState, onDocument) {
-    let request = this.createRequest(url, requestOptions, historyState, onDocument);
-    let cachedDocument = this.getFreshCachedDocument(request);
-    if (cachedDocument) {
-      this.applyResponse(cachedDocument, request.historyState, request.onDocument);
-      return cachedDocument.document;
-    }
-    if (this.canStartRequest()) {
-      return this.executeRequest(request);
-    }
-    return this.queueRequest(request);
-  }
-  createRequest(url, requestOptions, historyState, onDocument) {
     let method = (requestOptions.method ?? "get").toLowerCase();
-    let absoluteUrl = new URL(url, globalThis.location?.href).toString();
-    let requestKey = `${method}:${absoluteUrl}:${this.serialiseRequestBody(requestOptions.body)}`;
-    return {
-      url: absoluteUrl,
-      requestOptions: {
+    try {
+      let absoluteUrl = new URL(url, globalThis.location?.href).toString();
+      let response = await this.fetcher(absoluteUrl, {
         ...requestOptions,
         method
-      },
-      historyState,
-      onDocument,
-      requestKey
-    };
-  }
-  serialiseRequestBody(body) {
-    if (!body) {
-      return "";
-    }
-    if (body instanceof FormData) {
-      let searchParams = new URLSearchParams();
-      for (let [key, value] of body.entries()) {
-        searchParams.append(key, typeof value === "string" ? value : value.name);
-      }
-      return searchParams.toString();
-    }
-    if (body instanceof URLSearchParams) {
-      return body.toString();
-    }
-    if (typeof body === "string") {
-      return body;
-    }
-    return String(body);
-  }
-  canStartRequest() {
-    return !this.inFlight && this.now() - this.lastRequestTimestamp >= this.minRequestIntervalMs;
-  }
-  queueRequest(request) {
-    return new Promise((resolve) => {
-      if (this.pendingRequest) {
-        this.pendingRequest.resolve(null);
-      }
-      this.pendingRequest = {
-        ...request,
-        resolve
-      };
-      this.schedulePendingRequest();
-    });
-  }
-  schedulePendingRequest() {
-    if (this.pendingTimerId !== null || !this.pendingRequest) {
-      return;
-    }
-    this.pendingTimerId = this.scheduler(() => {
-      this.pendingTimerId = null;
-      this.flushPendingRequest();
-    }, this.getPendingDelay());
-  }
-  getPendingDelay() {
-    if (this.inFlight) {
-      return 50;
-    }
-    return Math.max(0, this.minRequestIntervalMs - (this.now() - this.lastRequestTimestamp));
-  }
-  flushPendingRequest() {
-    if (!this.pendingRequest) {
-      return;
-    }
-    let cachedDocument = this.getFreshCachedDocument(this.pendingRequest);
-    if (cachedDocument) {
-      let pendingRequest2 = this.pendingRequest;
-      this.pendingRequest = null;
-      this.applyResponse(cachedDocument, pendingRequest2.historyState, pendingRequest2.onDocument);
-      pendingRequest2.resolve(cachedDocument.document);
-      return;
-    }
-    if (!this.canStartRequest()) {
-      this.schedulePendingRequest();
-      return;
-    }
-    let pendingRequest = this.pendingRequest;
-    this.pendingRequest = null;
-    this.executeRequest(pendingRequest).then(pendingRequest.resolve);
-  }
-  getFreshCachedDocument(request) {
-    let cachedResponse = this.responseCache.get(request.requestKey);
-    if (!cachedResponse) {
-      return null;
-    }
-    if (this.now() - cachedResponse.timestamp >= this.minRequestIntervalMs) {
-      this.responseCache.delete(request.requestKey);
-      return null;
-    }
-    return {
-      document: this.parser.parseFromString(cachedResponse.html, "text/html"),
-      responseUrl: cachedResponse.responseUrl
-    };
-  }
-  cacheResponse(request, response, html) {
-    this.responseCache.set(request.requestKey, {
-      html,
-      responseUrl: response.url,
-      timestamp: this.now()
-    });
-  }
-  applyResponse(responseDocument, historyState, onDocument) {
-    if (historyState.action) {
-      this.historyObject.pushState({
-        action: historyState.action
-      }, "", responseDocument.responseUrl);
-    }
-    onDocument(responseDocument.document);
-  }
-  async executeRequest(request) {
-    this.inFlight = true;
-    this.lastRequestTimestamp = this.now();
-    try {
-      let response = await this.fetcher(request.url, request.requestOptions);
+      });
       if (!response.ok) {
-        throw new Error(`${request.historyState.errorPrefix}: ${response.status} ${response.statusText}`);
+        throw new Error(`${historyState.errorPrefix}: ${response.status} ${response.statusText}`);
       }
       let html = await response.text();
-      this.cacheResponse(request, response, html);
       let document2 = this.parser.parseFromString(html, "text/html");
-      this.applyResponse({
-        document: document2,
-        responseUrl: response.url
-      }, request.historyState, request.onDocument);
+      if (historyState.action) {
+        this.historyObject.pushState({
+          action: historyState.action
+        }, "", response.url);
+      }
+      onDocument(document2);
       return document2;
     } catch (error) {
       this.logger.error(error);
       return null;
-    } finally {
-      this.inFlight = false;
-      this.schedulePendingRequest();
     }
   }
 };
@@ -708,13 +575,16 @@ var FluxDomBridge = class {
 
 // src/FluxFormHandler.es6
 var FluxFormHandler = class {
-  constructor(navigationController, focusStateManager, onDocument, onNavigationDocument = onDocument, logger = console, debug = false) {
+  constructor(navigationController, focusStateManager, onDocument, onNavigationDocument = onDocument, logger = console, debug = false, now = () => Date.now(), domPath = DomPath) {
     this.navigationController = navigationController;
     this.focusStateManager = focusStateManager;
     this.onDocument = onDocument;
     this.onNavigationDocument = onNavigationDocument;
     this.logger = logger;
     this.debug = debug;
+    this.now = now;
+    this.domPath = domPath;
+    this.rateLimitState = /* @__PURE__ */ new Map();
   }
   initAutoContainer = (fluxElement) => {
     if (fluxElement instanceof HTMLFormElement) {
@@ -795,9 +665,33 @@ var FluxFormHandler = class {
     this.submitForm(form, submitter);
   };
   submitForm(form, submitter) {
+    if (this.isRateLimited(submitter)) {
+      return Promise.resolve(null);
+    }
     let formData = this.getFormDataForButton(form, "autoSave", submitter);
     let responseHandler = form.hasAttribute("action") ? this.onNavigationDocument : this.onDocument;
     return this.navigationController.submitForm(form, formData, responseHandler);
+  }
+  isRateLimited(submitter) {
+    if (!(submitter instanceof HTMLElement)) {
+      return false;
+    }
+    let rate = Number.parseFloat(submitter.dataset["fluxRate"] ?? "");
+    if (!Number.isFinite(rate) || rate <= 0) {
+      return false;
+    }
+    let now = this.now();
+    let rateLimitKey = this.getRateLimitKey(submitter);
+    let lastSubmittedAt = this.rateLimitState.get(rateLimitKey) ?? -Infinity;
+    if (now - lastSubmittedAt < rate * 1e3) {
+      return true;
+    }
+    this.rateLimitState.set(rateLimitKey, now);
+    return false;
+  }
+  getRateLimitKey(submitter) {
+    let path = this.domPath.getXPathForElement(submitter, document);
+    return `submit:${path}`;
   }
   getFormDataForButton(form, type, submitter) {
     let formData = new FormData(form);
@@ -815,10 +709,13 @@ var FluxFormHandler = class {
 
 // src/FluxLinkHandler.es6
 var FluxLinkHandler = class {
-  constructor(navigationController, onDocument, windowObject = globalThis.window) {
+  constructor(navigationController, onDocument, windowObject = globalThis.window, now = () => Date.now(), domPath = DomPath) {
     this.navigationController = navigationController;
     this.onDocument = onDocument;
     this.windowObject = windowObject;
+    this.now = now;
+    this.domPath = domPath;
+    this.rateLimitState = /* @__PURE__ */ new Map();
   }
   initAutoLink = (fluxElement) => {
     if (!(fluxElement instanceof HTMLAnchorElement)) {
@@ -835,6 +732,9 @@ var FluxLinkHandler = class {
     }, 0);
   };
   clickLink(link) {
+    if (this.isRateLimited(link)) {
+      return Promise.resolve(null);
+    }
     return this.navigationController.clickLink(link, this.onDocument);
   }
   scrollToTop() {
@@ -846,6 +746,24 @@ var FluxLinkHandler = class {
       left: 0,
       behavior: "smooth"
     });
+  }
+  isRateLimited(link) {
+    let rate = Number.parseFloat(link.dataset["fluxRate"] ?? "");
+    if (!Number.isFinite(rate) || rate <= 0) {
+      return false;
+    }
+    let now = this.now();
+    let rateLimitKey = this.getRateLimitKey(link);
+    let lastClickedAt = this.rateLimitState.get(rateLimitKey) ?? -Infinity;
+    if (now - lastClickedAt < rate * 1e3) {
+      return true;
+    }
+    this.rateLimitState.set(rateLimitKey, now);
+    return false;
+  }
+  getRateLimitKey(link) {
+    let path = this.domPath.getXPathForElement(link, document);
+    return `link:${path}`;
   }
 };
 

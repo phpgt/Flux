@@ -34,7 +34,7 @@ $now = new DateTimeImmutable("now");
 				Current form time:
 				<output><?php echo $now->format("H:i:s");?></output>
 			</p>
-			<button data-flux="submit">Update clock in form</button>
+			<button data-flux="submit" data-flux-rate="1">Update clock in form</button>
 		</form>
 	</section>
 </main>
