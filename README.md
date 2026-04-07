@@ -1,4 +1,4 @@
-# Fluid user experience micro-framework
+# Micro-framework for Fluid User Experience
 
 Flux is a minimalist JavaScript library that's shipped by default with [WebEngine]. 
 
