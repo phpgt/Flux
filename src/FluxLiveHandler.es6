@@ -181,7 +181,7 @@ export class FluxLiveHandler {
 		}
 
 		if(this.domPath?.getXPathForElement) {
-			let key = `${type}:${this.domPath.getXPathForElement(element, document)}`;
+			let key = `${type}:${this.domPath.getXPathForElement(element)}`;
 			if(element) {
 				element.fluxLiveKey = key;
 			}
