@@ -6,8 +6,13 @@ Feature: Link navigation example
     When I fill the element "textarea" with "Keep this note"
     And I follow "Page 1"
     Then I wait until the element "main" contains "Page 1: Dispatch board"
+    Then I should see "Assigned to"
+    And I should see "Highlight tag"
     When I follow "Page 2"
     Then I wait until the element "main" contains "Page 2: Editorial notes"
+    And I should see "Headline draft"
+    And I should see "Owner"
+    And I should see "Placeholder copy"
     And the element "textarea" should have value "Keep this note"
 
   Scenario: Inner form updates stay in place on the landing page

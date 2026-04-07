@@ -57,13 +57,13 @@ export class FluxResponseHandler {
 		}, 0);
 	}
 
-	handleLiveDocument = (newDocument) => {
+	handleLiveDocument = (newDocument, allowedTargetKeys = undefined) => {
 		if(!this.isProcessableDocument(newDocument)) {
 			return;
 		}
 
 		this.scheduler(() => {
-			this.documentUpdater.apply(newDocument, FluxResponseHandler.LIVE_UPDATE_TYPES);
+			this.documentUpdater.apply(newDocument, FluxResponseHandler.LIVE_UPDATE_TYPES, allowedTargetKeys);
 		}, 0);
 	}
 

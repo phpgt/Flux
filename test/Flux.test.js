@@ -929,7 +929,34 @@ describe("FluxResponseHandler", () => {
 
 		handler.handleLiveDocument(newDocument);
 
-		expect(apply).toHaveBeenCalledWith(newDocument, ["live-outer", "live-inner"]);
+		expect(apply).toHaveBeenCalledWith(newDocument, ["live-outer", "live-inner"], undefined);
+	});
+
+	it("can apply a live response to only the due live targets", () => {
+		let apply = vi.fn();
+		let scheduler = vi.fn((callback) => callback());
+		let handler = new FluxResponseHandler(
+			{apply},
+			{error: vi.fn()},
+			false,
+			scheduler,
+			vi.fn(),
+			vi.fn(),
+		);
+		let newDocument = new DOMParser().parseFromString(`
+			<html>
+				<head><title>Ok</title></head>
+				<body></body>
+			</html>
+		`, "text/html");
+
+		handler.handleLiveDocument(newDocument, ["live-outer:./BODY[1]/MAIN[1]"]);
+
+		expect(apply).toHaveBeenCalledWith(
+			newDocument,
+			["live-outer", "live-inner"],
+			["live-outer:./BODY[1]/MAIN[1]"],
+		);
 	});
 
 	it("forces the page to the top after link-driven document updates complete", () => {
@@ -1073,6 +1100,88 @@ describe("FluxLiveHandler", () => {
 		expect(clearScheduler).not.toHaveBeenCalled();
 	});
 
+	it("waits until a live target's data-live-rate is due before polling", () => {
+		document.body.innerHTML = `<main data-flux="live" data-live-rate="10"></main>`;
+
+		let updateTargetRegistry = new UpdateTargetRegistry();
+		let now = 0;
+		let scheduler = vi.fn().mockReturnValue(123);
+		let handler = new FluxLiveHandler(
+			{pollDocument: vi.fn()},
+			updateTargetRegistry,
+			vi.fn(),
+			console,
+			false,
+			scheduler,
+			vi.fn(),
+			{href: "https://example.com/live"},
+			1000,
+			() => now,
+			DomPath,
+		);
+		let main = document.querySelector("main");
+
+		handler.register("live-outer", main);
+
+		expect(scheduler).toHaveBeenLastCalledWith(expect.any(Function), 10000);
+
+		handler.lastRefreshMap.set(handler.getTargetKey("live-outer", main), 0);
+		handler.timerId = null;
+		now = 2000;
+		handler.ensureRunning();
+
+		expect(scheduler).toHaveBeenLastCalledWith(expect.any(Function), 8000);
+	});
+
+	it("polls once and applies only the due live targets", async() => {
+		document.body.innerHTML = `
+		<main data-flux="live" data-live-rate="1"></main>
+		<section data-flux="live-inner" data-live-rate="10"></section>
+		`;
+
+		let updateTargetRegistry = new UpdateTargetRegistry();
+		let now = 1000;
+		let onDocument = vi.fn();
+		let pollDocument = vi.fn().mockImplementation(async(url, callback) => {
+			let newDocument = new DOMParser().parseFromString(`
+				<html>
+					<body>
+						<main data-flux="live" data-live-rate="1">Fast</main>
+						<section data-flux="live-inner" data-live-rate="10">Slow</section>
+					</body>
+				</html>
+			`, "text/html");
+			callback(newDocument);
+		});
+		let handler = new FluxLiveHandler(
+			{pollDocument},
+			updateTargetRegistry,
+			onDocument,
+			console,
+			false,
+			vi.fn().mockReturnValue(1),
+			vi.fn(),
+			{href: "https://example.com/live"},
+			1000,
+			() => now,
+			DomPath,
+		);
+		let main = document.querySelector("main");
+		let section = document.querySelector("section");
+		let mainKey = handler.getTargetKey("live-outer", main);
+		let sectionKey = handler.getTargetKey("live-inner", section);
+		updateTargetRegistry.add(main, "live-outer");
+		updateTargetRegistry.add(section, "live-inner");
+		handler.lastRefreshMap.set(sectionKey, 0);
+
+		await handler.pollDocument();
+
+		expect(pollDocument).toHaveBeenCalledTimes(1);
+		expect(onDocument).toHaveBeenCalledWith(expect.any(Document), [mainKey]);
+		expect(handler.lastRefreshMap.get(mainKey)).toBe(1000);
+		expect(handler.lastRefreshMap.get(sectionKey)).toBe(0);
+	});
+
 	it("continues polling after a live outer element is replaced", async () => {
 		document.body.innerHTML = `<main data-flux="live">Old</main>`;
 
@@ -1094,9 +1203,7 @@ describe("FluxLiveHandler", () => {
 			);
 			documentUpdater.apply(newDocument, ["live-outer"]);
 		});
-		let scheduler = vi.fn((callback) => {
-			return callback();
-		});
+		let scheduler = vi.fn().mockReturnValue(1);
 		let handler = new FluxLiveHandler(
 			{pollDocument},
 			updateTargetRegistry,
@@ -1122,7 +1229,7 @@ describe("FluxLiveHandler", () => {
 
 		await handler.pollDocument();
 
-		expect(pollDocument).toHaveBeenCalledWith("https://example.com/live", onDocument);
+		expect(pollDocument).toHaveBeenCalledWith("https://example.com/live", expect.any(Function));
 		expect(updateTargetRegistry.getElements("live-outer")[0]).toBe(document.querySelector("main"));
 		expect(document.querySelector("main").textContent).toBe("New");
 		expect(scheduler).toHaveBeenCalled();

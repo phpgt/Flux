@@ -85,6 +85,12 @@ export class Flux {
 			this.responseHandler.handleLiveDocument,
 			console,
 			Flux.DEBUG,
+			globalThis.setTimeout.bind(globalThis),
+			globalThis.clearTimeout.bind(globalThis),
+			globalThis.location,
+			1000,
+			() => Date.now(),
+			DomPath,
 		);
 		this.domBridge = domBridge ?? new FluxDomBridge(
 			this.elementEventMapper,

@@ -355,10 +355,11 @@ var DocumentUpdater = class {
     this.logger = logger;
     this.debug = debug;
   }
-  apply(newDocument, allowedTypes = void 0) {
+  apply(newDocument, allowedTypes = void 0, allowedTargetKeys = void 0) {
     this.focusStateManager.markAutofocus(newDocument);
     let newActiveElement = this.focusStateManager.capturePendingActiveElement(newDocument);
     let allowedTypeSet = allowedTypes ? new Set(allowedTypes) : null;
+    let allowedTargetKeySet = allowedTargetKeys ? new Set(allowedTargetKeys) : null;
     let updateTypeSnapshot = /* @__PURE__ */ new Map();
     for (let type of this.updateTargetRegistry.getTypes()) {
       if (allowedTypeSet && !allowedTypeSet.has(type)) {
@@ -368,6 +369,12 @@ var DocumentUpdater = class {
     }
     for (let [type, elements] of updateTypeSnapshot) {
       elements.forEach((existingElement) => {
+        if (allowedTargetKeySet) {
+          let targetKey = this.getTargetKey(type, existingElement);
+          if (!allowedTargetKeySet.has(targetKey)) {
+            return;
+          }
+        }
         this.applyUpdateTarget(type, existingElement, newDocument);
       });
     }
@@ -431,6 +438,9 @@ var DocumentUpdater = class {
     Array.from(newElement.attributes).forEach((attribute) => {
       existingElement.setAttribute(attribute.name, attribute.value);
     });
+  }
+  getTargetKey(type, element) {
+    return `${type}:${this.domPath.getXPathForElement(element, document)}`;
   }
 };
 
@@ -810,12 +820,12 @@ var FluxResponseHandler = class _FluxResponseHandler {
       this.scrollToTopAfterPaint();
     }, 0);
   };
-  handleLiveDocument = (newDocument) => {
+  handleLiveDocument = (newDocument, allowedTargetKeys = void 0) => {
     if (!this.isProcessableDocument(newDocument)) {
       return;
     }
     this.scheduler(() => {
-      this.documentUpdater.apply(newDocument, _FluxResponseHandler.LIVE_UPDATE_TYPES);
+      this.documentUpdater.apply(newDocument, _FluxResponseHandler.LIVE_UPDATE_TYPES, allowedTargetKeys);
     }, 0);
   };
   isProcessableDocument(newDocument) {
@@ -860,7 +870,7 @@ var FluxLiveHandler = class _FluxLiveHandler {
     "live-outer",
     "live-inner"
   ]);
-  constructor(navigationController, updateTargetRegistry, onDocument, logger = console, debug = false, scheduler = globalThis.setTimeout.bind(globalThis), clearScheduler = globalThis.clearTimeout.bind(globalThis), locationObject = globalThis.location, intervalMs = 1e3) {
+  constructor(navigationController, updateTargetRegistry, onDocument, logger = console, debug = false, scheduler = globalThis.setTimeout.bind(globalThis), clearScheduler = globalThis.clearTimeout.bind(globalThis), locationObject = globalThis.location, intervalMs = 1e3, now = () => Date.now(), domPath = null) {
     this.navigationController = navigationController;
     this.updateTargetRegistry = updateTargetRegistry;
     this.onDocument = onDocument;
@@ -870,18 +880,27 @@ var FluxLiveHandler = class _FluxLiveHandler {
     this.clearScheduler = clearScheduler;
     this.locationObject = locationObject;
     this.intervalMs = intervalMs;
+    this.now = now;
+    this.domPath = domPath;
     this.timerId = null;
     this.inFlight = false;
+    this.lastRefreshMap = /* @__PURE__ */ new Map();
   }
   register(updateType, element) {
     this.updateTargetRegistry.add(element, updateType);
+    let key = this.getTargetKey(updateType, element);
+    element.fluxLiveKey = key;
+    if (!this.lastRefreshMap.has(key)) {
+      this.lastRefreshMap.set(key, this.now());
+    }
     this.ensureRunning();
   }
   ensureRunning() {
-    if (this.timerId !== null || !this.hasLiveElements()) {
+    let nextDelay = this.getNextPollDelay();
+    if (this.timerId !== null || nextDelay === null) {
       return;
     }
-    this.timerId = this.scheduler(this.pollDocument, this.intervalMs);
+    this.timerId = this.scheduler(this.pollDocument, nextDelay);
   }
   stop() {
     if (this.timerId === null) {
@@ -892,7 +911,9 @@ var FluxLiveHandler = class _FluxLiveHandler {
   }
   pollDocument = async () => {
     this.timerId = null;
-    if (!this.hasLiveElements()) {
+    let dueTargets = this.getDueTargets();
+    if (dueTargets.length === 0) {
+      this.ensureRunning();
       return;
     }
     if (this.inFlight) {
@@ -903,7 +924,13 @@ var FluxLiveHandler = class _FluxLiveHandler {
     try {
       await this.navigationController.pollDocument(
         this.locationObject.href,
-        this.onDocument
+        (newDocument) => {
+          let refreshedAt = this.now();
+          for (let target of dueTargets) {
+            this.lastRefreshMap.set(target.key, refreshedAt);
+          }
+          this.onDocument(newDocument, dueTargets.map((target) => target.key));
+        }
       );
     } finally {
       this.inFlight = false;
@@ -913,18 +940,80 @@ var FluxLiveHandler = class _FluxLiveHandler {
   hasLiveElements() {
     let hasLiveElements = false;
     for (let type of _FluxLiveHandler.UPDATE_TYPES) {
-      for (let element of [...this.updateTargetRegistry.getElements(type)]) {
-        if (element?.isConnected) {
-          hasLiveElements = true;
-          continue;
-        }
-        this.updateTargetRegistry.remove(type, element);
+      for (let element of this.getConnectedElements(type)) {
+        hasLiveElements = true;
       }
     }
     if (this.debug) {
       this.logger.debug("Flux live target count", hasLiveElements);
     }
     return hasLiveElements;
+  }
+  getDueTargets() {
+    let now = this.now();
+    let dueTargets = [];
+    for (let type of _FluxLiveHandler.UPDATE_TYPES) {
+      for (let element of this.getConnectedElements(type)) {
+        let key = this.getTargetKey(type, element);
+        let rateMs = this.getRateMs(element);
+        let lastRefresh = this.lastRefreshMap.get(key) ?? -Infinity;
+        if (now - lastRefresh >= rateMs) {
+          dueTargets.push({ type, element, key });
+        }
+      }
+    }
+    return dueTargets;
+  }
+  getNextPollDelay() {
+    let hasTargets = false;
+    let now = this.now();
+    let minDelay = Infinity;
+    for (let type of _FluxLiveHandler.UPDATE_TYPES) {
+      for (let element of this.getConnectedElements(type)) {
+        hasTargets = true;
+        let key = this.getTargetKey(type, element);
+        let rateMs = this.getRateMs(element);
+        let lastRefresh = this.lastRefreshMap.get(key) ?? -Infinity;
+        let remaining = rateMs - (now - lastRefresh);
+        minDelay = Math.min(minDelay, Math.max(0, remaining));
+      }
+    }
+    if (!hasTargets) {
+      return null;
+    }
+    return Number.isFinite(minDelay) ? minDelay : this.intervalMs;
+  }
+  getConnectedElements(type) {
+    let connected = [];
+    for (let element of [...this.updateTargetRegistry.getElements(type)]) {
+      if (element?.isConnected) {
+        connected.push(element);
+        continue;
+      }
+      this.updateTargetRegistry.remove(type, element);
+      this.lastRefreshMap.delete(this.getTargetKey(type, element));
+    }
+    return connected;
+  }
+  getRateMs(element) {
+    let rateSeconds = Number.parseFloat(element.dataset["liveRate"] ?? "");
+    if (!Number.isFinite(rateSeconds) || rateSeconds <= 0) {
+      return this.intervalMs;
+    }
+    return rateSeconds * 1e3;
+  }
+  getTargetKey(type, element) {
+    if (element?.fluxLiveKey) {
+      return element.fluxLiveKey;
+    }
+    if (this.domPath?.getXPathForElement) {
+      let key = `${type}:${this.domPath.getXPathForElement(element)}`;
+      if (element) {
+        element.fluxLiveKey = key;
+      }
+      return key;
+    }
+    return `${type}:${type}`;
   }
 };
 
@@ -985,7 +1074,13 @@ var Flux = class _Flux {
       this.updateTargetRegistry,
       this.responseHandler.handleLiveDocument,
       console,
-      _Flux.DEBUG
+      _Flux.DEBUG,
+      globalThis.setTimeout.bind(globalThis),
+      globalThis.clearTimeout.bind(globalThis),
+      globalThis.location,
+      1e3,
+      () => Date.now(),
+      DomPath
     );
     this.domBridge = domBridge ?? new FluxDomBridge(
       this.elementEventMapper,
