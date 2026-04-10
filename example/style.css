@@ -149,3 +149,23 @@ blockquote {
 		max-width: 100%;
 	}
 }
+
+form.flux-form-waiting {
+	animation: 1s 0.5s loading-fade forwards;
+
+	button {
+		animation: 0s 0.25s loading-cursor forwards;
+	}
+}
+
+@keyframes loading-fade {
+	to {
+		opacity: 0.5;
+	}
+}
+
+@keyframes loading-cursor {
+	to {
+		cursor: wait;
+	}
+}

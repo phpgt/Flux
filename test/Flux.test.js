@@ -248,6 +248,78 @@ describe("FocusStateManager", () => {
 });
 
 describe("NavigationController", () => {
+	it("adds flux-form-waiting to the body and form while a form request is pending", async () => {
+		document.body.innerHTML = `
+		<form action="/submit" method="post">
+			<input name="title" value="One">
+			<button name="save" value="publish">Save</button>
+		</form>
+		`;
+
+		let resolveFetch;
+		let callback = vi.fn();
+		let fetcher = vi.fn().mockImplementation(() => new Promise(resolve => {
+			resolveFetch = resolve;
+		}));
+		let navigationController = new NavigationController(
+			new DOMParser(),
+			fetcher,
+			{pushState: vi.fn()},
+			{error: vi.fn()},
+		);
+		let form = document.querySelector("form");
+		let button = document.querySelector("button");
+
+		let pendingRequest = navigationController.submitForm(form, new FormData(form), callback, button);
+
+		expect(document.body.classList.contains("flux-form-waiting")).toBe(true);
+		expect(form.classList.contains("flux-form-waiting")).toBe(true);
+		expect(button.classList.contains("flux-button-waiting")).toBe(true);
+
+		resolveFetch({
+			ok: true,
+			url: "https://example.com/next",
+			text: vi.fn().mockResolvedValue("<html><head></head><body><main>Next</main></body></html>"),
+		});
+		await pendingRequest;
+
+		expect(document.body.classList.contains("flux-form-waiting")).toBe(false);
+		expect(form.classList.contains("flux-form-waiting")).toBe(false);
+		expect(button.classList.contains("flux-button-waiting")).toBe(false);
+	});
+
+	it("adds flux-link-waiting to the body and link while a link request is pending", async () => {
+		document.body.innerHTML = `<a href="/next">Next</a>`;
+
+		let resolveFetch;
+		let callback = vi.fn();
+		let fetcher = vi.fn().mockImplementation(() => new Promise(resolve => {
+			resolveFetch = resolve;
+		}));
+		let navigationController = new NavigationController(
+			new DOMParser(),
+			fetcher,
+			{pushState: vi.fn()},
+			{error: vi.fn()},
+		);
+		let link = document.querySelector("a");
+
+		let pendingRequest = navigationController.clickLink(link, callback);
+
+		expect(document.body.classList.contains("flux-link-waiting")).toBe(true);
+		expect(link.classList.contains("flux-link-waiting")).toBe(true);
+
+		resolveFetch({
+			ok: true,
+			url: "https://example.com/next",
+			text: vi.fn().mockResolvedValue("<html><head></head><body><main>Next</main></body></html>"),
+		});
+		await pendingRequest;
+
+		expect(document.body.classList.contains("flux-link-waiting")).toBe(false);
+		expect(link.classList.contains("flux-link-waiting")).toBe(false);
+	});
+
 	it("submits a form, pushes history and parses the response document", async () => {
 		document.body.innerHTML = `
 		<form action="/submit" method="post">
@@ -281,7 +353,7 @@ describe("NavigationController", () => {
 		expect(fetcher.mock.calls[0][1].body).toBeInstanceOf(FormData);
 		expect(pushState).toHaveBeenCalledWith({action: "submitForm"}, "", "https://example.com/next");
 		expect(callback).toHaveBeenCalledWith(expect.any(Document));
-		expect(form.classList.contains("submitting")).toBe(false);
+		expect(form.classList.contains("flux-form-waiting")).toBe(false);
 	});
 
 	it("submits GET forms by encoding form data into the URL query string", async () => {
@@ -315,7 +387,7 @@ describe("NavigationController", () => {
 		});
 	});
 
-	it("logs request errors and clears the submitting state", async () => {
+	it("logs request errors and clears waiting state classes", async () => {
 		document.body.innerHTML = `<a href="/next">Next</a>`;
 
 		let link = document.querySelector("a");
@@ -338,7 +410,8 @@ describe("NavigationController", () => {
 
 		expect(result).toBeNull();
 		expect(logger.error).toHaveBeenCalledWith(expect.any(Error));
-		expect(link.classList.contains("submitting")).toBe(false);
+		expect(link.classList.contains("flux-link-waiting")).toBe(false);
+		expect(document.body.classList.contains("flux-link-waiting")).toBe(false);
 	});
 
 	it("polls the current document without pushing history state", async () => {
@@ -902,6 +975,7 @@ describe("FluxFormHandler", () => {
 			form,
 			expect.any(FormData),
 			onNavigationDocument,
+			undefined,
 		);
 	});
 
@@ -929,6 +1003,7 @@ describe("FluxFormHandler", () => {
 			form,
 			expect.any(FormData),
 			onDocument,
+			undefined,
 		);
 	});
 

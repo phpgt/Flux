@@ -129,7 +129,7 @@ export class FluxFormHandler {
 		let responseHandler = form.hasAttribute("action")
 			? this.onNavigationDocument
 			: this.onDocument;
-		return this.navigationController.submitForm(form, formData, responseHandler);
+		return this.navigationController.submitForm(form, formData, responseHandler, submitter);
 	}
 
 	isRateLimited(submitter) {

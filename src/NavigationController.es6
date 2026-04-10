@@ -4,14 +4,16 @@ export class NavigationController {
 		fetcher = globalThis.fetch.bind(globalThis),
 		historyObject = globalThis.history,
 		logger = console,
+		documentObject = globalThis.document,
 	) {
 		this.parser = parser;
 		this.fetcher = fetcher;
 		this.historyObject = historyObject;
 		this.logger = logger;
+		this.documentObject = documentObject;
 	}
 
-	submitForm(form, formData, onDocument) {
+	submitForm(form, formData, onDocument, submitter = null) {
 		let method = (form.getAttribute("method") ?? "get").toLowerCase();
 		let url = form.action;
 		let requestOptions = {
@@ -35,6 +37,7 @@ export class NavigationController {
 				errorPrefix: "Form submission error",
 			},
 			onDocument,
+			this.getFormWaitingTargets(form, submitter),
 		);
 	}
 
@@ -62,6 +65,7 @@ export class NavigationController {
 				errorPrefix: "Link fetch error",
 			},
 			onDocument,
+			this.getLinkWaitingTargets(link),
 		);
 	}
 
@@ -79,8 +83,10 @@ export class NavigationController {
 		);
 	}
 
-	async navigate(element, url, requestOptions, historyState, onDocument) {
-		element.classList.add("submitting");
+	async navigate(element, url, requestOptions, historyState, onDocument, waitingTargets = []) {
+		for(let {element: waitingElement, className} of waitingTargets) {
+			waitingElement?.classList?.add(className);
+		}
 
 		try {
 			return await this.requestDocument(url, requestOptions, historyState, onDocument);
@@ -89,8 +95,47 @@ export class NavigationController {
 			return null;
 		}
 		finally {
-			element.classList.remove("submitting");
+			for(let {element: waitingElement, className} of waitingTargets) {
+				waitingElement?.classList?.remove(className);
+			}
 		}
+	}
+
+	getFormWaitingTargets(form, submitter) {
+		let waitingTargets = [
+			{element: form, className: "flux-form-waiting"},
+		];
+
+		if(this.documentObject?.body) {
+			waitingTargets.push({
+				element: this.documentObject.body,
+				className: "flux-form-waiting",
+			});
+		}
+
+		if(submitter instanceof HTMLButtonElement) {
+			waitingTargets.push({
+				element: submitter,
+				className: "flux-button-waiting",
+			});
+		}
+
+		return waitingTargets;
+	}
+
+	getLinkWaitingTargets(link) {
+		let waitingTargets = [
+			{element: link, className: "flux-link-waiting"},
+		];
+
+		if(this.documentObject?.body) {
+			waitingTargets.push({
+				element: this.documentObject.body,
+				className: "flux-link-waiting",
+			});
+		}
+
+		return waitingTargets;
 	}
 
 	async requestDocument(url, requestOptions, historyState, onDocument) {

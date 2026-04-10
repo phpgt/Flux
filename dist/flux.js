@@ -242,13 +242,14 @@ var FocusStateManager = class {
 
 // src/NavigationController.es6
 var NavigationController = class {
-  constructor(parser = new DOMParser(), fetcher = globalThis.fetch.bind(globalThis), historyObject = globalThis.history, logger = console) {
+  constructor(parser = new DOMParser(), fetcher = globalThis.fetch.bind(globalThis), historyObject = globalThis.history, logger = console, documentObject = globalThis.document) {
     this.parser = parser;
     this.fetcher = fetcher;
     this.historyObject = historyObject;
     this.logger = logger;
+    this.documentObject = documentObject;
   }
-  submitForm(form, formData, onDocument) {
+  submitForm(form, formData, onDocument, submitter = null) {
     let method = (form.getAttribute("method") ?? "get").toLowerCase();
     let url = form.action;
     let requestOptions = {
@@ -268,7 +269,8 @@ var NavigationController = class {
         action: "submitForm",
         errorPrefix: "Form submission error"
       },
-      onDocument
+      onDocument,
+      this.getFormWaitingTargets(form, submitter)
     );
   }
   appendFormDataToUrl(url, formData) {
@@ -291,7 +293,8 @@ var NavigationController = class {
         action: "clickLink",
         errorPrefix: "Link fetch error"
       },
-      onDocument
+      onDocument,
+      this.getLinkWaitingTargets(link)
     );
   }
   pollDocument(url, onDocument) {
@@ -307,15 +310,49 @@ var NavigationController = class {
       onDocument
     );
   }
-  async navigate(element, url, requestOptions, historyState, onDocument) {
-    element.classList.add("submitting");
+  async navigate(element, url, requestOptions, historyState, onDocument, waitingTargets = []) {
+    for (let { element: waitingElement, className } of waitingTargets) {
+      waitingElement?.classList?.add(className);
+    }
     try {
       return await this.requestDocument(url, requestOptions, historyState, onDocument);
     } catch (error) {
       return null;
     } finally {
-      element.classList.remove("submitting");
+      for (let { element: waitingElement, className } of waitingTargets) {
+        waitingElement?.classList?.remove(className);
+      }
     }
+  }
+  getFormWaitingTargets(form, submitter) {
+    let waitingTargets = [
+      { element: form, className: "flux-form-waiting" }
+    ];
+    if (this.documentObject?.body) {
+      waitingTargets.push({
+        element: this.documentObject.body,
+        className: "flux-form-waiting"
+      });
+    }
+    if (submitter instanceof HTMLButtonElement) {
+      waitingTargets.push({
+        element: submitter,
+        className: "flux-button-waiting"
+      });
+    }
+    return waitingTargets;
+  }
+  getLinkWaitingTargets(link) {
+    let waitingTargets = [
+      { element: link, className: "flux-link-waiting" }
+    ];
+    if (this.documentObject?.body) {
+      waitingTargets.push({
+        element: this.documentObject.body,
+        className: "flux-link-waiting"
+      });
+    }
+    return waitingTargets;
   }
   async requestDocument(url, requestOptions, historyState, onDocument) {
     let method = (requestOptions.method ?? "get").toLowerCase();
@@ -694,7 +731,7 @@ var FluxFormHandler = class {
     }
     let formData = this.getFormDataForButton(form, "autoSave", submitter);
     let responseHandler = form.hasAttribute("action") ? this.onNavigationDocument : this.onDocument;
-    return this.navigationController.submitForm(form, formData, responseHandler);
+    return this.navigationController.submitForm(form, formData, responseHandler, submitter);
   }
   isRateLimited(submitter) {
     if (!(submitter instanceof HTMLElement)) {
