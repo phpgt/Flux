@@ -63,8 +63,7 @@ export class DocumentUpdater {
 		}
 
 		let activeElementState = this.focusStateManager.captureElementState(existingElement);
-		let xPath = this.domPath.getXPathForElement(existingElement, document);
-		let newElement = this.domPath.findInDocument(newDocument, xPath);
+		let newElement = this.findMatchingElement(existingElement, newDocument);
 
 		if(type === "outer" || type === "link-outer" || type === "live-outer") {
 			this.applyOuterUpdate(type, existingElement, newElement);
@@ -121,7 +120,20 @@ export class DocumentUpdater {
 		});
 	}
 
+	findMatchingElement(existingElement, newDocument) {
+		if(existingElement.id) {
+			return newDocument.getElementById(existingElement.id);
+		}
+
+		let xPath = this.domPath.getXPathForElement(existingElement, document);
+		return this.domPath.findInDocument(newDocument, xPath);
+	}
+
 	getTargetKey(type, element) {
+		if(element?.id) {
+			return `${type}:#${element.id}`;
+		}
+
 		return `${type}:${this.domPath.getXPathForElement(element, document)}`;
 	}
 }

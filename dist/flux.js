@@ -393,8 +393,7 @@ var DocumentUpdater = class {
       return;
     }
     let activeElementState = this.focusStateManager.captureElementState(existingElement);
-    let xPath = this.domPath.getXPathForElement(existingElement, document);
-    let newElement = this.domPath.findInDocument(newDocument, xPath);
+    let newElement = this.findMatchingElement(existingElement, newDocument);
     if (type === "outer" || type === "link-outer" || type === "live-outer") {
       this.applyOuterUpdate(type, existingElement, newElement);
     } else if (type === "inner" || type === "link-inner" || type === "live-inner") {
@@ -439,7 +438,17 @@ var DocumentUpdater = class {
       existingElement.setAttribute(attribute.name, attribute.value);
     });
   }
+  findMatchingElement(existingElement, newDocument) {
+    if (existingElement.id) {
+      return newDocument.getElementById(existingElement.id);
+    }
+    let xPath = this.domPath.getXPathForElement(existingElement, document);
+    return this.domPath.findInDocument(newDocument, xPath);
+  }
   getTargetKey(type, element) {
+    if (element?.id) {
+      return `${type}:#${element.id}`;
+    }
     return `${type}:${this.domPath.getXPathForElement(element, document)}`;
   }
 };
@@ -506,6 +515,11 @@ var FluxDirectiveRegistry = class _FluxDirectiveRegistry {
   }
   initElement(fluxElement) {
     let fluxType = fluxElement.dataset["flux"];
+    if (fluxType === "") {
+      if (fluxElement instanceof HTMLButtonElement) {
+        fluxType = "submit";
+      }
+    }
     let definition = _FluxDirectiveRegistry.DEFINITIONS[fluxType];
     if (!definition) {
       throw new TypeError(`Unknown flux element type: ${fluxType}`);
@@ -996,7 +1010,7 @@ var FluxLiveHandler = class _FluxLiveHandler {
     return connected;
   }
   getRateMs(element) {
-    let rateSeconds = Number.parseFloat(element.dataset["liveRate"] ?? "");
+    let rateSeconds = Number.parseFloat(element.dataset["fluxRate"] ?? "");
     if (!Number.isFinite(rateSeconds) || rateSeconds <= 0) {
       return this.intervalMs;
     }
@@ -1005,6 +1019,11 @@ var FluxLiveHandler = class _FluxLiveHandler {
   getTargetKey(type, element) {
     if (element?.fluxLiveKey) {
       return element.fluxLiveKey;
+    }
+    if (element?.id) {
+      let key = `${type}:#${element.id}`;
+      element.fluxLiveKey = key;
+      return key;
     }
     if (this.domPath?.getXPathForElement) {
       let key = `${type}:${this.domPath.getXPathForElement(element)}`;
@@ -1126,6 +1145,8 @@ var Flux = class _Flux {
       this.formHandler.initAutoContainer(fluxElement);
     } else if (fluxElement instanceof HTMLAnchorElement) {
       this.linkHandler.initAutoLink(fluxElement);
+    } else {
+      throw new TypeError("Bare data-flux must be applied to a form, button, or anchor element.");
     }
   };
   /**

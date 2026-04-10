@@ -70,6 +70,19 @@ describe("Flux", () => {
 		);
 	});
 
+	it("treats data-flux on buttons as shorthand for data-flux=submit", () => {
+		document.body.innerHTML = `
+		<form method="post" data-flux="update-inner">
+			<button name="do" value="increment" data-flux>Increment</button>
+		</form>
+		`;
+
+		let form = document.forms[0];
+		const spy = vi.spyOn(form, "addEventListener");
+		new Flux();
+		expect(spy).toHaveBeenCalledWith("submit", expect.any(Function));
+	});
+
 	it("logs unknown directives without halting other flux initialisation", () => {
 		document.body.innerHTML = `
 		<div data-flux="unknown"></div>
@@ -88,6 +101,32 @@ describe("Flux", () => {
 			"Error initialising flux element: unknown",
 			expect.any(HTMLElement),
 			expect.any(TypeError),
+		);
+		expect(addEventListenerSpy).toHaveBeenCalledWith("submit", expect.any(Function));
+
+		errorSpy.mockRestore();
+	});
+
+	it("logs unsupported bare data-flux elements without halting other flux initialisation", () => {
+		document.body.innerHTML = `
+		<div data-flux></div>
+		<form method="post" data-flux>
+			<button name="do" value="increment">Increment</button>
+		</form>
+		`;
+
+		let form = document.forms[0];
+		let addEventListenerSpy = vi.spyOn(form, "addEventListener");
+		let errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+		new Flux();
+
+		expect(errorSpy).toHaveBeenCalledWith(
+			"Error initialising flux element: ",
+			expect.any(HTMLElement),
+			expect.objectContaining({
+				message: "Bare data-flux must be applied to a form, button, or anchor element.",
+			}),
 		);
 		expect(addEventListenerSpy).toHaveBeenCalledWith("submit", expect.any(Function));
 
@@ -398,6 +437,84 @@ describe("DocumentUpdater", () => {
 		expect(existingElement.innerHTML).toBe("<strong>New</strong>");
 	});
 
+	it("prefers id matching over DOM position for outer updates", () => {
+		document.body.innerHTML = `
+		<div class="layout-a">
+			<main id="target" data-flux="update"><span>Old</span></main>
+		</div>
+		`;
+
+		let existingElement = document.querySelector("#target");
+		let updateTargetRegistry = new UpdateTargetRegistry();
+		updateTargetRegistry.add(existingElement, "outer");
+		let documentUpdater = new DocumentUpdater(
+			updateTargetRegistry,
+			{
+				markAutofocus: vi.fn(),
+				capturePendingActiveElement: vi.fn().mockReturnValue(null),
+				captureElementState: vi.fn().mockReturnValue(null),
+				restoreElementState: vi.fn(),
+				restorePendingActiveElement: vi.fn(),
+				focusMarkedAutofocusElements: vi.fn(),
+			},
+			vi.fn(),
+		);
+		let newDocument = new DOMParser().parseFromString(`
+			<html>
+				<body>
+					<header>Moved above</header>
+					<section class="layout-b">
+						<main id="target" data-flux="update"><span>New</span></main>
+					</section>
+				</body>
+			</html>
+		`, "text/html");
+
+		documentUpdater.apply(newDocument);
+
+		expect(document.querySelector("#target").textContent).toBe("New");
+		expect(updateTargetRegistry.getElements("outer")[0]).toBe(document.querySelector("#target"));
+	});
+
+	it("prefers id matching over DOM position for inner updates", () => {
+		document.body.innerHTML = `
+		<div class="layout-a">
+			<section id="target" data-flux="update-inner"><span>Old</span></section>
+		</div>
+		`;
+
+		let existingElement = document.querySelector("#target");
+		let updateTargetRegistry = new UpdateTargetRegistry();
+		updateTargetRegistry.add(existingElement, "inner");
+		let documentUpdater = new DocumentUpdater(
+			updateTargetRegistry,
+			{
+				markAutofocus: vi.fn(),
+				capturePendingActiveElement: vi.fn().mockReturnValue(null),
+				captureElementState: vi.fn().mockReturnValue(null),
+				restoreElementState: vi.fn(),
+				restorePendingActiveElement: vi.fn(),
+				focusMarkedAutofocusElements: vi.fn(),
+			},
+			vi.fn(),
+		);
+		let newDocument = new DOMParser().parseFromString(`
+			<html>
+				<body>
+					<header>Moved above</header>
+					<div class="layout-b">
+						<section id="target" data-flux="update-inner"><strong>New</strong></section>
+					</div>
+				</body>
+			</html>
+		`, "text/html");
+
+		documentUpdater.apply(newDocument);
+
+		expect(document.querySelector("#target")).toBe(existingElement);
+		expect(existingElement.innerHTML).toBe("<strong>New</strong>");
+	});
+
 	it("applies link-only targets only when their types are allowed", () => {
 		document.body.innerHTML = `
 		<main data-flux="update-link"><span>Old outer</span></main>
@@ -670,6 +787,29 @@ describe("FluxDirectiveRegistry", () => {
 		expect(autoContainer).toHaveBeenCalledWith(expect.any(HTMLAnchorElement));
 	});
 
+	it("uses the autoSubmit handler for empty data-flux values on buttons", () => {
+		document.body.innerHTML = `<form><button data-flux>Save</button></form>`;
+
+		let autoSubmit = vi.fn();
+		let registry = new FluxDirectiveRegistry({
+			autoContainer: vi.fn(),
+			autoSave: vi.fn(),
+			updateOuter: vi.fn(),
+			updateInner: vi.fn(),
+			updateLinkOuter: vi.fn(),
+			updateLinkInner: vi.fn(),
+			liveOuter: vi.fn(),
+			liveInner: vi.fn(),
+			updateAttributes: vi.fn(),
+			autoSubmit,
+			autoLink: vi.fn(),
+		});
+
+		registry.initElement(document.querySelector("button"));
+
+		expect(autoSubmit).toHaveBeenCalledWith(expect.any(HTMLButtonElement));
+	});
+
 	it("throws when a data-flux value is not registered", () => {
 		document.body.innerHTML = `<div data-flux="unknown"></div>`;
 
@@ -714,6 +854,28 @@ describe("FluxFormHandler", () => {
 		let formData = handler.getFormDataForButton(form, "autoSave");
 
 		expect(formData.get("save")).toBe("draft");
+	});
+
+	it("includes the clicked submit button name and value in form data", () => {
+		document.body.innerHTML = `
+		<form>
+			<input name="title" value="One">
+			<button name="save" value="publish" data-flux="submit"></button>
+		</form>
+		`;
+
+		let form = document.querySelector("form");
+		let button = document.querySelector("button");
+		let handler = new FluxFormHandler(
+			{submitForm: vi.fn()},
+			{storeFormState: vi.fn()},
+			vi.fn(),
+		);
+
+		let formData = handler.getFormDataForButton(form, "autoSave", button);
+
+		expect(formData.get("save")).toBe("publish");
+		expect(formData.get("title")).toBe("One");
 	});
 
 	it("uses link-style document handling for forms with an explicit action attribute", () => {
@@ -1100,8 +1262,8 @@ describe("FluxLiveHandler", () => {
 		expect(clearScheduler).not.toHaveBeenCalled();
 	});
 
-	it("waits until a live target's data-live-rate is due before polling", () => {
-		document.body.innerHTML = `<main data-flux="live" data-live-rate="10"></main>`;
+	it("waits until a live target's data-flux-rate is due before polling", () => {
+		document.body.innerHTML = `<main data-flux="live" data-flux-rate="10"></main>`;
 
 		let updateTargetRegistry = new UpdateTargetRegistry();
 		let now = 0;
@@ -1133,10 +1295,24 @@ describe("FluxLiveHandler", () => {
 		expect(scheduler).toHaveBeenLastCalledWith(expect.any(Function), 8000);
 	});
 
+	it("uses id-based keys for live targets when an id is present", () => {
+		document.body.innerHTML = `<main id="clock" data-flux="live"></main>`;
+
+		let updateTargetRegistry = new UpdateTargetRegistry();
+		let handler = new FluxLiveHandler(
+			{pollDocument: vi.fn()},
+			updateTargetRegistry,
+			vi.fn(),
+		);
+		let main = document.querySelector("main");
+
+		expect(handler.getTargetKey("live-outer", main)).toBe("live-outer:#clock");
+	});
+
 	it("polls once and applies only the due live targets", async() => {
 		document.body.innerHTML = `
-		<main data-flux="live" data-live-rate="1"></main>
-		<section data-flux="live-inner" data-live-rate="10"></section>
+		<main data-flux="live" data-flux-rate="1"></main>
+		<section data-flux="live-inner" data-flux-rate="10"></section>
 		`;
 
 		let updateTargetRegistry = new UpdateTargetRegistry();
@@ -1146,8 +1322,8 @@ describe("FluxLiveHandler", () => {
 			let newDocument = new DOMParser().parseFromString(`
 				<html>
 					<body>
-						<main data-flux="live" data-live-rate="1">Fast</main>
-						<section data-flux="live-inner" data-live-rate="10">Slow</section>
+						<main data-flux="live" data-flux-rate="1">Fast</main>
+						<section data-flux="live-inner" data-flux-rate="10">Slow</section>
 					</body>
 				</html>
 			`, "text/html");

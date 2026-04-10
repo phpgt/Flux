@@ -21,7 +21,7 @@ $now = new DateTimeImmutable("now");
 		<time
 			class="counter"
 			data-flux="live"
-			data-live-rate="1"
+			data-flux-rate="1"
 			datetime="<?php echo $now->format(DateTimeInterface::ATOM);?>"
 		><?php echo $now->format("H:i:s");?></time>
 	</section>

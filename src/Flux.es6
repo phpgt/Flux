@@ -143,6 +143,9 @@ export class Flux {
 		else if(fluxElement instanceof HTMLAnchorElement) {
 			this.linkHandler.initAutoLink(fluxElement);
 		}
+		else {
+			throw new TypeError("Bare data-flux must be applied to a form, button, or anchor element.");
+		}
 	}
 
 	/**

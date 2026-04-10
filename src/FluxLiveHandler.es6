@@ -167,7 +167,7 @@ export class FluxLiveHandler {
 	}
 
 	getRateMs(element) {
-		let rateSeconds = Number.parseFloat(element.dataset["liveRate"] ?? "");
+		let rateSeconds = Number.parseFloat(element.dataset["fluxRate"] ?? "");
 		if(!Number.isFinite(rateSeconds) || rateSeconds <= 0) {
 			return this.intervalMs;
 		}
@@ -178,6 +178,12 @@ export class FluxLiveHandler {
 	getTargetKey(type, element) {
 		if(element?.fluxLiveKey) {
 			return element.fluxLiveKey;
+		}
+
+		if(element?.id) {
+			let key = `${type}:#${element.id}`;
+			element.fluxLiveKey = key;
+			return key;
 		}
 
 		if(this.domPath?.getXPathForElement) {

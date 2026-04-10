@@ -62,6 +62,12 @@ export class FluxDirectiveRegistry {
 
 	initElement(fluxElement) {
 		let fluxType = fluxElement.dataset["flux"];
+		if(fluxType === "") {
+			if(fluxElement instanceof HTMLButtonElement) {
+				fluxType = "submit";
+			}
+		}
+
 		let definition = FluxDirectiveRegistry.DEFINITIONS[fluxType];
 		if(!definition) {
 			throw new TypeError(`Unknown flux element type: ${fluxType}`);
