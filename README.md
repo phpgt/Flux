@@ -24,16 +24,23 @@ Run the suite locally with:
 composer behat
 ```
 
-Feature files live in `test/behat/*.feature`. The local wrapper at `test/bin/behat` delegates to your local `php-actions/behat` checkout, so local runs use the same container orchestration as CI.
+Feature files live in `test/behat/*.feature`. The local wrapper at `test/bin/behat` serves the repository root with the PHP built-in server, launches a local headless Chrome or Chromium instance, and then runs `vendor/bin/behat`.
+
+Local requirements:
+
+- PHP dependencies installed with `composer install`
+- A local Chrome or Chromium binary available on `PATH`, or `CHROME_BIN` set explicitly
 
 PhpStorm settings:
 
 - Behat executable: `test/bin/behat`
 - Configuration file: `behat.yml`
 
-If your `php-actions/behat` checkout is not at `~/Code/php-actions/behat`, set `PHP_ACTIONS_BEHAT_DIR` to its location.
+Useful overrides:
 
-If you want to dry-run the GitHub Action behavior itself, you can still invoke `php-actions/behat` directly from `~/Code/php-actions/behat`.
+- `CHROME_BIN=/path/to/chrome composer behat`
+- `BEHAT_APP_PORT=8080 composer behat`
+- `BEHAT_CHROME_PORT=9333 composer behat`
 
 To use Flux, convert a "regular" HTML form into a _flux form_ by adding the `data-flux` attribute:
 
