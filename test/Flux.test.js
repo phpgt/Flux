@@ -192,6 +192,24 @@ describe("DomPath", () => {
 		let matched = DomPath.findInDocument(newDocument, path);
 		expect(matched.getAttribute("value")).toBe("Example updated");
 	});
+
+	it("returns null when no element is provided", () => {
+		expect(DomPath.getXPathForElement(null)).toBe(null);
+	});
+
+	it("returns null when the context is not an ancestor", () => {
+		document.body.innerHTML = `
+		<main>
+			<section><input name="title"></section>
+			<form></form>
+		</main>
+		`;
+
+		let input = document.querySelector("input");
+		let form = document.querySelector("form");
+
+		expect(DomPath.getXPathForElement(input, form)).toBe(null);
+	});
 });
 
 describe("UpdateTargetRegistry", () => {
@@ -244,6 +262,85 @@ describe("FocusStateManager", () => {
 
 		let matched = focusStateManager.capturePendingActiveElement(newDocument);
 		expect(matched.getAttribute("value")).toBe("Two");
+	});
+
+	it("does not store an invalid active path", () => {
+		document.body.innerHTML = `
+		<form>
+			<input name="title" value="One">
+		</form>
+		`;
+
+		let form = document.querySelector("form");
+		let focusStateManager = new FocusStateManager();
+		focusStateManager.storeFormState(form, null);
+
+		expect(form.dataset["fluxPath"]).toBeTruthy();
+		expect("fluxActive" in form.dataset).toBe(false);
+	});
+
+	it("restores focus to the pending active element without blurring it", () => {
+		document.body.innerHTML = `
+		<form>
+			<input name="title" value="One">
+		</form>
+		`;
+
+		let form = document.querySelector("form");
+		let input = document.querySelector("input");
+		let focusStateManager = new FocusStateManager();
+		focusStateManager.storeFormState(form, input);
+		let newDocument = new DOMParser().parseFromString(`
+			<html>
+				<body>
+					<form>
+						<input name="title" value="Two">
+					</form>
+				</body>
+			</html>
+		`, "text/html");
+
+		let matched = focusStateManager.capturePendingActiveElement(newDocument);
+		document.body.replaceWith(newDocument.body);
+		focusStateManager.restorePendingActiveElement(document.querySelector("input"));
+
+		expect(document.activeElement).toBe(document.querySelector("input"));
+		expect(matched.getAttribute("value")).toBe("Two");
+	});
+
+	it("restores the active input value and selection after replacement", () => {
+		document.body.innerHTML = `
+		<form>
+			<input name="title" value="One">
+		</form>
+		`;
+
+		let input = document.querySelector("input");
+		let focusStateManager = new FocusStateManager();
+		input.focus();
+		input.value = "One updated";
+		input.setSelectionRange(4, 11);
+
+		let elementState = focusStateManager.captureElementState(document.querySelector("form"));
+
+		let newDocument = new DOMParser().parseFromString(`
+			<html>
+				<body>
+					<form>
+						<input name="title" value="One">
+					</form>
+				</body>
+			</html>
+		`, "text/html");
+		document.body.replaceWith(newDocument.body);
+
+		focusStateManager.restoreElementState(elementState);
+
+		let restoredInput = document.querySelector("input");
+		expect(restoredInput.value).toBe("One updated");
+		expect(document.activeElement).toBe(restoredInput);
+		expect(restoredInput.selectionStart).toBe(4);
+		expect(restoredInput.selectionEnd).toBe(11);
 	});
 });
 
@@ -356,6 +453,39 @@ describe("NavigationController", () => {
 		expect(form.classList.contains("flux-form-waiting")).toBe(false);
 	});
 
+	it("parses and applies HTML error responses for form submissions", async () => {
+		document.body.innerHTML = `
+		<form action="/submit" method="post">
+			<input name="title" value="One">
+		</form>
+		`;
+
+		let form = document.querySelector("form");
+		let callback = vi.fn();
+		let pushState = vi.fn();
+		let logger = {error: vi.fn()};
+		let fetcher = vi.fn().mockResolvedValue({
+			ok: false,
+			status: 500,
+			statusText: "Server Error",
+			url: "https://example.com/error",
+			text: vi.fn().mockResolvedValue("<html><head></head><body><main>Error page</main></body></html>"),
+		});
+		let navigationController = new NavigationController(
+			new DOMParser(),
+			fetcher,
+			{pushState},
+			logger,
+		);
+
+		let result = await navigationController.submitForm(form, new FormData(form), callback);
+
+		expect(result).toBeInstanceOf(Document);
+		expect(callback).toHaveBeenCalledWith(expect.any(Document));
+		expect(pushState).toHaveBeenCalledWith({action: "submitForm"}, "", "https://example.com/error");
+		expect(logger.error).not.toHaveBeenCalled();
+	});
+
 	it("submits GET forms by encoding form data into the URL query string", async () => {
 		document.body.innerHTML = `
 		<form action="/search?scope=docs" method="get">
@@ -387,18 +517,12 @@ describe("NavigationController", () => {
 		});
 	});
 
-	it("logs request errors and clears waiting state classes", async () => {
+	it("logs network request errors and clears waiting state classes", async () => {
 		document.body.innerHTML = `<a href="/next">Next</a>`;
 
 		let link = document.querySelector("a");
 		let logger = {error: vi.fn()};
-		let fetcher = vi.fn().mockResolvedValue({
-			ok: false,
-			status: 500,
-			statusText: "Server Error",
-			url: "https://example.com/next",
-			text: vi.fn(),
-		});
+		let fetcher = vi.fn().mockRejectedValue(new TypeError("Network error"));
 		let navigationController = new NavigationController(
 			new DOMParser(),
 			fetcher,
@@ -412,6 +536,59 @@ describe("NavigationController", () => {
 		expect(logger.error).toHaveBeenCalledWith(expect.any(Error));
 		expect(link.classList.contains("flux-link-waiting")).toBe(false);
 		expect(document.body.classList.contains("flux-link-waiting")).toBe(false);
+	});
+
+	it("parses and applies HTML error responses for link navigation", async () => {
+		document.body.innerHTML = `<a href="/missing">Missing</a>`;
+
+		let link = document.querySelector("a");
+		let callback = vi.fn();
+		let pushState = vi.fn();
+		let logger = {error: vi.fn()};
+		let fetcher = vi.fn().mockResolvedValue({
+			ok: false,
+			status: 404,
+			statusText: "Not Found",
+			url: "https://example.com/missing",
+			text: vi.fn().mockResolvedValue("<html><head></head><body><main>Not found</main></body></html>"),
+		});
+		let navigationController = new NavigationController(
+			new DOMParser(),
+			fetcher,
+			{pushState},
+			logger,
+		);
+
+		let result = await navigationController.clickLink(link, callback);
+
+		expect(result).toBeInstanceOf(Document);
+		expect(callback).toHaveBeenCalledWith(expect.any(Document));
+		expect(pushState).toHaveBeenCalledWith({action: "clickLink"}, "", "https://example.com/missing");
+		expect(logger.error).not.toHaveBeenCalled();
+	});
+
+	it("keeps logging live polling HTTP errors without applying them", async () => {
+		let callback = vi.fn();
+		let logger = {error: vi.fn()};
+		let fetcher = vi.fn().mockResolvedValue({
+			ok: false,
+			status: 500,
+			statusText: "Server Error",
+			url: "https://example.com/live",
+			text: vi.fn().mockResolvedValue("<html><head></head><body><main>Error</main></body></html>"),
+		});
+		let navigationController = new NavigationController(
+			new DOMParser(),
+			fetcher,
+			{pushState: vi.fn()},
+			logger,
+		);
+
+		let result = await navigationController.pollDocument("https://example.com/live", callback);
+
+		expect(result).toBeNull();
+		expect(callback).not.toHaveBeenCalled();
+		expect(logger.error).toHaveBeenCalledWith(expect.any(Error));
 	});
 
 	it("polls the current document without pushing history state", async () => {
@@ -793,6 +970,51 @@ describe("DocumentUpdater", () => {
 		expect(existingElement.hasAttribute("data-theme")).toBe(false);
 		expect(existingElement.innerHTML).toBe(originalHtml);
 	});
+
+	it("preserves the active input value during an outer update", () => {
+		document.body.innerHTML = `
+		<main data-flux="update-outer">
+			<form>
+				<input name="first" value="One">
+				<input name="second" value="Two">
+			</form>
+		</main>
+		`;
+
+		let existingElement = document.querySelector("main");
+		let activeInput = document.querySelectorAll("input")[1];
+		let updateTargetRegistry = new UpdateTargetRegistry();
+		updateTargetRegistry.add(existingElement, "outer");
+		let documentUpdater = new DocumentUpdater(
+			updateTargetRegistry,
+			new FocusStateManager(),
+			vi.fn(),
+		);
+		activeInput.focus();
+		activeInput.value = "TwoXYZ";
+		activeInput.setSelectionRange(6, 6);
+
+		let newDocument = new DOMParser().parseFromString(`
+			<html>
+				<body>
+					<main data-flux="update-outer">
+						<form>
+							<input name="first" value="One">
+							<input name="second" value="Two">
+						</form>
+					</main>
+				</body>
+			</html>
+		`, "text/html");
+
+		documentUpdater.apply(newDocument);
+
+		let updatedInput = document.querySelectorAll("input")[1];
+		expect(updatedInput.value).toBe("TwoXYZ");
+		expect(document.activeElement).toBe(updatedInput);
+		expect(updatedInput.selectionStart).toBe(6);
+		expect(updatedInput.selectionEnd).toBe(6);
+	});
 });
 
 describe("FluxDirectiveRegistry", () => {
@@ -1005,6 +1227,34 @@ describe("FluxFormHandler", () => {
 			onDocument,
 			undefined,
 		);
+	});
+
+	it("stores the newly focused field during autosave submit without blurring it", () => {
+		document.body.innerHTML = `
+		<form method="post">
+			<input name="first" value="One">
+			<input name="second" value="Two">
+		</form>
+		`;
+
+		let form = document.querySelector("form");
+		let secondInput = document.querySelectorAll("input")[1];
+		let focusStateManager = {storeFormState: vi.fn()};
+		let handler = new FluxFormHandler(
+			{submitForm: vi.fn()},
+			focusStateManager,
+			vi.fn(),
+		);
+		secondInput.focus();
+
+		handler.formSubmitAutoSave({
+			preventDefault: vi.fn(),
+			target: form,
+			submitter: null,
+		});
+
+		expect(document.activeElement).toBe(secondInput);
+		expect(focusStateManager.storeFormState).toHaveBeenCalledWith(form, secondInput);
 	});
 
 	it("rate limits submitter buttons when data-flux-rate is present", () => {

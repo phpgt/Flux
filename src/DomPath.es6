@@ -1,14 +1,21 @@
 export class DomPath {
 	static getXPathForElement(element, context) {
+		if(!element) {
+			return null;
+		}
+
 		let xpath = "";
 		if(context instanceof Document) {
 			context = context.documentElement;
 		}
 		if(!context) {
-			context = element.ownerDocument.documentElement;
+			context = element.ownerDocument?.documentElement;
+		}
+		if(!context) {
+			return null;
 		}
 
-		while(element !== context) {
+		while(element && element !== context) {
 			let pos = 0;
 			let sibling = element;
 			while(sibling) {
@@ -20,6 +27,10 @@ export class DomPath {
 
 			xpath = `./${element.nodeName}[${pos}]/${xpath}`;
 			element = element.parentElement;
+		}
+
+		if(element !== context) {
+			return null;
 		}
 
 		return xpath.replace(/\/$/, "");

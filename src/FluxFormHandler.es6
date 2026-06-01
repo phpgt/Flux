@@ -97,9 +97,6 @@ export class FluxFormHandler {
 	formSubmitAutoSave = (e) => {
 		e.preventDefault();
 		let currentActiveElement = document.activeElement;
-		if(currentActiveElement) {
-			currentActiveElement.blur();
-		}
 
 		let form = e.target;
 		if(form.form instanceof HTMLFormElement) {

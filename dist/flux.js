@@ -86,14 +86,20 @@ var ElementEventMapper = class {
 // src/DomPath.es6
 var DomPath = class {
   static getXPathForElement(element, context) {
+    if (!element) {
+      return null;
+    }
     let xpath = "";
     if (context instanceof Document) {
       context = context.documentElement;
     }
     if (!context) {
-      context = element.ownerDocument.documentElement;
+      context = element.ownerDocument?.documentElement;
     }
-    while (element !== context) {
+    if (!context) {
+      return null;
+    }
+    while (element && element !== context) {
       let pos = 0;
       let sibling = element;
       while (sibling) {
@@ -104,6 +110,9 @@ var DomPath = class {
       }
       xpath = `./${element.nodeName}[${pos}]/${xpath}`;
       element = element.parentElement;
+    }
+    if (element !== context) {
+      return null;
     }
     return xpath.replace(/\/$/, "");
   }
@@ -198,10 +207,26 @@ var FocusStateManager = class {
     if (activeElement.selectionStart >= 0 && activeElement.selectionEnd >= 0) {
       selection = [activeElement.selectionStart, activeElement.selectionEnd];
     }
-    return {
+    let elementState = {
       path: this.domPath.getXPathForElement(activeElement),
       selection
     };
+    if (activeElement instanceof HTMLInputElement) {
+      if (activeElement.type !== "file") {
+        elementState.value = activeElement.value;
+      }
+      if (activeElement.type === "checkbox" || activeElement.type === "radio") {
+        elementState.checked = activeElement.checked;
+      }
+    } else if (activeElement instanceof HTMLTextAreaElement) {
+      elementState.value = activeElement.value;
+    } else if (activeElement instanceof HTMLSelectElement) {
+      elementState.value = activeElement.value;
+      if (activeElement.multiple) {
+        elementState.selectedValues = Array.from(activeElement.options).filter((option) => option.selected).map((option) => option.value);
+      }
+    }
+    return elementState;
   }
   restoreElementState(elementState) {
     if (!elementState) {
@@ -210,6 +235,17 @@ var FocusStateManager = class {
     let elementToActivate = this.domPath.findInDocument(document, elementState.path);
     if (!elementToActivate) {
       return;
+    }
+    if ("selectedValues" in elementState && elementToActivate instanceof HTMLSelectElement) {
+      let selectedValueSet = new Set(elementState.selectedValues);
+      Array.from(elementToActivate.options).forEach((option) => {
+        option.selected = selectedValueSet.has(option.value);
+      });
+    } else if ("value" in elementState && "value" in elementToActivate) {
+      elementToActivate.value = elementState.value;
+    }
+    if ("checked" in elementState && elementToActivate instanceof HTMLInputElement) {
+      elementToActivate.checked = elementState.checked;
     }
     elementToActivate.focus();
     if (elementState.selection && elementToActivate.setSelectionRange) {
@@ -224,7 +260,6 @@ var FocusStateManager = class {
       return;
     }
     newActiveElement.focus();
-    newActiveElement.blur();
   }
   focusMarkedAutofocusElements() {
     document.querySelectorAll("[data-flux-autofocus]").forEach((autofocusElement) => {
@@ -232,11 +267,19 @@ var FocusStateManager = class {
     });
   }
   storeFormState(form, activeElement) {
-    form.dataset["fluxPath"] = this.domPath.getXPathForElement(form);
-    form.dataset["fluxActive"] = this.domPath.getXPathForElement(
+    let formPath = this.domPath.getXPathForElement(form);
+    if (formPath) {
+      form.dataset["fluxPath"] = formPath;
+    }
+    let activePath = this.domPath.getXPathForElement(
       activeElement,
       form
     );
+    if (activePath) {
+      form.dataset["fluxActive"] = activePath;
+    } else {
+      delete form.dataset["fluxActive"];
+    }
   }
 };
 
@@ -307,7 +350,8 @@ var NavigationController = class {
         action: null,
         errorPrefix: "Live update error"
       },
-      onDocument
+      onDocument,
+      false
     );
   }
   async navigate(element, url, requestOptions, historyState, onDocument, waitingTargets = []) {
@@ -315,7 +359,7 @@ var NavigationController = class {
       waitingElement?.classList?.add(className);
     }
     try {
-      return await this.requestDocument(url, requestOptions, historyState, onDocument);
+      return await this.requestDocument(url, requestOptions, historyState, onDocument, true);
     } catch (error) {
       return null;
     } finally {
@@ -354,7 +398,7 @@ var NavigationController = class {
     }
     return waitingTargets;
   }
-  async requestDocument(url, requestOptions, historyState, onDocument) {
+  async requestDocument(url, requestOptions, historyState, onDocument, allowErrorDocument = false) {
     let method = (requestOptions.method ?? "get").toLowerCase();
     try {
       let absoluteUrl = new URL(url, globalThis.location?.href).toString();
@@ -362,7 +406,7 @@ var NavigationController = class {
         ...requestOptions,
         method
       });
-      if (!response.ok) {
+      if (!response.ok && !allowErrorDocument) {
         throw new Error(`${historyState.errorPrefix}: ${response.status} ${response.statusText}`);
       }
       let html = await response.text();
@@ -708,9 +752,6 @@ var FluxFormHandler = class {
   formSubmitAutoSave = (e) => {
     e.preventDefault();
     let currentActiveElement = document.activeElement;
-    if (currentActiveElement) {
-      currentActiveElement.blur();
-    }
     let form = e.target;
     if (form.form instanceof HTMLFormElement) {
       form = form.form;

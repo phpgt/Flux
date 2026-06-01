@@ -39,10 +39,33 @@ export class FocusStateManager {
 			selection = [activeElement.selectionStart, activeElement.selectionEnd];
 		}
 
-		return {
+		let elementState = {
 			path: this.domPath.getXPathForElement(activeElement),
 			selection,
 		};
+
+		if(activeElement instanceof HTMLInputElement) {
+			if(activeElement.type !== "file") {
+				elementState.value = activeElement.value;
+			}
+
+			if(activeElement.type === "checkbox" || activeElement.type === "radio") {
+				elementState.checked = activeElement.checked;
+			}
+		}
+		else if(activeElement instanceof HTMLTextAreaElement) {
+			elementState.value = activeElement.value;
+		}
+		else if(activeElement instanceof HTMLSelectElement) {
+			elementState.value = activeElement.value;
+			if(activeElement.multiple) {
+				elementState.selectedValues = Array.from(activeElement.options)
+					.filter(option => option.selected)
+					.map(option => option.value);
+			}
+		}
+
+		return elementState;
 	}
 
 	restoreElementState(elementState) {
@@ -53,6 +76,20 @@ export class FocusStateManager {
 		let elementToActivate = this.domPath.findInDocument(document, elementState.path);
 		if(!elementToActivate) {
 			return;
+		}
+
+		if("selectedValues" in elementState && elementToActivate instanceof HTMLSelectElement) {
+			let selectedValueSet = new Set(elementState.selectedValues);
+			Array.from(elementToActivate.options).forEach(option => {
+				option.selected = selectedValueSet.has(option.value);
+			});
+		}
+		else if("value" in elementState && "value" in elementToActivate) {
+			elementToActivate.value = elementState.value;
+		}
+
+		if("checked" in elementState && elementToActivate instanceof HTMLInputElement) {
+			elementToActivate.checked = elementState.checked;
 		}
 
 		elementToActivate.focus();
@@ -70,7 +107,6 @@ export class FocusStateManager {
 		}
 
 		newActiveElement.focus();
-		newActiveElement.blur();
 	}
 
 	focusMarkedAutofocusElements() {
@@ -80,10 +116,20 @@ export class FocusStateManager {
 	}
 
 	storeFormState(form, activeElement) {
-		form.dataset["fluxPath"] = this.domPath.getXPathForElement(form);
-		form.dataset["fluxActive"] = this.domPath.getXPathForElement(
+		let formPath = this.domPath.getXPathForElement(form);
+		if(formPath) {
+			form.dataset["fluxPath"] = formPath;
+		}
+
+		let activePath = this.domPath.getXPathForElement(
 			activeElement,
 			form,
 		);
+		if(activePath) {
+			form.dataset["fluxActive"] = activePath;
+		}
+		else {
+			delete form.dataset["fluxActive"];
+		}
 	}
 }

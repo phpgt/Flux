@@ -80,6 +80,7 @@ export class NavigationController {
 				errorPrefix: "Live update error",
 			},
 			onDocument,
+			false,
 		);
 	}
 
@@ -89,7 +90,7 @@ export class NavigationController {
 		}
 
 		try {
-			return await this.requestDocument(url, requestOptions, historyState, onDocument);
+			return await this.requestDocument(url, requestOptions, historyState, onDocument, true);
 		}
 		catch(error) {
 			return null;
@@ -138,7 +139,7 @@ export class NavigationController {
 		return waitingTargets;
 	}
 
-	async requestDocument(url, requestOptions, historyState, onDocument) {
+	async requestDocument(url, requestOptions, historyState, onDocument, allowErrorDocument = false) {
 		let method = (requestOptions.method ?? "get").toLowerCase();
 		try {
 			let absoluteUrl = new URL(url, globalThis.location?.href).toString();
@@ -146,7 +147,7 @@ export class NavigationController {
 				...requestOptions,
 				method,
 			});
-			if(!response.ok) {
+			if(!response.ok && !allowErrorDocument) {
 				throw new Error(`${historyState.errorPrefix}: ${response.status} ${response.statusText}`);
 			}
 
