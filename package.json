@@ -11,7 +11,8 @@
 	},
 	"scripts": {
 		"build": "esbuild src/main.es6 --bundle --outfile=dist/flux.js --format=esm --platform=browser --loader:.es6=js",
-		"test": "vitest"
+		"test": "vitest run",
+		"test:watch": "vitest"
 	},
 	"vitest": {
 		"environment": "jsdom"
