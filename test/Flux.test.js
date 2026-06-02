@@ -12,6 +12,7 @@ import {FluxFormHandler} from "../src/FluxFormHandler.es6";
 import {FluxLinkHandler} from "../src/FluxLinkHandler.es6";
 import {FluxResponseHandler} from "../src/FluxResponseHandler.es6";
 import {FluxLiveHandler} from "../src/FluxLiveHandler.es6";
+import {FluxDragOrderHandler} from "../src/FluxDragOrderHandler.es6";
 
 beforeEach(() => {
 	document.body.innerHTML = "";
@@ -1033,6 +1034,7 @@ describe("FluxDirectiveRegistry", () => {
 			"update-attributes": expect.objectContaining({handler: "updateAttributes"}),
 			"submit": expect.objectContaining({handler: "autoSubmit"}),
 			"link": expect.objectContaining({handler: "autoLink"}),
+			"drag-order": expect.objectContaining({handler: "dragOrder"}),
 		});
 	});
 
@@ -1052,6 +1054,7 @@ describe("FluxDirectiveRegistry", () => {
 			updateAttributes: vi.fn(),
 			autoSubmit: vi.fn(),
 			autoLink: vi.fn(),
+			dragOrder: vi.fn(),
 		});
 
 		registry.initElement(document.querySelector("button"));
@@ -1075,6 +1078,7 @@ describe("FluxDirectiveRegistry", () => {
 			updateAttributes: vi.fn(),
 			autoSubmit: vi.fn(),
 			autoLink: vi.fn(),
+			dragOrder: vi.fn(),
 		});
 
 		registry.initElement(document.querySelector("a"));
@@ -1098,6 +1102,7 @@ describe("FluxDirectiveRegistry", () => {
 			updateAttributes: vi.fn(),
 			autoSubmit,
 			autoLink: vi.fn(),
+			dragOrder: vi.fn(),
 		});
 
 		registry.initElement(document.querySelector("button"));
@@ -1120,6 +1125,7 @@ describe("FluxDirectiveRegistry", () => {
 			updateAttributes: vi.fn(),
 			autoSubmit: vi.fn(),
 			autoLink: vi.fn(),
+			dragOrder: vi.fn(),
 		});
 
 		expect(() => registry.initElement(document.querySelector("div"))).toThrow(
@@ -1329,6 +1335,136 @@ describe("FluxFormHandler", () => {
 		handler.submitForm(document.querySelector("form"), document.querySelector("button"));
 
 		expect(navigationController.submitForm).toHaveBeenCalledTimes(2);
+	});
+});
+
+describe("FluxDragOrderHandler", () => {
+	it("hides the order controls and adds a draggable handle to the form", () => {
+		document.body.innerHTML = `
+		<ul>
+			<li>
+				<form method="post" data-flux="drag-order">
+					<input type="hidden" name="id" value="1">
+					<label>
+						<span>Move to order</span>
+						<input name="order">
+						<button name="do" value="move">Move</button>
+					</label>
+				</form>
+				<span>one</span>
+			</li>
+		</ul>
+		`;
+
+		let handler = new FluxDragOrderHandler({submitForm: vi.fn()}, document);
+		let form = document.querySelector("form");
+
+		handler.initDragOrder(form);
+
+		let handle = form.querySelector(".drag-handle");
+		expect(handle).toBeInstanceOf(HTMLElement);
+		expect(handle.draggable).toBe(true);
+		expect(form.querySelector("input[name='order']").hidden).toBe(true);
+		expect(form.querySelector("button[name='do']").hidden).toBe(true);
+		expect(form.querySelector("label").hidden).toBe(true);
+	});
+
+	it("sets the order input and submits the form when an item is dropped", () => {
+		document.body.innerHTML = `
+		<ul>
+			<li data-id="1">
+				<form method="post">
+					<input name="id" value="1">
+					<label><input name="order"><button name="do" value="move">Move</button></label>
+				</form>
+			</li>
+			<li data-id="2"><form method="post"><input name="id" value="2"><label><input name="order"><button name="do" value="move">Move</button></label></form></li>
+			<li data-id="3"><form method="post"><input name="id" value="3"><label><input name="order"><button name="do" value="move">Move</button></label></form></li>
+			<li data-id="4"><form method="post"><input name="id" value="4"><label><input name="order"><button name="do" value="move">Move</button></label></form></li>
+		</ul>
+		`;
+
+		let formHandler = {submitForm: vi.fn()};
+		let handler = new FluxDragOrderHandler(formHandler, document);
+		let form = document.querySelector("form");
+		let itemFour = document.querySelector("[data-id='4']");
+
+		handler.startDrag(form);
+		document.querySelector("ul").insertBefore(handler.dragState.item, itemFour);
+		handler.submitDrag();
+
+		expect(form.querySelector("input[name='order']").value).toBe("3");
+		expect(formHandler.submitForm).toHaveBeenCalledWith(
+			form,
+			form.querySelector("button[name='do']"),
+		);
+		expect([...document.querySelectorAll("li")].map(li => li.dataset["id"])).toEqual(["2", "3", "1", "4"]);
+	});
+
+	it("reorders touch drags using the item centre rather than the finger position", () => {
+		document.body.innerHTML = `
+		<ul>
+			<li data-id="1"><form><input name="order"><button name="do" value="move">Move</button></form></li>
+			<li data-id="2"><form><input name="order"><button name="do" value="move">Move</button></form></li>
+			<li data-id="3"><form><input name="order"><button name="do" value="move">Move</button></form></li>
+		</ul>
+		`;
+
+		let handler = new FluxDragOrderHandler({submitForm: vi.fn()}, document);
+		let form = document.querySelector("form");
+		let items = [...document.querySelectorAll("li")];
+		items.forEach((item, index) => {
+			item.getBoundingClientRect = () => ({
+				top: index * 100,
+				height: 100,
+			});
+		});
+
+		handler.startDrag(form, 10);
+		handler.moveItem(120);
+
+		expect([...document.querySelectorAll("li")].map(li => li.dataset["id"])).toEqual(["2", "1", "3"]);
+	});
+
+	it("tracks touch movement and release on the document during an active drag", () => {
+		document.body.innerHTML = `
+		<ul>
+			<li data-id="1">
+				<form data-flux="drag-order">
+					<label><input name="order"><button name="do" value="move">Move</button></label>
+				</form>
+			</li>
+			<li data-id="2"><form><input name="order"><button name="do" value="move">Move</button></form></li>
+		</ul>
+		`;
+
+		let handler = new FluxDragOrderHandler({submitForm: vi.fn()}, document);
+		let form = document.querySelector("form");
+		handler.initDragOrder(form);
+
+		let addSpy = vi.spyOn(document, "addEventListener");
+		let removeSpy = vi.spyOn(document, "removeEventListener");
+		let handle = document.querySelector(".drag-handle");
+		let createPointerEvent = (type) => Object.assign(
+			new Event(type, {bubbles: true, cancelable: true}),
+			{
+				pointerId: 7,
+				pointerType: "touch",
+				button: 0,
+				clientY: 10,
+			},
+		);
+
+		handle.dispatchEvent(createPointerEvent("pointerdown"));
+
+		expect(addSpy).toHaveBeenCalledWith("pointermove", handler.pointerMove, true);
+		expect(addSpy).toHaveBeenCalledWith("pointerup", handler.pointerUp, true);
+		expect(addSpy).toHaveBeenCalledWith("pointercancel", handler.pointerCancel, true);
+
+		document.dispatchEvent(createPointerEvent("pointerup"));
+
+		expect(removeSpy).toHaveBeenCalledWith("pointermove", handler.pointerMove, true);
+		expect(document.querySelector("[data-id='1']").classList.contains("flux-drag-order-dragging")).toBe(false);
 	});
 });
 

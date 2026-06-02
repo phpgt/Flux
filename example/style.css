@@ -132,6 +132,36 @@ blockquote {
 	color: #555;
 }
 
+.drag-drop {
+	margin: 0;
+	padding: 0;
+	max-width: 20rem;
+	list-style-type: none;
+
+	li {
+		border: 1px solid black;
+		margin-bottom: 0.5rem;
+
+		form {
+			display: inline-flex;
+
+			label {
+				span {
+					display: none;
+				}
+				input {
+					width: 4rem;
+				}
+			}
+
+			input, button {
+				padding: 0;
+				font-size: 0.5rem;
+			}
+		}
+	}
+}
+
 @media (max-width: 48rem) {
 	body {
 		padding: 1rem;
