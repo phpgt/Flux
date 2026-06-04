@@ -34,8 +34,8 @@ if($doAction === "move" && isset($items[$id])) {
 	unset($order[$index]);
 	$order = array_values($order);
 
-	$newOrder = max(1, min(count($items), $newOrder ?: 1));
-	array_splice($order, $newOrder - 1, 0, [$id]);
+	$newOrder = max(0, min(count($items) - 1, $newOrder ?? 0));
+	array_splice($order, $newOrder, 0, [$id]);
 
 	$_SESSION["drag-order"] = $order;
 
@@ -58,16 +58,16 @@ if($doAction === "move" && isset($items[$id])) {
 
 	<ul class="drag-drop" data-flux="update">
 		<?php foreach($order as $id) { ?>
-		<li data-id="<?php echo $id;?>">
-			<form method="post" data-flux="drag-order">
-				<input type="hidden" name="id" value="<?php echo $id;?>" />
+			<li data-id="<?php echo $id;?>" data-flux="drag-order">
+				<form method="post">
+					<input type="hidden" name="id" value="<?php echo $id;?>" />
 
 				<label>
 					<span>Move to order</span>
 					<input type="number" name="order" />
 					<button name="do" value="move">Move</button>
 				</label>
-			</form>
+				</form>
 
 			<span><?php echo htmlspecialchars($items[$id], ENT_QUOTES, "UTF-8");?></span>
 		</li>

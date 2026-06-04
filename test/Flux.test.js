@@ -1339,7 +1339,7 @@ describe("FluxFormHandler", () => {
 });
 
 describe("FluxDragOrderHandler", () => {
-	it("hides the order controls and adds a draggable handle to the form", () => {
+		it("hides the order controls and adds a draggable handle to the form", () => {
 		document.body.innerHTML = `
 		<ul>
 			<li>
@@ -1361,15 +1361,106 @@ describe("FluxDragOrderHandler", () => {
 
 		handler.initDragOrder(form);
 
-		let handle = form.querySelector(".drag-handle");
-		expect(handle).toBeInstanceOf(HTMLElement);
-		expect(handle.draggable).toBe(true);
-		expect(form.querySelector("input[name='order']").hidden).toBe(true);
-		expect(form.querySelector("button[name='do']").hidden).toBe(true);
-		expect(form.querySelector("label").hidden).toBe(true);
-	});
+			let handle = form.querySelector(".drag-handle");
+			expect(handle).toBeInstanceOf(HTMLElement);
+			expect(handle.draggable).toBe(true);
+			expect(handle.dataset["fluxTitle"]).toBe("Drag");
+			expect(form.querySelector("input[name='order']").hidden).toBe(true);
+			expect(form.querySelector("button[name='do']").hidden).toBe(true);
+			expect(form.querySelector("label").hidden).toBe(true);
+		});
 
-	it("sets the order input and submits the form when an item is dropped", () => {
+		it("allows drag-order on a parent element and drags that element", () => {
+			document.body.innerHTML = `
+			<ul>
+				<li data-id="1" data-flux="drag-order">
+					<article>
+						<header>one</header>
+						<div>
+							<form method="post">
+								<input name="id" value="1">
+								<label><input name="order"><button name="do" value="move">Move</button></label>
+							</form>
+						</div>
+					</article>
+				</li>
+				<li data-id="2" data-flux="drag-order"><article><form method="post"><input name="id" value="2"><label><input name="order"><button name="do" value="move">Move</button></label></form></article></li>
+				<li data-id="3" data-flux="drag-order"><article><form method="post"><input name="id" value="3"><label><input name="order"><button name="do" value="move">Move</button></label></form></article></li>
+			</ul>
+			`;
+
+			let formHandler = {submitForm: vi.fn()};
+			let handler = new FluxDragOrderHandler(formHandler, document);
+			let items = [...document.querySelectorAll("[data-id]")];
+			items.forEach(item => handler.initDragOrder(item));
+			let item = document.querySelector("[data-id='1']");
+			let form = item.querySelector("form");
+
+			handler.startDrag(form, null, item);
+			document.querySelector("ul").append(item);
+			handler.submitDrag();
+
+			expect(form.querySelector(".drag-handle")).toBeInstanceOf(HTMLElement);
+			expect(form.querySelector("input[name='order']").value).toBe("2");
+			expect(formHandler.submitForm).toHaveBeenCalledWith(
+				form,
+				form.querySelector("button[name='do']"),
+			);
+			expect([...document.querySelectorAll("li")].map(li => li.dataset["id"])).toEqual(["2", "3", "1"]);
+		});
+
+		it("calculates order among sortable siblings only", () => {
+			document.body.innerHTML = `
+			<menu>
+				<li class="fixed">Secrets</li>
+				<li class="fixed">New request</li>
+				<li data-id="1" data-flux="drag-order">
+					<a href="/one">one</a>
+					<form method="post">
+						<input name="id" value="1">
+						<label><input name="order"><button name="do" value="order">Order</button></label>
+					</form>
+				</li>
+				<li data-id="2" data-flux="drag-order">
+					<a href="/two">two</a>
+					<form method="post">
+						<input name="id" value="2">
+						<label><input name="order"><button name="do" value="order">Order</button></label>
+					</form>
+				</li>
+				<li data-id="3" data-flux="drag-order">
+					<a href="/three">three</a>
+					<form method="post">
+						<input name="id" value="3">
+						<label><input name="order"><button name="do" value="order">Order</button></label>
+					</form>
+				</li>
+			</menu>
+			`;
+
+			let formHandler = {submitForm: vi.fn()};
+			let handler = new FluxDragOrderHandler(formHandler, document);
+			let items = [...document.querySelectorAll("[data-flux='drag-order']")];
+			items.forEach(item => handler.initDragOrder(item));
+
+			let item = document.querySelector("[data-id='3']");
+			let form = item.querySelector("form");
+			let firstSortable = document.querySelector("[data-id='1']");
+
+			handler.startDrag(form, null, item);
+			document.querySelector("menu").insertBefore(item, firstSortable);
+			handler.submitDrag();
+
+			expect(form.querySelector("input[name='order']").value).toBe("0");
+			expect(formHandler.submitForm).toHaveBeenCalledWith(
+				form,
+				form.querySelector("button[name='do']"),
+			);
+			expect([...document.querySelectorAll("menu > li")].map(li => li.dataset["id"] ?? li.textContent.trim()))
+				.toEqual(["Secrets", "New request", "3", "1", "2"]);
+		});
+
+		it("sets the order input and submits the form when an item is dropped", () => {
 		document.body.innerHTML = `
 		<ul>
 			<li data-id="1">
@@ -1384,24 +1475,56 @@ describe("FluxDragOrderHandler", () => {
 		</ul>
 		`;
 
-		let formHandler = {submitForm: vi.fn()};
-		let handler = new FluxDragOrderHandler(formHandler, document);
-		let form = document.querySelector("form");
-		let itemFour = document.querySelector("[data-id='4']");
+			let formHandler = {submitForm: vi.fn()};
+			let handler = new FluxDragOrderHandler(formHandler, document);
+			let forms = [...document.querySelectorAll("form")];
+			forms.forEach(form => handler.initDragOrder(form));
+			let form = document.querySelector("form");
+			let itemFour = document.querySelector("[data-id='4']");
 
-		handler.startDrag(form);
+			handler.startDrag(form);
 		document.querySelector("ul").insertBefore(handler.dragState.item, itemFour);
 		handler.submitDrag();
 
-		expect(form.querySelector("input[name='order']").value).toBe("3");
+			expect(form.querySelector("input[name='order']").value).toBe("2");
 		expect(formHandler.submitForm).toHaveBeenCalledWith(
 			form,
 			form.querySelector("button[name='do']"),
 		);
-		expect([...document.querySelectorAll("li")].map(li => li.dataset["id"])).toEqual(["2", "3", "1", "4"]);
-	});
+			expect([...document.querySelectorAll("li")].map(li => li.dataset["id"])).toEqual(["2", "3", "1", "4"]);
+		});
 
-	it("reorders touch drags using the item centre rather than the finger position", () => {
+		it("submits the final order when a native drag ends outside the drop target", () => {
+			document.body.innerHTML = `
+			<ul>
+				<li data-id="1"><form method="post"><input name="id" value="1"><label><input name="order"><button name="do" value="move">Move</button></label></form></li>
+				<li data-id="2"><form method="post"><input name="id" value="2"><label><input name="order"><button name="do" value="move">Move</button></label></form></li>
+				<li data-id="3"><form method="post"><input name="id" value="3"><label><input name="order"><button name="do" value="move">Move</button></label></form></li>
+			</ul>
+			`;
+
+			let formHandler = {submitForm: vi.fn()};
+			let handler = new FluxDragOrderHandler(formHandler, document);
+			let forms = [...document.querySelectorAll("form")];
+			forms.forEach(form => handler.initDragOrder(form));
+			let form = document.querySelector("[data-id='3'] form");
+			let item = document.querySelector("[data-id='3']");
+			let firstItem = document.querySelector("[data-id='1']");
+
+			handler.startDrag(form, null, item);
+			document.querySelector("ul").insertBefore(item, firstItem);
+			handler.endNativeDrag();
+
+			expect(form.querySelector("input[name='order']").value).toBe("0");
+			expect(formHandler.submitForm).toHaveBeenCalledWith(
+				form,
+				form.querySelector("button[name='do']"),
+			);
+			expect(handler.dragState).toBe(null);
+			expect([...document.querySelectorAll("li")].map(li => li.dataset["id"])).toEqual(["3", "1", "2"]);
+		});
+
+		it("reorders touch drags using the item centre rather than the finger position", () => {
 		document.body.innerHTML = `
 		<ul>
 			<li data-id="1"><form><input name="order"><button name="do" value="move">Move</button></form></li>
@@ -1410,10 +1533,12 @@ describe("FluxDragOrderHandler", () => {
 		</ul>
 		`;
 
-		let handler = new FluxDragOrderHandler({submitForm: vi.fn()}, document);
-		let form = document.querySelector("form");
-		let items = [...document.querySelectorAll("li")];
-		items.forEach((item, index) => {
+			let handler = new FluxDragOrderHandler({submitForm: vi.fn()}, document);
+			let forms = [...document.querySelectorAll("form")];
+			forms.forEach(form => handler.initDragOrder(form));
+			let form = document.querySelector("form");
+			let items = [...document.querySelectorAll("li")];
+			items.forEach((item, index) => {
 			item.getBoundingClientRect = () => ({
 				top: index * 100,
 				height: 100,

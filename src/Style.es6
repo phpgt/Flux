@@ -22,13 +22,13 @@ const CSS_CONTENT = `
 }
 
 .drag-handle {
-	cursor: grab;
+	cursor: move;
 	user-select: none;
 	touch-action: none;
 }
 
-.drag-handle:active {
-	cursor: grabbing;
+.drag-handle::before {
+	content: attr(data-flux-title);
 }
 
 .flux-drag-order-dragging {

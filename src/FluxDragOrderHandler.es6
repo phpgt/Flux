@@ -1,4 +1,6 @@
 export class FluxDragOrderHandler {
+	static LEGACY_SORTABLE_ITEM_ATTRIBUTE = "data-flux-drag-order-item";
+
 	constructor(
 		formHandler,
 		documentObject = globalThis.document,
@@ -14,21 +16,25 @@ export class FluxDragOrderHandler {
 		this.activePointerId = null;
 	}
 
-	initDragOrder = (form) => {
-		if(!(form instanceof HTMLFormElement)) {
-			throw new TypeError("data-flux type \"drag-order\" must be applied to a form element.");
+	initDragOrder = (dragElement) => {
+		if(!(dragElement instanceof HTMLElement)) {
+			throw new TypeError("data-flux type \"drag-order\" must be applied to an HTML element.");
 		}
 
-		if(form.dataset["fluxDragOrderInit"] !== undefined) {
+		if(dragElement.dataset["fluxDragOrderInit"] !== undefined) {
 			return;
 		}
 
+		let form = this.getForm(dragElement);
 		let orderInput = this.getOrderInput(form);
 		let submitButton = this.getSubmitButton(form);
-		let item = this.getItem(form);
+		let item = this.getItem(dragElement, form);
 		let container = item.parentElement;
 
-		form.dataset["fluxDragOrderInit"] = "";
+		dragElement.dataset["fluxDragOrderInit"] = "";
+		if(dragElement instanceof HTMLFormElement) {
+			item.setAttribute(FluxDragOrderHandler.LEGACY_SORTABLE_ITEM_ATTRIBUTE, "");
+		}
 		this.hideFormControls(form, orderInput, submitButton);
 
 		let handle = this.documentObject.createElement("span");
@@ -37,12 +43,12 @@ export class FluxDragOrderHandler {
 		handle.role = "button";
 		handle.tabIndex = 0;
 		handle.ariaLabel = "Drag to reorder";
-		handle.textContent = "Drag";
+		handle.dataset["fluxTitle"] = "Drag";
 		form.prepend(handle);
 
-		handle.addEventListener("dragstart", e => this.startNativeDrag(e, form));
-		handle.addEventListener("dragend", this.endDrag);
-		handle.addEventListener("pointerdown", e => this.startPointerDrag(e, form));
+		handle.addEventListener("dragstart", e => this.startNativeDrag(e, form, item));
+		handle.addEventListener("dragend", this.endNativeDrag);
+		handle.addEventListener("pointerdown", e => this.startPointerDrag(e, form, item));
 
 		if(!this.containerState.has(container)) {
 			this.containerState.add(container);
@@ -51,8 +57,21 @@ export class FluxDragOrderHandler {
 		}
 
 		if(this.debug) {
-			this.logger.debug("initDragOrder completed", form);
+			this.logger.debug("initDragOrder completed", dragElement);
 		}
+	}
+
+	getForm(dragElement) {
+		if(dragElement instanceof HTMLFormElement) {
+			return dragElement;
+		}
+
+		let form = dragElement.querySelector("form");
+		if(!(form instanceof HTMLFormElement)) {
+			throw new TypeError("data-flux type \"drag-order\" requires a form element.");
+		}
+
+		return form;
 	}
 
 	getOrderInput(form) {
@@ -73,10 +92,12 @@ export class FluxDragOrderHandler {
 		return submitButton;
 	}
 
-	getItem(form) {
-		let item = form.parentElement;
+	getItem(dragElement, form = dragElement instanceof HTMLFormElement ? dragElement : null) {
+		let item = dragElement instanceof HTMLFormElement
+			? form?.parentElement
+			: dragElement;
 		if(!item?.parentElement) {
-			throw new TypeError("data-flux type \"drag-order\" requires the form to be inside a sortable item.");
+			throw new TypeError("data-flux type \"drag-order\" requires the sortable element to be inside a container.");
 		}
 
 		return item;
@@ -97,21 +118,21 @@ export class FluxDragOrderHandler {
 		}
 	}
 
-	startNativeDrag(e, form) {
-		this.startDrag(form, e.clientY);
+	startNativeDrag(e, form, item = null) {
+		this.startDrag(form, e.clientY, item);
 		if(e.dataTransfer) {
 			e.dataTransfer.effectAllowed = "move";
 			e.dataTransfer.setData("text/plain", "");
 		}
 	}
 
-	startPointerDrag(e, form) {
+	startPointerDrag(e, form, item = null) {
 		if(e.pointerType === "mouse" || e.button !== 0) {
 			return;
 		}
 
 		e.preventDefault();
-		this.startDrag(form, e.clientY);
+		this.startDrag(form, e.clientY, item);
 		this.moveItem(e.clientY);
 
 		this.activePointerId = e.pointerId;
@@ -120,10 +141,10 @@ export class FluxDragOrderHandler {
 		this.documentObject.addEventListener("pointercancel", this.pointerCancel, true);
 	}
 
-	startDrag(form, clientY = null) {
+	startDrag(form, clientY = null, item = null) {
 		this.endDrag();
 
-		let item = this.getItem(form);
+		item ??= this.getItem(form);
 		let rect = item.getBoundingClientRect();
 		let pointerOffsetY = clientY === null
 			? 0
@@ -184,9 +205,7 @@ export class FluxDragOrderHandler {
 	moveItem(clientY) {
 		let {container, item, pointerOffsetY} = this.dragState;
 		let itemCenterY = clientY + pointerOffsetY;
-		let siblings = [...container.children].filter(child => {
-			return child !== item;
-		});
+		let siblings = this.getSortableSiblings(container).filter(child => child !== item);
 		let insertBefore = siblings.find(child => {
 			let rect = child.getBoundingClientRect();
 			return itemCenterY < rect.top + rect.height / 2;
@@ -201,6 +220,14 @@ export class FluxDragOrderHandler {
 		}
 
 		e.preventDefault();
+		this.submitDrag();
+	}
+
+	endNativeDrag = () => {
+		if(!this.dragState) {
+			return;
+		}
+
 		this.submitDrag();
 	}
 
@@ -221,7 +248,14 @@ export class FluxDragOrderHandler {
 
 	getItemOrder() {
 		let {item, container} = this.dragState;
-		return [...container.children].indexOf(item) + 1;
+		return this.getSortableSiblings(container).indexOf(item);
+	}
+
+	getSortableSiblings(container) {
+		return [...container.children].filter(child => {
+			return child.dataset["flux"] === "drag-order"
+				|| child.hasAttribute(FluxDragOrderHandler.LEGACY_SORTABLE_ITEM_ATTRIBUTE);
+		});
 	}
 
 	endDrag = () => {
