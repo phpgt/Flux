@@ -39,6 +39,91 @@ class FeatureContext extends MinkContext {
 	}
 
 	/**
+	 * @When I drag the item with id :id to position :position in :selector
+	 */
+	public function iDragTheItemWithIdToPositionIn(string $id, int $position, string $selector):void {
+		$escapedSelector = json_encode($selector, JSON_THROW_ON_ERROR);
+		$escapedId = json_encode($id, JSON_THROW_ON_ERROR);
+		$encodedPosition = json_encode($position, JSON_THROW_ON_ERROR);
+		$script = <<<JS
+	(() => {
+	  const id = $escapedId;
+	  const container = document.querySelector($escapedSelector);
+	  if(!container) {
+	    throw new Error("Could not find container: " + $escapedSelector);
+	  }
+
+	  const item = container.querySelector('[data-id="' + CSS.escape(id) + '"]');
+	  if(!item) {
+	    throw new Error("Could not find item with data-id: " + id);
+	  }
+
+	  const handle = item.querySelector(".drag-handle");
+	  if(!handle) {
+	    throw new Error("Could not find drag handle for item: " + id);
+	  }
+
+	  const itemRect = item.getBoundingClientRect();
+	  const handleRect = handle.getBoundingClientRect();
+	  const startY = handleRect.top + handleRect.height / 2;
+	  const pointerOffsetY = itemRect.top + itemRect.height / 2 - startY;
+	  const siblings = [...container.children].filter(child => child !== item);
+	  const targetIndex = Math.max(0, Math.min(siblings.length, $encodedPosition - 1));
+	  const before = siblings[targetIndex] ?? null;
+	  const previous = siblings[targetIndex - 1] ?? null;
+	  const beforeMid = before
+	    ? before.getBoundingClientRect().top + before.getBoundingClientRect().height / 2
+	    : container.getBoundingClientRect().bottom;
+	  const previousMid = previous
+	    ? previous.getBoundingClientRect().top + previous.getBoundingClientRect().height / 2
+	    : container.getBoundingClientRect().top;
+	  const targetItemCenterY = (beforeMid + previousMid) / 2;
+	  const targetPointerY = targetItemCenterY - pointerOffsetY;
+	  const x = handleRect.left + handleRect.width / 2;
+	  const eventOptions = {
+	    bubbles: true,
+	    cancelable: true,
+	    pointerId: 1,
+	    pointerType: "touch",
+	    isPrimary: true,
+	    button: 0,
+	    buttons: 1,
+	    clientX: x,
+	  };
+
+	  handle.dispatchEvent(new PointerEvent("pointerdown", {...eventOptions, clientY: startY}));
+	  document.dispatchEvent(new PointerEvent("pointermove", {...eventOptions, clientY: targetPointerY}));
+	  document.dispatchEvent(new PointerEvent("pointerup", {...eventOptions, buttons: 0, clientY: targetPointerY}));
+	})()
+	JS;
+
+		$this->getSession()->executeScript($script);
+	}
+
+	/**
+	 * @Then the items in :selector should be ordered :expectedOrder
+	 */
+	public function theItemsInShouldBeOrdered(string $selector, string $expectedOrder):void {
+		$escapedSelector = json_encode($selector, JSON_THROW_ON_ERROR);
+		$escapedExpectedOrder = json_encode($expectedOrder, JSON_THROW_ON_ERROR);
+		$condition = <<<JS
+	(() => {
+	  const container = document.querySelector($escapedSelector);
+	  if(!container) {
+	    return false;
+	  }
+
+	  const actualOrder = [...container.children]
+	    .map(child => child.dataset.id)
+	    .join(",");
+	  return actualOrder === $escapedExpectedOrder;
+	})()
+	JS;
+
+		$this->waitForCondition($condition, sprintf('Timed out waiting for "%s" to be ordered "%s".', $selector, $expectedOrder));
+	}
+
+	/**
 	 * @Then I wait until the element :selector contains :text
 	 */
 	public function iWaitUntilTheElementContains(string $selector, string $text):void {

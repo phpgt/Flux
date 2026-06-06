@@ -11,6 +11,7 @@ import {FluxFormHandler} from "./FluxFormHandler.es6";
 import {FluxLinkHandler} from "./FluxLinkHandler.es6";
 import {FluxResponseHandler} from "./FluxResponseHandler.es6";
 import {FluxLiveHandler} from "./FluxLiveHandler.es6";
+import {FluxDragOrderHandler} from "./FluxDragOrderHandler.es6";
 
 export class Flux {
 	static DEBUG = false;
@@ -26,6 +27,7 @@ export class Flux {
 	linkHandler;
 	responseHandler;
 	liveHandler;
+	dragOrderHandler;
 	logger;
 
 	constructor(
@@ -43,6 +45,7 @@ export class Flux {
 		responseHandler = undefined,
 		liveHandler = undefined,
 		logger = undefined,
+		dragOrderHandler = undefined,
 	) {
 		handleWindowPopState();
 		this.logger = logger ?? console;
@@ -92,6 +95,12 @@ export class Flux {
 			() => Date.now(),
 			DomPath,
 		);
+		this.dragOrderHandler = dragOrderHandler ?? new FluxDragOrderHandler(
+			this.formHandler,
+			document,
+			console,
+			Flux.DEBUG,
+		);
 		this.domBridge = domBridge ?? new FluxDomBridge(
 			this.elementEventMapper,
 			this.initFluxElementSafely,
@@ -111,6 +120,7 @@ export class Flux {
 			updateAttributes: this.storeAttributesUpdateElement,
 			autoSubmit: this.formHandler.initAutoSubmit,
 			autoLink: this.linkHandler.initAutoLink,
+			dragOrder: this.dragOrderHandler.initDragOrder,
 		});
 
 		document.querySelectorAll("[data-flux]").forEach(this.initFluxElementSafely);
