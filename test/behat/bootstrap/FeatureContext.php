@@ -24,6 +24,30 @@ class FeatureContext extends MinkContext {
 	}
 
 	/**
+	 * @When I change the element :selector to :value
+	 */
+	public function iChangeTheElementTo(string $selector, string $value):void {
+		$escapedSelector = json_encode($selector, JSON_THROW_ON_ERROR);
+		$escapedValue = json_encode($value, JSON_THROW_ON_ERROR);
+		$script = <<<JS
+	(() => {
+	  const element = document.querySelector($escapedSelector);
+	  if(!element) {
+	    throw new Error("Could not find element: " + $escapedSelector);
+	  }
+
+	  element.focus();
+	  element.value = $escapedValue;
+	  element.dispatchEvent(new Event("input", {bubbles: true}));
+	  element.dispatchEvent(new Event("change", {bubbles: true}));
+	  element.blur();
+	})()
+	JS;
+
+		$this->getSession()->executeScript($script);
+	}
+
+	/**
 	 * @Then the element :selector should have value :value
 	 */
 	public function theElementShouldHaveValue(string $selector, string $value):void {
@@ -101,6 +125,86 @@ class FeatureContext extends MinkContext {
 	}
 
 	/**
+	 * @When I drag the item with id :id from :sourceSelector to position :position in :targetSelector
+	 */
+	public function iDragTheItemWithIdFromToPositionIn(string $id, string $sourceSelector, int $position, string $targetSelector):void {
+		$escapedSourceSelector = json_encode($sourceSelector, JSON_THROW_ON_ERROR);
+		$escapedTargetSelector = json_encode($targetSelector, JSON_THROW_ON_ERROR);
+		$escapedId = json_encode($id, JSON_THROW_ON_ERROR);
+		$encodedPosition = json_encode($position, JSON_THROW_ON_ERROR);
+		$script = <<<JS
+	(() => {
+	  const id = $escapedId;
+	  const sourceContainer = document.querySelector($escapedSourceSelector);
+	  const targetContainer = document.querySelector($escapedTargetSelector);
+	  if(!sourceContainer) {
+	    throw new Error("Could not find source container: " + $escapedSourceSelector);
+	  }
+	  if(!targetContainer) {
+	    throw new Error("Could not find target container: " + $escapedTargetSelector);
+	  }
+
+	  const item = sourceContainer.querySelector('[data-id="' + CSS.escape(id) + '"]');
+	  if(!item) {
+	    throw new Error("Could not find item with data-id: " + id);
+	  }
+
+	  const handle = item.querySelector(".drag-handle");
+	  if(!handle) {
+	    throw new Error("Could not find drag handle for item: " + id);
+	  }
+
+	  const itemRect = item.getBoundingClientRect();
+	  const handleRect = handle.getBoundingClientRect();
+	  const targetRect = targetContainer.getBoundingClientRect();
+	  const startY = handleRect.top + handleRect.height / 2;
+	  const pointerOffsetY = itemRect.top + itemRect.height / 2 - startY;
+	  const siblings = [...targetContainer.children].filter(child => child !== item);
+	  const targetIndex = Math.max(0, Math.min(siblings.length, $encodedPosition - 1));
+	  const before = siblings[targetIndex] ?? null;
+	  const previous = siblings[targetIndex - 1] ?? null;
+	  const beforeMid = before
+	    ? before.getBoundingClientRect().top + before.getBoundingClientRect().height / 2
+	    : targetRect.bottom;
+	  const previousMid = previous
+	    ? previous.getBoundingClientRect().top + previous.getBoundingClientRect().height / 2
+	    : targetRect.top;
+	  const targetItemCenterY = (beforeMid + previousMid) / 2;
+	  const targetPointerY = targetItemCenterY - pointerOffsetY;
+	  const x = targetRect.left + Math.min(20, targetRect.width / 2);
+	  const eventOptions = {
+	    bubbles: true,
+	    cancelable: true,
+	    pointerId: 1,
+	    pointerType: "touch",
+	    isPrimary: true,
+	    button: 0,
+	    buttons: 1,
+	  };
+
+	  handle.dispatchEvent(new PointerEvent("pointerdown", {
+	    ...eventOptions,
+	    clientX: handleRect.left + handleRect.width / 2,
+	    clientY: startY,
+	  }));
+	  document.dispatchEvent(new PointerEvent("pointermove", {
+	    ...eventOptions,
+	    clientX: x,
+	    clientY: targetPointerY,
+	  }));
+	  document.dispatchEvent(new PointerEvent("pointerup", {
+	    ...eventOptions,
+	    buttons: 0,
+	    clientX: x,
+	    clientY: targetPointerY,
+	  }));
+	})()
+	JS;
+
+		$this->getSession()->executeScript($script);
+	}
+
+	/**
 	 * @Then the items in :selector should be ordered :expectedOrder
 	 */
 	public function theItemsInShouldBeOrdered(string $selector, string $expectedOrder):void {
@@ -115,6 +219,7 @@ class FeatureContext extends MinkContext {
 
 	  const actualOrder = [...container.children]
 	    .map(child => child.dataset.id)
+	    .filter(id => id !== undefined)
 	    .join(",");
 	  return actualOrder === $escapedExpectedOrder;
 	})()

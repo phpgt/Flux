@@ -69,6 +69,26 @@ Flux also supports polling-based live regions:
 
 `data-flux="live"` is shorthand for `data-flux="live-outer"`. If one or more live regions exist on the page, Flux performs a single background GET request every second against the current page URL and applies only the live updates from the returned HTML.
 
+Flux can also turn a server-ordered form into a drag handle:
+
+```html
+<ul data-flux-drag-parent="todo" data-flux-drag-handle="Move card">
+	<li data-flux="drag-order">
+		<form method="post">
+			<input type="hidden" name="id" value="1" />
+			<input type="hidden" name="parent" value="todo" />
+			<input type="number" name="order" />
+			<button name="do" value="move">Move</button>
+		</form>
+		<span>Write the tests</span>
+	</li>
+</ul>
+```
+
+`order` is filled with the zero-based position before submit. When an optional `parent` input is present, Flux also fills it from the destination container's `data-flux-drag-parent` value, which allows Kanban-style moves while keeping the server-side action as a plain form submission.
+
+Use `data-flux-drag-handle` on the draggable item or its parent container to change the generated handle text. If it is omitted, the handle text is `Drag`.
+
 ## Limitations compared to other libraries
 
 Flux is designed as a **progressive enhancement** tool that encourages plain HTTP techniques. Your web applications should function fully even without any JavaScript or CSS, ensuring simplicity and accessibility. This approach simplifies development by focusing on straightforward, reliable techniques, making the entire development experience more manageable.
