@@ -10,6 +10,13 @@ class FeatureContext extends MinkContext {
 	private DateTime $rememberedTime;
 
 	/**
+	 * @Given I have a fresh browser session
+	 */
+	public function iHaveAFreshBrowserSession():void {
+		$this->getSession()->reset();
+	}
+
+	/**
 	 * @When I fill the element :selector with:
 	 */
 	public function iFillTheElementWith(string $selector, PyStringNode $value):void {
