@@ -4,8 +4,14 @@
  * keep the preview positioned under the pointer.
  */
 export class Preview {
-	constructor(documentObject = globalThis.document) {
+	constructor(
+		documentObject = globalThis.document,
+		styleReader = undefined,
+	) {
 		this.documentObject = documentObject;
+		this.styleReader = styleReader ?? globalThis.getComputedStyle?.bind(globalThis);
+		this.canReadPseudoElements = Boolean(styleReader)
+			|| !this.documentObject.defaultView?.navigator?.userAgent.includes("jsdom");
 	}
 
 	create(item, rect) {
@@ -49,7 +55,56 @@ export class Preview {
 	}
 
 	copyComputedStyles(source, target) {
-		let styles = getComputedStyle(source);
+		this.copyStyleDeclaration(this.readStyles(source), target);
+
+		[...source.children].forEach((sourceChild, index) => {
+			let targetChild = target.children[index];
+			if(targetChild) {
+				this.copyComputedStyles(sourceChild, targetChild);
+			}
+		});
+
+		this.copyPseudoElement(source, target, "::before", "afterbegin");
+		this.copyPseudoElement(source, target, "::after", "beforeend");
+	}
+
+	copyPseudoElement(source, target, pseudoElement, position) {
+		if(!this.canReadPseudoElements) {
+			return;
+		}
+
+		let styles = this.readStyles(source, pseudoElement);
+		if(!this.hasPseudoElementContent(styles)) {
+			return;
+		}
+
+		let pseudoClone = this.documentObject.createElement("span");
+		pseudoClone.setAttribute("aria-hidden", "true");
+		pseudoClone.dataset["fluxPseudo"] = pseudoElement.slice(2);
+		pseudoClone.textContent = this.getPseudoElementText(styles);
+		this.copyStyleDeclaration(styles, pseudoClone);
+		target.insertAdjacentElement(position, pseudoClone);
+	}
+
+	hasPseudoElementContent(styles) {
+		let content = styles?.getPropertyValue?.("content");
+		return content !== undefined
+			&& content !== ""
+			&& content !== "normal"
+			&& content !== "none";
+	}
+
+	getPseudoElementText(styles) {
+		let content = styles.getPropertyValue("content");
+		if(content === "\"\"" || content === "''") {
+			return "";
+		}
+
+		let match = content.match(/^(['"])(.*)\1$/);
+		return match ? match[2] : "";
+	}
+
+	copyStyleDeclaration(styles, target) {
 		for(let i = 0; i < styles.length; i++) {
 			let property = styles.item(i);
 			target.style.setProperty(
@@ -58,12 +113,9 @@ export class Preview {
 				styles.getPropertyPriority(property),
 			);
 		}
+	}
 
-		[...source.children].forEach((sourceChild, index) => {
-			let targetChild = target.children[index];
-			if(targetChild) {
-				this.copyComputedStyles(sourceChild, targetChild);
-			}
-		});
+	readStyles(element, pseudoElement = undefined) {
+		return this.styleReader(element, pseudoElement);
 	}
 }

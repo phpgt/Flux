@@ -13,6 +13,7 @@ import {LinkHandler} from "../src/LinkHandler.es6";
 import {ResponseHandler} from "../src/ResponseHandler.es6";
 import {LiveHandler} from "../src/LiveHandler.es6";
 import {Handler as DragOrderHandler} from "../src/DragOrder/Handler.es6";
+import {Preview} from "../src/DragOrder/Preview.es6";
 
 beforeEach(() => {
 	document.body.innerHTML = "";
@@ -2230,6 +2231,76 @@ describe("DragOrderHandler", () => {
 		expect(item.classList.contains("flux-drag-order-dragging")).toBe(false);
 	});
 });
+
+describe("DragOrder Preview", () => {
+	it("copies pseudo-elements into the floating clone", () => {
+		document.body.innerHTML = `
+		<li>
+			<form>
+				<span class="drag-handle"></span>
+			</form>
+		</li>
+		`;
+
+		let styleReader = (element, pseudoElement) => {
+			let properties = {
+				display: "block",
+			};
+
+			if(element.matches?.(".drag-handle") && pseudoElement === "::before") {
+				properties = {
+					content: "\"\"",
+					display: "block",
+					width: "12px",
+					height: "12px",
+					"background-color": "rgb(1, 2, 3)",
+				};
+			}
+			else if(element.matches?.(".drag-handle") && pseudoElement === "::after") {
+				properties = {
+					content: "\"suffix\"",
+					display: "inline",
+					color: "rgb(4, 5, 6)",
+				};
+			}
+			else if(pseudoElement) {
+				properties = {
+					content: "normal",
+				};
+			}
+
+			return createStyleDeclaration(properties);
+		};
+
+		let preview = new Preview(document, styleReader);
+		let floatingItem = preview.create(document.querySelector("li"), {
+			width: 100,
+			height: 40,
+		});
+		let floatingHandle = floatingItem.querySelector(".drag-handle");
+		let before = floatingHandle.querySelector("[data-flux-pseudo='before']");
+		let after = floatingHandle.querySelector("[data-flux-pseudo='after']");
+
+		expect(before).toBeInstanceOf(HTMLElement);
+		expect(before.textContent).toBe("");
+		expect(before.style.width).toBe("12px");
+		expect(before.style.height).toBe("12px");
+		expect(before.style.backgroundColor).toBe("rgb(1, 2, 3)");
+		expect(after).toBeInstanceOf(HTMLElement);
+		expect(after.textContent).toBe("suffix");
+		expect(after.style.color).toBe("rgb(4, 5, 6)");
+	});
+});
+
+function createStyleDeclaration(properties) {
+	let propertyNames = Object.keys(properties);
+	return {
+		length: propertyNames.length,
+		item: index => propertyNames[index],
+		getPropertyValue: property => properties[property] ?? "",
+		getPropertyPriority: () => "",
+	};
+}
 
 describe("DomBridge", () => {
 	it("reinitialises flux elements and transfers fluxObj during element replacement", () => {
