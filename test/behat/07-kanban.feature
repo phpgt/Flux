@@ -18,6 +18,14 @@ Feature: Kanban example
     Then Flux should be ready
     And the element "[data-id='doing'] > .kanban-column-form input[name='title']" should have value "In progress"
 
+  Scenario: Emptying a list title removes the list and its cards
+    Given I have a fresh browser session
+    And I am on "/example/07-kanban.php"
+    Then Flux should be ready
+    When I change the element "[data-id='doing'] > .kanban-column-form input[name='title']" to ""
+    Then the items in ".kanban-board" should be ordered "todo,done"
+    And I should not see "Create the example"
+
   Scenario: Reordering list containers preserves their cards
     Given I have a fresh browser session
     And I am on "/example/07-kanban.php"

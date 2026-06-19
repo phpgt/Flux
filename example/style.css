@@ -163,6 +163,7 @@ blockquote {
 }
 
 .kanban-board {
+	position: relative;
 	display: grid;
 	grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
 	gap: 1rem;
@@ -176,6 +177,11 @@ blockquote {
 	border-radius: 0.5rem;
 	padding: 1rem;
 	background: #f6f6f6;
+}
+
+.kanban-column-new {
+	background: transparent;
+	border: none;
 }
 
 .kanban-column-form {
@@ -231,6 +237,11 @@ blockquote {
 
 .kanban-card-new {
 	opacity: 0.5;
+
+	input[name="title"] {
+		margin-left: 1.1rem;
+		width: calc(100% - 1.1rem);
+	}
 }
 
 .kanban-card-new:focus-within {

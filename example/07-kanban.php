@@ -128,7 +128,19 @@ elseif($doAction === "move-list" && isset($columns[$column])) {
 }
 elseif($doAction === "save-list") {
 	if($column && isset($columns[$column])) {
-		$columns[$column] = $title;
+		if($title === "") {
+			foreach($board[$column] ?? [] as $cardId) {
+				unset($cards[$cardId]);
+			}
+			unset($columns[$column], $board[$column]);
+			$columnOrder = array_values(array_filter(
+				$columnOrder,
+				fn($key) => $key !== $column,
+			));
+		}
+		else {
+			$columns[$column] = $title;
+		}
 	}
 	elseif($title !== "") {
 		$column = "column-" . (count($columns) + 1);
