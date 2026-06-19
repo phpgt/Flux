@@ -13,7 +13,7 @@
         "dmore/behat-chrome-extension": "^1.4"
     },
     "scripts": {
-        "behat": "test/bin/behat",
+        "behat": "test/behat/behat-bin",
         "vitest": "npm test",
         "test": [
             "@behat",

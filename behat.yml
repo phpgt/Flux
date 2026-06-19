@@ -2,7 +2,7 @@ default:
   suites:
     default:
       paths:
-        - test/behat
+        - "%paths.base%/test/behat"
       contexts:
         - FeatureContext
   extensions:

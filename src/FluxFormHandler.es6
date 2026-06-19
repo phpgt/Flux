@@ -122,10 +122,11 @@ export class FluxFormHandler {
 			return Promise.resolve(null);
 		}
 
+		let requestElementState = this.focusStateManager.captureElementState(form);
 		let formData = this.getFormDataForButton(form, "autoSave", submitter);
 		let responseHandler = form.hasAttribute("action")
-			? this.onNavigationDocument
-			: this.onDocument;
+			? (newDocument) => this.onNavigationDocument(newDocument, requestElementState)
+			: (newDocument) => this.onDocument(newDocument, requestElementState);
 		return this.navigationController.submitForm(form, formData, responseHandler, submitter);
 	}
 

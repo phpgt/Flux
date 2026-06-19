@@ -48,7 +48,41 @@ class FeatureContext extends MinkContext {
 	}
 
 	/**
-	 * @Then the element :selector should have value :value
+	 * @When I press Enter in the element :selector
+	 */
+	public function iPressEnterInTheElement(string $selector):void {
+		$escapedSelector = json_encode($selector, JSON_THROW_ON_ERROR);
+		$script = <<<JS
+	(() => {
+	  const element = document.querySelector($escapedSelector);
+	  if(!element) {
+	    throw new Error("Could not find element: " + $escapedSelector);
+	  }
+
+	  const form = element.form;
+	  if(!(form instanceof HTMLFormElement)) {
+	    throw new Error("Element does not belong to a form: " + $escapedSelector);
+	  }
+
+	  const eventOptions = {
+	    key: "Enter",
+	    code: "Enter",
+	    bubbles: true,
+	    cancelable: true,
+	  };
+	  const button = form.querySelector("button[type='submit'], button:not([type]), input[type='submit']");
+	  element.focus();
+	  element.dispatchEvent(new KeyboardEvent("keydown", eventOptions));
+	  element.dispatchEvent(new KeyboardEvent("keyup", eventOptions));
+	  form.requestSubmit(button);
+	})()
+	JS;
+
+		$this->getSession()->executeScript($script);
+	}
+
+	/**
+	 * @Then /^the element "([^"]+)" should have value "(.*)"$/
 	 */
 	public function theElementShouldHaveValue(string $selector, string $value):void {
 		$element = $this->findCssElement($selector);

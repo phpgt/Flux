@@ -36,23 +36,33 @@ export class FluxResponseHandler {
 		this.animationFrame = animationFrame;
 	}
 
-	handleDocument = (newDocument) => {
+	handleDocument = (newDocument, requestElementState = null) => {
 		if(!this.isProcessableDocument(newDocument)) {
 			return;
 		}
 
 		this.scheduler(() => {
-			this.documentUpdater.apply(newDocument, FluxResponseHandler.DEFAULT_UPDATE_TYPES);
+			this.documentUpdater.apply(
+				newDocument,
+				FluxResponseHandler.DEFAULT_UPDATE_TYPES,
+				undefined,
+				requestElementState,
+			);
 		}, 0);
 	}
 
-	handleLinkDocument = (newDocument) => {
+	handleLinkDocument = (newDocument, requestElementState = null) => {
 		if(!this.isProcessableDocument(newDocument)) {
 			return;
 		}
 
 		this.scheduler(() => {
-			this.documentUpdater.apply(newDocument, FluxResponseHandler.LINK_UPDATE_TYPES);
+			this.documentUpdater.apply(
+				newDocument,
+				FluxResponseHandler.LINK_UPDATE_TYPES,
+				undefined,
+				requestElementState,
+			);
 			this.scrollToTopAfterPaint();
 		}, 0);
 	}

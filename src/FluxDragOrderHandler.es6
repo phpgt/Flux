@@ -41,7 +41,7 @@ export class FluxDragOrderHandler {
 
 		let handle = this.documentObject.createElement("span");
 		handle.className = "drag-handle";
-		handle.draggable = true;
+		handle.draggable = false;
 		handle.role = "button";
 		handle.tabIndex = 0;
 		handle.ariaLabel = "Drag to reorder";
@@ -155,13 +155,22 @@ export class FluxDragOrderHandler {
 	startNativeDrag(e, form, item = null) {
 		this.startDrag(form, e.clientY, item, e.clientX);
 		if(e.dataTransfer) {
+			if(item) {
+				let rect = item.getBoundingClientRect();
+				e.dataTransfer.setDragImage(
+					item,
+					e.clientX - rect.left,
+					e.clientY - rect.top,
+				);
+			}
+
 			e.dataTransfer.effectAllowed = "move";
 			e.dataTransfer.setData("text/plain", "");
 		}
 	}
 
 	startPointerDrag(e, form, item = null) {
-		if(e.pointerType === "mouse" || e.button !== 0) {
+		if(e.button !== 0) {
 			return;
 		}
 
@@ -180,10 +189,10 @@ export class FluxDragOrderHandler {
 
 		item ??= this.getItem(form);
 		let rect = item.getBoundingClientRect();
-		let pointerOffsetX = clientX === null
+		let pointerOffsetX = !Number.isFinite(clientX)
 			? 0
 			: rect.left + rect.width / 2 - clientX;
-		let pointerOffsetY = clientY === null
+		let pointerOffsetY = !Number.isFinite(clientY)
 			? 0
 			: rect.top + rect.height / 2 - clientY;
 
@@ -191,11 +200,15 @@ export class FluxDragOrderHandler {
 		this.dragState = {
 			form,
 			item,
+			floatingItem: this.createFloatingItem(item, rect),
 			initialContainer: item.parentElement,
 			container: item.parentElement,
 			pointerOffsetX,
 			pointerOffsetY,
+			itemWidth: rect.width,
+			itemHeight: rect.height,
 		};
+		this.moveFloatingItem(clientX, clientY);
 	}
 
 	dragOver = (e) => {
@@ -328,6 +341,66 @@ export class FluxDragOrderHandler {
 
 		this.dragState.container = container;
 		container.insertBefore(item, this.getInsertBeforeElement(container, insertBefore, siblings));
+		this.moveFloatingItem(clientX, clientY);
+	}
+
+	createFloatingItem(item, rect) {
+		let floatingItem = item.cloneNode(true);
+		this.copyComputedStyles(item, floatingItem);
+		floatingItem.classList.add("flux-drag-order-floating");
+		floatingItem.setAttribute("aria-hidden", "true");
+		floatingItem.style.setProperty("box-sizing", "border-box");
+		floatingItem.style.setProperty("position", "fixed");
+		floatingItem.style.setProperty("z-index", "2147483647");
+		floatingItem.style.setProperty("pointer-events", "none");
+		floatingItem.style.setProperty("opacity", "0.85");
+		floatingItem.style.setProperty("transform-origin", "top left");
+		floatingItem.style.setProperty("width", `${rect.width}px`);
+		floatingItem.style.setProperty("height", `${rect.height}px`);
+		floatingItem.style.setProperty("left", "0");
+		floatingItem.style.setProperty("top", "0");
+		this.documentObject.body.append(floatingItem);
+
+		return floatingItem;
+	}
+
+	copyComputedStyles(source, target) {
+		let styles = getComputedStyle(source);
+		for(let i = 0; i < styles.length; i++) {
+			let property = styles.item(i);
+			target.style.setProperty(
+				property,
+				styles.getPropertyValue(property),
+				styles.getPropertyPriority(property),
+			);
+		}
+
+		[...source.children].forEach((sourceChild, index) => {
+			let targetChild = target.children[index];
+			if(targetChild) {
+				this.copyComputedStyles(sourceChild, targetChild);
+			}
+		});
+	}
+
+	moveFloatingItem(clientX, clientY) {
+		if(!this.dragState?.floatingItem
+			|| !Number.isFinite(clientX)
+			|| !Number.isFinite(clientY)) {
+			return;
+		}
+
+		let {
+			floatingItem,
+			pointerOffsetX,
+			pointerOffsetY,
+			itemWidth,
+			itemHeight,
+		} = this.dragState;
+		let left = clientX + pointerOffsetX - itemWidth / 2;
+		let top = clientY + pointerOffsetY - itemHeight / 2;
+
+		floatingItem.style.transform = `translate(${left}px, ${top}px)`;
 	}
 
 	isHorizontalContainer(siblings) {
@@ -418,6 +491,7 @@ export class FluxDragOrderHandler {
 			return;
 		}
 
+		this.dragState.floatingItem?.remove();
 		this.dragState.item.classList.remove("flux-drag-order-dragging");
 		this.removePointerListeners();
 		this.dragState = null;

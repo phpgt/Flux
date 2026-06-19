@@ -17,7 +17,7 @@ export class DocumentUpdater {
 		this.debug = debug;
 	}
 
-	apply(newDocument, allowedTypes = undefined, allowedTargetKeys = undefined) {
+	apply(newDocument, allowedTypes = undefined, allowedTargetKeys = undefined, requestElementState = null) {
 		this.focusStateManager.markAutofocus(newDocument);
 		let newActiveElement = this.focusStateManager.capturePendingActiveElement(newDocument);
 		let allowedTypeSet = allowedTypes ? new Set(allowedTypes) : null;
@@ -41,7 +41,7 @@ export class DocumentUpdater {
 					}
 				}
 
-				this.applyUpdateTarget(type, existingElement, newDocument);
+				this.applyUpdateTarget(type, existingElement, newDocument, requestElementState);
 			});
 		}
 
@@ -52,7 +52,7 @@ export class DocumentUpdater {
 		this.focusStateManager.focusMarkedAutofocusElements();
 	}
 
-	applyUpdateTarget(type, existingElement, newDocument) {
+	applyUpdateTarget(type, existingElement, newDocument, requestElementState = null) {
 		if(!existingElement) {
 			return;
 		}
@@ -63,6 +63,12 @@ export class DocumentUpdater {
 		}
 
 		let activeElementState = this.focusStateManager.captureElementState(existingElement);
+		if(activeElementState && requestElementState) {
+			activeElementState = this.focusStateManager.withoutUnchangedRequestValues(
+				activeElementState,
+				requestElementState,
+			);
+		}
 		let newElement = this.findMatchingElement(existingElement, newDocument);
 
 		if(type === "outer" || type === "link-outer" || type === "live-outer") {

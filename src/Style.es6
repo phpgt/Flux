@@ -32,6 +32,15 @@ const CSS_CONTENT = `
 }
 
 .flux-drag-order-dragging {
-	opacity: 0.5;
+	opacity: 0;
+}
+
+.flux-drag-order-floating {
+	box-sizing: border-box;
+	position: fixed;
+	z-index: 2147483647;
+	pointer-events: none;
+	opacity: 0.85;
+	transform-origin: top left;
 }
 `;

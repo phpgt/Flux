@@ -24,7 +24,7 @@ Run the suite locally with:
 composer behat
 ```
 
-Feature files live in `test/behat/*.feature`. The local wrapper at `test/bin/behat` serves the repository root with the PHP built-in server, launches a local headless Chrome or Chromium instance, and then runs `vendor/bin/behat`.
+Feature files live in `test/behat/*.feature`. The local wrapper at `test/behat/behat-bin` serves the repository root with the PHP built-in server, launches a local headless Chrome or Chromium instance, and then runs `vendor/bin/behat`.
 
 Local requirements:
 
@@ -33,7 +33,7 @@ Local requirements:
 
 PhpStorm settings:
 
-- Behat executable: `test/bin/behat`
+- Behat executable: `test/behat/phpstorm-behat-bin`
 - Configuration file: `behat.yml`
 
 Useful overrides:

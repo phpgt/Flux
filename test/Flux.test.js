@@ -1016,6 +1016,88 @@ describe("DocumentUpdater", () => {
 		expect(updatedInput.selectionStart).toBe(6);
 		expect(updatedInput.selectionEnd).toBe(6);
 	});
+
+	it("uses the response value when an active input has not changed since the request started", () => {
+		document.body.innerHTML = `
+		<form data-flux="update-inner">
+			<ul></ul>
+			<input name="new-item">
+		</form>
+		`;
+
+		let form = document.querySelector("form");
+		let input = document.querySelector("input");
+		let updateTargetRegistry = new UpdateTargetRegistry();
+		let focusStateManager = new FocusStateManager();
+		updateTargetRegistry.add(form, "inner");
+		let documentUpdater = new DocumentUpdater(
+			updateTargetRegistry,
+			focusStateManager,
+			vi.fn(),
+		);
+		input.focus();
+		input.value = "Milk";
+		let requestElementState = focusStateManager.captureElementState(form);
+		let newDocument = new DOMParser().parseFromString(`
+			<html>
+				<body>
+					<form data-flux="update-inner">
+						<ul><li>Milk</li></ul>
+						<input name="new-item">
+					</form>
+				</body>
+			</html>
+		`, "text/html");
+
+		documentUpdater.apply(newDocument, ["inner"], undefined, requestElementState);
+
+		let updatedInput = document.querySelector("input");
+		expect(updatedInput.value).toBe("");
+		expect(document.activeElement).toBe(updatedInput);
+	});
+
+	it("preserves the active input value when it changes after the request starts", () => {
+		document.body.innerHTML = `
+		<form data-flux="update-inner">
+			<ul></ul>
+			<input name="new-item">
+		</form>
+		`;
+
+		let form = document.querySelector("form");
+		let input = document.querySelector("input");
+		let updateTargetRegistry = new UpdateTargetRegistry();
+		let focusStateManager = new FocusStateManager();
+		updateTargetRegistry.add(form, "inner");
+		let documentUpdater = new DocumentUpdater(
+			updateTargetRegistry,
+			focusStateManager,
+			vi.fn(),
+		);
+		input.focus();
+		input.value = "Milk";
+		let requestElementState = focusStateManager.captureElementState(form);
+		input.value = "Milk and bread";
+		input.setSelectionRange(14, 14);
+		let newDocument = new DOMParser().parseFromString(`
+			<html>
+				<body>
+					<form data-flux="update-inner">
+						<ul><li>Milk</li></ul>
+						<input name="new-item">
+					</form>
+				</body>
+			</html>
+		`, "text/html");
+
+		documentUpdater.apply(newDocument, ["inner"], undefined, requestElementState);
+
+		let updatedInput = document.querySelector("input");
+		expect(updatedInput.value).toBe("Milk and bread");
+		expect(document.activeElement).toBe(updatedInput);
+		expect(updatedInput.selectionStart).toBe(14);
+		expect(updatedInput.selectionEnd).toBe(14);
+	});
 });
 
 describe("FluxDirectiveRegistry", () => {
@@ -1189,23 +1271,31 @@ describe("FluxFormHandler", () => {
 		let form = document.querySelector("form");
 		let onDocument = vi.fn();
 		let onNavigationDocument = vi.fn();
-		let navigationController = {submitForm: vi.fn()};
-		let handler = new FluxFormHandler(
-			navigationController,
-			{storeFormState: vi.fn()},
-			onDocument,
-			onNavigationDocument,
-		);
+			let navigationController = {submitForm: vi.fn()};
+			let requestElementState = {path: "/HTML/BODY/FORM[1]/INPUT[1]", value: "One"};
+			let handler = new FluxFormHandler(
+				navigationController,
+				{
+					storeFormState: vi.fn(),
+					captureElementState: vi.fn().mockReturnValue(requestElementState),
+				},
+				onDocument,
+				onNavigationDocument,
+			);
 
-		handler.submitForm(form);
+			handler.submitForm(form);
+			let responseHandler = navigationController.submitForm.mock.calls[0][2];
+			let newDocument = new DOMParser().parseFromString("<html><head><title>Ok</title></head><body></body></html>", "text/html");
+			responseHandler(newDocument);
 
-		expect(navigationController.submitForm).toHaveBeenCalledWith(
-			form,
-			expect.any(FormData),
-			onNavigationDocument,
-			undefined,
-		);
-	});
+			expect(navigationController.submitForm).toHaveBeenCalledWith(
+				form,
+				expect.any(FormData),
+				expect.any(Function),
+				undefined,
+			);
+			expect(onNavigationDocument).toHaveBeenCalledWith(newDocument, requestElementState);
+		});
 
 	it("keeps in-place document handling for forms without an explicit action attribute", () => {
 		document.body.innerHTML = `
@@ -1217,23 +1307,31 @@ describe("FluxFormHandler", () => {
 		let form = document.querySelector("form");
 		let onDocument = vi.fn();
 		let onNavigationDocument = vi.fn();
-		let navigationController = {submitForm: vi.fn()};
-		let handler = new FluxFormHandler(
-			navigationController,
-			{storeFormState: vi.fn()},
-			onDocument,
-			onNavigationDocument,
-		);
+			let navigationController = {submitForm: vi.fn()};
+			let requestElementState = {path: "/HTML/BODY/FORM[1]/INPUT[1]", value: "One"};
+			let handler = new FluxFormHandler(
+				navigationController,
+				{
+					storeFormState: vi.fn(),
+					captureElementState: vi.fn().mockReturnValue(requestElementState),
+				},
+				onDocument,
+				onNavigationDocument,
+			);
 
-		handler.submitForm(form);
+			handler.submitForm(form);
+			let responseHandler = navigationController.submitForm.mock.calls[0][2];
+			let newDocument = new DOMParser().parseFromString("<html><head><title>Ok</title></head><body></body></html>", "text/html");
+			responseHandler(newDocument);
 
-		expect(navigationController.submitForm).toHaveBeenCalledWith(
-			form,
-			expect.any(FormData),
-			onDocument,
-			undefined,
-		);
-	});
+			expect(navigationController.submitForm).toHaveBeenCalledWith(
+				form,
+				expect.any(FormData),
+				expect.any(Function),
+				undefined,
+			);
+			expect(onDocument).toHaveBeenCalledWith(newDocument, requestElementState);
+		});
 
 	it("stores the newly focused field during autosave submit without blurring it", () => {
 		document.body.innerHTML = `
@@ -1245,7 +1343,10 @@ describe("FluxFormHandler", () => {
 
 		let form = document.querySelector("form");
 		let secondInput = document.querySelectorAll("input")[1];
-		let focusStateManager = {storeFormState: vi.fn()};
+			let focusStateManager = {
+				storeFormState: vi.fn(),
+				captureElementState: vi.fn().mockReturnValue(null),
+			};
 		let handler = new FluxFormHandler(
 			{submitForm: vi.fn()},
 			focusStateManager,
@@ -1274,12 +1375,15 @@ describe("FluxFormHandler", () => {
 		let form = document.querySelector("form");
 		let button = document.querySelector("button");
 		let navigationController = {submitForm: vi.fn()};
-		let handler = new FluxFormHandler(
-			navigationController,
-			{storeFormState: vi.fn()},
-			vi.fn(),
-			vi.fn(),
-			console,
+			let handler = new FluxFormHandler(
+				navigationController,
+				{
+					storeFormState: vi.fn(),
+					captureElementState: vi.fn().mockReturnValue(null),
+				},
+				vi.fn(),
+				vi.fn(),
+				console,
 			false,
 			() => now,
 		);
@@ -1304,12 +1408,15 @@ describe("FluxFormHandler", () => {
 		`;
 
 		let navigationController = {submitForm: vi.fn()};
-		let handler = new FluxFormHandler(
-			navigationController,
-			{storeFormState: vi.fn()},
-			vi.fn(),
-			vi.fn(),
-			console,
+			let handler = new FluxFormHandler(
+				navigationController,
+				{
+					storeFormState: vi.fn(),
+					captureElementState: vi.fn().mockReturnValue(null),
+				},
+				vi.fn(),
+				vi.fn(),
+				console,
 			false,
 			() => now,
 		);
@@ -1363,7 +1470,7 @@ describe("FluxDragOrderHandler", () => {
 
 			let handle = form.querySelector(".drag-handle");
 			expect(handle).toBeInstanceOf(HTMLElement);
-			expect(handle.draggable).toBe(true);
+			expect(handle.draggable).toBe(false);
 			expect(handle.dataset["fluxTitle"]).toBe("Drag");
 			expect(form.querySelector("input[name='order']").hidden).toBe(true);
 			expect(form.querySelector("button[name='do']").hidden).toBe(true);
@@ -2028,7 +2135,7 @@ describe("FluxDragOrderHandler", () => {
 		handler.startDrag(form, 10);
 		handler.moveItem(120);
 
-		expect([...document.querySelectorAll("li")].map(li => li.dataset["id"])).toEqual(["2", "1", "3"]);
+		expect([...document.querySelectorAll("ul > li")].map(li => li.dataset["id"])).toEqual(["2", "1", "3"]);
 	});
 
 	it("tracks touch movement and release on the document during an active drag", () => {
@@ -2070,6 +2177,57 @@ describe("FluxDragOrderHandler", () => {
 
 		expect(removeSpy).toHaveBeenCalledWith("pointermove", handler.pointerMove, true);
 		expect(document.querySelector("[data-id='1']").classList.contains("flux-drag-order-dragging")).toBe(false);
+	});
+
+	it("uses a floating clone while the real item reserves its place", () => {
+		document.body.innerHTML = `
+		<style>
+			.drag-list > li {
+				border-top-color: rgb(1, 2, 3);
+				border-top-style: solid;
+				border-top-width: 4px;
+			}
+		</style>
+		<ul class="drag-list">
+			<li data-id="1">
+				<form data-flux="drag-order">
+					<input name="order">
+					<button name="do" value="move">Move</button>
+				</form>
+				<span>one</span>
+			</li>
+		</ul>
+		`;
+
+		let handler = new FluxDragOrderHandler({submitForm: vi.fn()}, document);
+		let item = document.querySelector("li");
+		let form = document.querySelector("form");
+		item.getBoundingClientRect = () => ({
+			left: 20,
+			top: 40,
+			width: 120,
+			height: 50,
+		});
+
+		handler.initDragOrder(form);
+		handler.startDrag(form, 50, item, 30);
+		handler.moveItem(70, document.querySelector("ul"), 50);
+
+		let floatingItem = document.querySelector(".flux-drag-order-floating");
+		expect(item.classList.contains("flux-drag-order-dragging")).toBe(true);
+		expect(floatingItem).toBeInstanceOf(HTMLElement);
+		expect(floatingItem).not.toBe(item);
+		expect(floatingItem.style.width).toBe("120px");
+		expect(floatingItem.style.height).toBe("50px");
+		expect(floatingItem.style.borderTopColor).toBe("rgb(1, 2, 3)");
+		expect(floatingItem.style.borderTopStyle).toBe("solid");
+		expect(floatingItem.style.borderTopWidth).toBe("4px");
+		expect(floatingItem.style.transform).toBe("translate(40px, 60px)");
+
+		handler.endDrag();
+
+		expect(document.querySelector(".flux-drag-order-floating")).toBe(null);
+		expect(item.classList.contains("flux-drag-order-dragging")).toBe(false);
 	});
 });
 
@@ -2134,7 +2292,7 @@ describe("FluxResponseHandler", () => {
 		handler.handleDocument(newDocument);
 
 		expect(scheduler).toHaveBeenCalledWith(expect.any(Function), 0);
-		expect(apply).toHaveBeenCalledWith(newDocument, ["outer", "inner", "attributes"]);
+			expect(apply).toHaveBeenCalledWith(newDocument, ["outer", "inner", "attributes"], undefined, null);
 	});
 
 	it("routes live refresh documents to the live update types only", () => {
@@ -2211,7 +2369,12 @@ describe("FluxResponseHandler", () => {
 
 		handler.handleLinkDocument(newDocument);
 
-		expect(apply).toHaveBeenCalledWith(newDocument, ["outer", "inner", "attributes", "link-outer", "link-inner"]);
+			expect(apply).toHaveBeenCalledWith(
+				newDocument,
+				["outer", "inner", "attributes", "link-outer", "link-inner"],
+				undefined,
+				null,
+			);
 		expect(animationFrame).toHaveBeenCalledTimes(2);
 		expect(scrollTo).toHaveBeenCalledWith({
 			top: 0,
