@@ -164,7 +164,7 @@ blockquote {
 
 .kanban-board {
 	display: grid;
-	grid-template-columns: repeat(3, minmax(0, 1fr));
+	grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
 	gap: 1rem;
 }
 
@@ -178,8 +178,22 @@ blockquote {
 	background: #f6f6f6;
 }
 
-.kanban-column h2 {
-	margin: 0;
+.kanban-column-form {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+
+	label {
+		flex: 1;
+	}
+
+	input[name="title"] {
+		width: 100%;
+		border: 0;
+		padding: 0.25rem;
+		background: transparent;
+		font-weight: 600;
+	}
 }
 
 .kanban-list {

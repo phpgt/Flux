@@ -153,7 +153,7 @@ export class FluxDragOrderHandler {
 	}
 
 	startNativeDrag(e, form, item = null) {
-		this.startDrag(form, e.clientY, item);
+		this.startDrag(form, e.clientY, item, e.clientX);
 		if(e.dataTransfer) {
 			e.dataTransfer.effectAllowed = "move";
 			e.dataTransfer.setData("text/plain", "");
@@ -166,8 +166,8 @@ export class FluxDragOrderHandler {
 		}
 
 		e.preventDefault();
-		this.startDrag(form, e.clientY, item);
-		this.moveItem(e.clientY);
+		this.startDrag(form, e.clientY, item, e.clientX);
+		this.moveItem(e.clientY, undefined, e.clientX);
 
 		this.activePointerId = e.pointerId;
 		this.documentObject.addEventListener("pointermove", this.pointerMove, true);
@@ -175,11 +175,14 @@ export class FluxDragOrderHandler {
 		this.documentObject.addEventListener("pointercancel", this.pointerCancel, true);
 	}
 
-	startDrag(form, clientY = null, item = null) {
+	startDrag(form, clientY = null, item = null, clientX = null) {
 		this.endDrag();
 
 		item ??= this.getItem(form);
 		let rect = item.getBoundingClientRect();
+		let pointerOffsetX = clientX === null
+			? 0
+			: rect.left + rect.width / 2 - clientX;
 		let pointerOffsetY = clientY === null
 			? 0
 			: rect.top + rect.height / 2 - clientY;
@@ -188,7 +191,9 @@ export class FluxDragOrderHandler {
 		this.dragState = {
 			form,
 			item,
+			initialContainer: item.parentElement,
 			container: item.parentElement,
+			pointerOffsetX,
 			pointerOffsetY,
 		};
 	}
@@ -199,7 +204,12 @@ export class FluxDragOrderHandler {
 		}
 
 		e.preventDefault();
-		this.moveItem(e.clientY, e.currentTarget);
+		e.stopPropagation();
+		this.moveItem(
+			e.clientY,
+			this.getCompatiblePointerContainer(e.currentTarget),
+			e.clientX,
+		);
 	}
 
 	pointerMove = (e) => {
@@ -208,7 +218,7 @@ export class FluxDragOrderHandler {
 		}
 
 		e.preventDefault();
-		this.moveItem(e.clientY, this.getPointerContainer(e));
+		this.moveItem(e.clientY, this.getPointerContainer(e), e.clientX);
 	}
 
 	pointerUp = (e) => {
@@ -244,14 +254,40 @@ export class FluxDragOrderHandler {
 		}
 
 		let element = this.documentObject.elementFromPoint(e.clientX, e.clientY);
-		return element?.closest("[data-flux-drag-parent]")
+		let container = element
+			? this.getNestedPointerContainer(element, e.clientX, e.clientY)
+			: null;
+		container ??= element?.closest("[data-flux-drag-parent]")
 			?? this.getParentContainerAtPoint(e.clientX, e.clientY)
 			?? this.dragState.container;
+
+		return this.getCompatiblePointerContainer(container);
+	}
+
+	getNestedPointerContainer(element, clientX, clientY) {
+		let outerContainer = element.closest("[data-flux-drag-parent]");
+		if(!outerContainer?.contains(this.dragState.initialContainer)) {
+			return null;
+		}
+
+		let host = element.closest("[data-flux='drag-order']");
+		if(!host || host === this.dragState.item) {
+			return null;
+		}
+
+		let candidates = [...host.querySelectorAll("[data-flux-drag-parent]")];
+		return candidates.find(container => {
+			let rect = container.getBoundingClientRect();
+			return clientX >= rect.left
+				&& clientX <= rect.right
+				&& clientY >= rect.top
+				&& clientY <= rect.bottom;
+		}) ?? candidates[0] ?? null;
 	}
 
 	getParentContainerAtPoint(clientX, clientY) {
 		let containers = this.documentObject.querySelectorAll("[data-flux-drag-parent]");
-		return [...containers].find(container => {
+		return [...containers].reverse().find(container => {
 			let rect = container.getBoundingClientRect();
 			return clientX >= rect.left
 				&& clientX <= rect.right
@@ -260,21 +296,50 @@ export class FluxDragOrderHandler {
 		});
 	}
 
-	moveItem(clientY, container = this.dragState.container) {
+	getCompatiblePointerContainer(container) {
+		let {initialContainer} = this.dragState;
+		if(container !== initialContainer
+			&& (initialContainer.contains(container) || container.contains(initialContainer))) {
+			return this.dragState.container;
+		}
+
+		return container;
+	}
+
+	moveItem(clientY, container = this.dragState.container, clientX = null) {
 		if(!(container instanceof HTMLElement)) {
 			container = this.dragState.container;
 		}
 
-		let {item, pointerOffsetY} = this.dragState;
-		let itemCenterY = clientY + pointerOffsetY;
-		let siblings = this.getSortableSiblings(container).filter(child => child !== item);
+		let {item, pointerOffsetX, pointerOffsetY} = this.dragState;
+		let sortableItems = this.getSortableSiblings(container);
+		let siblings = sortableItems.filter(child => child !== item);
+		let horizontal = this.isHorizontalContainer(sortableItems);
+		let itemCenter = horizontal
+			? (clientX ?? 0) + pointerOffsetX
+			: clientY + pointerOffsetY;
 		let insertBefore = siblings.find(child => {
 			let rect = child.getBoundingClientRect();
-			return itemCenterY < rect.top + rect.height / 2;
+			let childCenter = horizontal
+				? rect.left + rect.width / 2
+				: rect.top + rect.height / 2;
+			return itemCenter < childCenter;
 		});
 
 		this.dragState.container = container;
 		container.insertBefore(item, this.getInsertBeforeElement(container, insertBefore, siblings));
+	}
+
+	isHorizontalContainer(siblings) {
+		if(siblings.length < 2) {
+			return false;
+		}
+
+		let rects = siblings.map(child => child.getBoundingClientRect());
+		let lefts = rects.map(rect => rect.left);
+		let tops = rects.map(rect => rect.top);
+		return Math.max(...lefts) - Math.min(...lefts)
+			> Math.max(...tops) - Math.min(...tops);
 	}
 
 	getInsertBeforeElement(container, sortableInsertBefore, sortableSiblings) {

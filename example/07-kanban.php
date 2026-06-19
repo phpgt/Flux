@@ -10,6 +10,7 @@ $columns = [
 	"doing" => "Doing",
 	"done" => "Done",
 ];
+$defaultColumnOrder = array_keys($columns);
 $cards = [
 	1 => "Write the tests",
 	2 => "Update the library",
@@ -21,9 +22,20 @@ $defaultBoard = [
 	"doing" => [3],
 	"done" => [4],
 ];
+$columns = $_SESSION["kanban-columns"] ?? $columns;
+$columnOrder = $_SESSION["kanban-column-order"] ?? $defaultColumnOrder;
 $cards = $_SESSION["kanban-cards"] ?? $cards;
 $board = $_SESSION["kanban"] ?? $defaultBoard;
 
+$columnOrder = array_values(array_filter(
+	$columnOrder,
+	fn($key) => isset($columns[$key]),
+));
+foreach(array_keys($columns) as $key) {
+	if(!in_array($key, $columnOrder, true)) {
+		$columnOrder[] = $key;
+	}
+}
 foreach($columns as $key => $_) {
 	$board[$key] ??= [];
 	$board[$key] = array_values(array_filter(
@@ -39,6 +51,7 @@ if(array_diff(array_keys($cards), $knownCards) || array_diff($knownCards, array_
 
 $doAction = $_POST["do"] ?? null;
 $id = filter_input(INPUT_POST, "id", FILTER_VALIDATE_INT);
+$column = $_POST["column"] ?? null;
 $parent = $_POST["parent"] ?? null;
 $newOrder = filter_input(INPUT_POST, "order", FILTER_VALIDATE_INT);
 $title = trim($_POST["title"] ?? "");
@@ -58,6 +71,8 @@ if($doAction === "move" && isset($cards[$id], $columns[$parent])) {
 
 	$_SESSION["kanban"] = $board;
 	$_SESSION["kanban-cards"] = $cards;
+	$_SESSION["kanban-columns"] = $columns;
+	$_SESSION["kanban-column-order"] = $columnOrder;
 
 	header("Location: $_SERVER[SCRIPT_NAME]");
 	exit;
@@ -87,6 +102,49 @@ elseif($doAction === "save" && isset($columns[$parent])) {
 
 	$_SESSION["kanban"] = $board;
 	$_SESSION["kanban-cards"] = $cards;
+	$_SESSION["kanban-columns"] = $columns;
+	$_SESSION["kanban-column-order"] = $columnOrder;
+
+	header("Location: $_SERVER[SCRIPT_NAME]");
+	exit;
+}
+elseif($doAction === "move-list" && isset($columns[$column])) {
+	$index = array_search($column, $columnOrder, true);
+	if($index !== false) {
+		unset($columnOrder[$index]);
+		$columnOrder = array_values($columnOrder);
+	}
+
+	$newOrder = max(0, min(count($columnOrder), $newOrder ?? 0));
+	array_splice($columnOrder, $newOrder, 0, [$column]);
+
+	$_SESSION["kanban"] = $board;
+	$_SESSION["kanban-cards"] = $cards;
+	$_SESSION["kanban-columns"] = $columns;
+	$_SESSION["kanban-column-order"] = $columnOrder;
+
+	header("Location: $_SERVER[SCRIPT_NAME]");
+	exit;
+}
+elseif($doAction === "save-list") {
+	if($column && isset($columns[$column])) {
+		$columns[$column] = $title;
+	}
+	elseif($title !== "") {
+		$column = "column-" . (count($columns) + 1);
+		while(isset($columns[$column])) {
+			$column = "column-" . ((int)substr($column, 7) + 1);
+		}
+
+		$columns[$column] = $title;
+		$columnOrder[] = $column;
+		$board[$column] = [];
+	}
+
+	$_SESSION["kanban"] = $board;
+	$_SESSION["kanban-cards"] = $cards;
+	$_SESSION["kanban-columns"] = $columns;
+	$_SESSION["kanban-column-order"] = $columnOrder;
 
 	header("Location: $_SERVER[SCRIPT_NAME]");
 	exit;
@@ -105,10 +163,19 @@ elseif($doAction === "save" && isset($columns[$parent])) {
 <main class="page-shell">
 	<h1>Example 07: Kanban</h1>
 
-	<div class="kanban-board" data-flux="update">
-		<?php foreach($columns as $parent => $heading) { ?>
-		<section class="kanban-column">
-			<h2><?php echo htmlspecialchars($heading, ENT_QUOTES, "UTF-8");?></h2>
+	<div class="kanban-board" data-flux="update" data-flux-drag-parent="columns" data-flux-drag-handle="☰">
+		<?php foreach($columnOrder as $parent) { ?>
+		<section class="kanban-column" data-id="<?php echo $parent;?>" data-flux="drag-order">
+			<form class="kanban-column-form" method="post" data-flux>
+				<input type="hidden" name="column" value="<?php echo $parent;?>" />
+				<input type="hidden" name="order" />
+				<button name="do" value="move-list">Move list</button>
+
+				<label>
+					<input name="title" value="<?php echo htmlspecialchars($columns[$parent], ENT_QUOTES, "UTF-8");?>" />
+					<button name="do" value="save-list" data-flux="autosave">Save</button>
+				</label>
+			</form>
 
 			<ul class="kanban-list" data-flux-drag-parent="<?php echo $parent;?>" data-flux-drag-handle="☰">
 				<?php foreach($board[$parent] as $id) { ?>
@@ -140,6 +207,15 @@ elseif($doAction === "save" && isset($columns[$parent])) {
 			</ul>
 		</section>
 		<?php } ?>
+
+		<section class="kanban-column kanban-column-new">
+			<form class="kanban-column-form" method="post" data-flux>
+				<label>
+					<input name="title" placeholder="New list" />
+					<button name="do" value="save-list" data-flux="autosave">Save</button>
+				</label>
+			</form>
+		</section>
 	</div>
 </main>
 

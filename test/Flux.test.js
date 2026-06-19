@@ -1661,6 +1661,285 @@ describe("FluxDragOrderHandler", () => {
 			);
 		});
 
+		it("keeps parent item drags in their original container when hovering nested drag parents", () => {
+			document.body.innerHTML = `
+			<div class="board" data-flux-drag-parent="columns">
+				<section data-id="todo" data-flux="drag-order">
+					<form method="post">
+						<input name="order">
+						<button name="do" value="move-list">Move</button>
+					</form>
+					<ul data-flux-drag-parent="todo">
+						<li data-id="1" data-flux="drag-order">
+							<form method="post">
+								<input name="order">
+								<button name="do" value="move">Move</button>
+							</form>
+						</li>
+					</ul>
+				</section>
+				<section data-id="done" data-flux="drag-order">
+					<form method="post">
+						<input name="order">
+						<button name="do" value="move-list">Move</button>
+					</form>
+					<ul data-flux-drag-parent="done"></ul>
+				</section>
+			</div>
+			`;
+
+			let handler = new FluxDragOrderHandler({submitForm: vi.fn()}, document);
+			let columns = [...document.querySelectorAll(".board > [data-flux='drag-order']")];
+			columns.forEach(column => handler.initDragOrder(column));
+			let column = document.querySelector("[data-id='todo']");
+			let form = column.querySelector("form");
+			let nestedList = document.querySelector("[data-flux-drag-parent='done']");
+			document.elementFromPoint = () => nestedList;
+
+			handler.startDrag(form, null, column);
+			handler.pointerMove({
+				pointerId: null,
+				clientX: 10,
+				clientY: 10,
+				preventDefault: vi.fn(),
+			});
+
+			expect(column.parentElement).toBe(document.querySelector(".board"));
+		});
+
+		it("moves a card to the nested list when hovering another draggable column shell", () => {
+			document.body.innerHTML = `
+			<div class="board" data-flux-drag-parent="columns">
+				<section data-id="todo" data-flux="drag-order">
+					<form method="post">
+						<input name="order">
+						<button name="do" value="move-list">Move list</button>
+					</form>
+					<ul data-flux-drag-parent="todo">
+						<li data-id="1" data-flux="drag-order">
+							<form method="post">
+								<input name="id" value="1">
+								<input name="parent">
+								<input name="order">
+								<button name="do" value="move">Move</button>
+							</form>
+						</li>
+					</ul>
+				</section>
+				<section data-id="doing" data-flux="drag-order">
+					<form method="post">
+						<input name="order">
+						<button name="do" value="move-list">Move list</button>
+					</form>
+					<ul data-flux-drag-parent="doing">
+						<li data-id="2" data-flux="drag-order">
+							<form method="post">
+								<input name="id" value="2">
+								<input name="parent">
+								<input name="order">
+								<button name="do" value="move">Move</button>
+							</form>
+						</li>
+					</ul>
+				</section>
+			</div>
+			`;
+
+			let formHandler = {submitForm: vi.fn()};
+			let handler = new FluxDragOrderHandler(formHandler, document);
+			document.querySelectorAll("[data-flux='drag-order']").forEach(item => handler.initDragOrder(item));
+			let card = document.querySelector("[data-id='1']");
+			let form = card.querySelector("form");
+			let doingColumn = document.querySelector("[data-id='doing']");
+			let doingList = document.querySelector("[data-flux-drag-parent='doing']");
+			document.querySelector("[data-id='2']").getBoundingClientRect = () => ({
+				top: 200,
+				height: 100,
+			});
+			doingList.getBoundingClientRect = () => ({
+				left: 100,
+				right: 300,
+				top: 100,
+				bottom: 300,
+			});
+			document.elementFromPoint = () => doingColumn;
+
+			handler.startDrag(form, null, card);
+			handler.pointerMove({
+				pointerId: null,
+				clientX: 150,
+				clientY: 150,
+				preventDefault: vi.fn(),
+			});
+			handler.submitDrag();
+
+			expect([...document.querySelectorAll("[data-flux-drag-parent='todo'] > li")].map(li => li.dataset["id"]))
+				.toEqual([]);
+			expect([...document.querySelectorAll("[data-flux-drag-parent='doing'] > li")].map(li => li.dataset["id"]))
+				.toEqual(["1", "2"]);
+			expect([...document.querySelectorAll(".board > section")].map(section => section.dataset["id"]))
+				.toEqual(["todo", "doing"]);
+			expect(form.querySelector("input[name='parent']").value).toBe("doing");
+			expect(formHandler.submitForm).toHaveBeenCalledWith(
+				form,
+				form.querySelector("button[name='do']"),
+			);
+		});
+
+		it("does not let native dragover bubbling move a card into the outer board", () => {
+			document.body.innerHTML = `
+			<div class="board" data-flux-drag-parent="columns">
+				<section data-id="todo" data-flux="drag-order">
+					<form method="post">
+						<input name="order">
+						<button name="do" value="move-list">Move list</button>
+					</form>
+					<ul data-flux-drag-parent="todo">
+						<li data-id="1" data-flux="drag-order">
+							<form method="post">
+								<input name="id" value="1">
+								<input name="parent">
+								<input name="order">
+								<button name="do" value="move">Move</button>
+							</form>
+						</li>
+					</ul>
+				</section>
+				<section data-id="doing" data-flux="drag-order">
+					<form method="post">
+						<input name="order">
+						<button name="do" value="move-list">Move list</button>
+					</form>
+					<ul data-flux-drag-parent="doing">
+						<li data-id="2" data-flux="drag-order">
+							<form method="post">
+								<input name="id" value="2">
+								<input name="parent">
+								<input name="order">
+								<button name="do" value="move">Move</button>
+							</form>
+						</li>
+					</ul>
+				</section>
+			</div>
+			`;
+
+			let handler = new FluxDragOrderHandler({submitForm: vi.fn()}, document);
+			document.querySelectorAll("[data-flux='drag-order']").forEach(item => handler.initDragOrder(item));
+			let card = document.querySelector("[data-id='1']");
+			let form = card.querySelector("form");
+			let board = document.querySelector(".board");
+			let doingList = document.querySelector("[data-flux-drag-parent='doing']");
+
+			handler.startDrag(form, null, card);
+			handler.dragOver({
+				clientX: 0,
+				clientY: 0,
+				currentTarget: doingList,
+				preventDefault: vi.fn(),
+				stopPropagation: vi.fn(),
+			});
+			handler.dragOver({
+				clientX: 0,
+				clientY: 0,
+				currentTarget: board,
+				preventDefault: vi.fn(),
+				stopPropagation: vi.fn(),
+			});
+
+			expect(card.parentElement).toBe(doingList);
+			expect([...document.querySelectorAll(".board > section")].map(section => section.dataset["id"]))
+				.toEqual(["todo", "doing"]);
+		});
+
+		it("reorders horizontal containers using the pointer x position", () => {
+			document.body.innerHTML = `
+			<div class="board" data-flux-drag-parent="columns">
+				<section data-id="todo" data-flux="drag-order">
+					<form method="post"><input name="order"><button name="do" value="move-list">Move</button></form>
+				</section>
+				<section data-id="doing" data-flux="drag-order">
+					<form method="post"><input name="order"><button name="do" value="move-list">Move</button></form>
+				</section>
+				<section data-id="done" data-flux="drag-order">
+					<form method="post"><input name="order"><button name="do" value="move-list">Move</button></form>
+				</section>
+			</div>
+			`;
+
+			let formHandler = {submitForm: vi.fn()};
+			let handler = new FluxDragOrderHandler(formHandler, document);
+			let columns = [...document.querySelectorAll("section")];
+			columns.forEach((column, index) => {
+				column.getBoundingClientRect = () => ({
+					left: index * 200,
+					top: 0,
+					width: 100,
+					height: 400,
+				});
+				handler.initDragOrder(column);
+			});
+			let column = document.querySelector("[data-id='done']");
+			let form = column.querySelector("form");
+
+			handler.startDrag(form, 0, column, 400);
+			handler.moveItem(0, document.querySelector(".board"), -100);
+			handler.submitDrag();
+
+			expect(form.querySelector("input[name='order']").value).toBe("0");
+			expect([...document.querySelectorAll(".board > section")].map(section => section.dataset["id"]))
+				.toEqual(["done", "todo", "doing"]);
+			expect(formHandler.submitForm).toHaveBeenCalledWith(
+				form,
+				form.querySelector("button[name='do']"),
+			);
+		});
+
+		it("preserves nested cards when reordering outer list containers", () => {
+			document.body.innerHTML = `
+			<div class="board" data-flux-drag-parent="columns">
+				<section data-id="todo" data-flux="drag-order">
+					<form method="post"><input name="order"><button name="do" value="move-list">Move</button></form>
+					<ul data-flux-drag-parent="todo">
+						<li data-id="1" data-flux="drag-order"><form><input name="order"><button name="do" value="move">Move</button></form></li>
+						<li data-id="2" data-flux="drag-order"><form><input name="order"><button name="do" value="move">Move</button></form></li>
+					</ul>
+				</section>
+				<section data-id="doing" data-flux="drag-order">
+					<form method="post"><input name="order"><button name="do" value="move-list">Move</button></form>
+					<ul data-flux-drag-parent="doing">
+						<li data-id="3" data-flux="drag-order"><form><input name="order"><button name="do" value="move">Move</button></form></li>
+					</ul>
+				</section>
+			</div>
+			`;
+
+			let handler = new FluxDragOrderHandler({submitForm: vi.fn()}, document);
+			let columns = [...document.querySelectorAll(".board > section")];
+			columns.forEach((column, index) => {
+				column.getBoundingClientRect = () => ({
+					left: index * 200,
+					top: 0,
+					width: 100,
+					height: 400,
+				});
+				handler.initDragOrder(column);
+			});
+			let column = document.querySelector("[data-id='doing']");
+			let form = column.querySelector("form");
+
+			handler.startDrag(form, 0, column, 200);
+			handler.moveItem(0, document.querySelector(".board"), -100);
+			handler.submitDrag();
+
+			expect([...document.querySelectorAll(".board > section")].map(section => section.dataset["id"]))
+				.toEqual(["doing", "todo"]);
+			expect([...document.querySelectorAll("[data-flux-drag-parent='todo'] > li")].map(li => li.dataset["id"]))
+				.toEqual(["1", "2"]);
+			expect([...document.querySelectorAll("[data-flux-drag-parent='doing'] > li")].map(li => li.dataset["id"]))
+				.toEqual(["3"]);
+		});
+
 		it("sets the order input and submits the form when an item is dropped", () => {
 		document.body.innerHTML = `
 		<ul>

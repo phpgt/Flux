@@ -90,11 +90,24 @@ class FeatureContext extends MinkContext {
 	  const itemRect = item.getBoundingClientRect();
 	  const handleRect = handle.getBoundingClientRect();
 	  const startY = handleRect.top + handleRect.height / 2;
+	  const startX = handleRect.left + handleRect.width / 2;
 	  const pointerOffsetY = itemRect.top + itemRect.height / 2 - startY;
+	  const pointerOffsetX = itemRect.left + itemRect.width / 2 - startX;
 	  const siblings = [...container.children].filter(child => child !== item);
 	  const targetIndex = Math.max(0, Math.min(siblings.length, $encodedPosition - 1));
 	  const before = siblings[targetIndex] ?? null;
 	  const previous = siblings[targetIndex - 1] ?? null;
+	  const rects = siblings.map(child => child.getBoundingClientRect());
+	  const lefts = rects.map(rect => rect.left);
+	  const tops = rects.map(rect => rect.top);
+	  const horizontal = siblings.length > 1
+	    && Math.max(...lefts) - Math.min(...lefts) > Math.max(...tops) - Math.min(...tops);
+	  const beforeX = before
+	    ? before.getBoundingClientRect().left + before.getBoundingClientRect().width / 2
+	    : container.getBoundingClientRect().right;
+	  const previousX = previous
+	    ? previous.getBoundingClientRect().left + previous.getBoundingClientRect().width / 2
+	    : container.getBoundingClientRect().left;
 	  const beforeMid = before
 	    ? before.getBoundingClientRect().top + before.getBoundingClientRect().height / 2
 	    : container.getBoundingClientRect().bottom;
@@ -102,8 +115,11 @@ class FeatureContext extends MinkContext {
 	    ? previous.getBoundingClientRect().top + previous.getBoundingClientRect().height / 2
 	    : container.getBoundingClientRect().top;
 	  const targetItemCenterY = (beforeMid + previousMid) / 2;
+	  const targetItemCenterX = (beforeX + previousX) / 2;
 	  const targetPointerY = targetItemCenterY - pointerOffsetY;
-	  const x = handleRect.left + handleRect.width / 2;
+	  const targetPointerX = horizontal
+	    ? targetItemCenterX - pointerOffsetX
+	    : startX;
 	  const eventOptions = {
 	    bubbles: true,
 	    cancelable: true,
@@ -112,12 +128,11 @@ class FeatureContext extends MinkContext {
 	    isPrimary: true,
 	    button: 0,
 	    buttons: 1,
-	    clientX: x,
 	  };
 
-	  handle.dispatchEvent(new PointerEvent("pointerdown", {...eventOptions, clientY: startY}));
-	  document.dispatchEvent(new PointerEvent("pointermove", {...eventOptions, clientY: targetPointerY}));
-	  document.dispatchEvent(new PointerEvent("pointerup", {...eventOptions, buttons: 0, clientY: targetPointerY}));
+	  handle.dispatchEvent(new PointerEvent("pointerdown", {...eventOptions, clientX: startX, clientY: startY}));
+	  document.dispatchEvent(new PointerEvent("pointermove", {...eventOptions, clientX: targetPointerX, clientY: targetPointerY}));
+	  document.dispatchEvent(new PointerEvent("pointerup", {...eventOptions, buttons: 0, clientX: targetPointerX, clientY: targetPointerY}));
 	})()
 	JS;
 
@@ -158,11 +173,24 @@ class FeatureContext extends MinkContext {
 	  const handleRect = handle.getBoundingClientRect();
 	  const targetRect = targetContainer.getBoundingClientRect();
 	  const startY = handleRect.top + handleRect.height / 2;
+	  const startX = handleRect.left + handleRect.width / 2;
 	  const pointerOffsetY = itemRect.top + itemRect.height / 2 - startY;
+	  const pointerOffsetX = itemRect.left + itemRect.width / 2 - startX;
 	  const siblings = [...targetContainer.children].filter(child => child !== item);
 	  const targetIndex = Math.max(0, Math.min(siblings.length, $encodedPosition - 1));
 	  const before = siblings[targetIndex] ?? null;
 	  const previous = siblings[targetIndex - 1] ?? null;
+	  const rects = siblings.map(child => child.getBoundingClientRect());
+	  const lefts = rects.map(rect => rect.left);
+	  const tops = rects.map(rect => rect.top);
+	  const horizontal = siblings.length > 1
+	    && Math.max(...lefts) - Math.min(...lefts) > Math.max(...tops) - Math.min(...tops);
+	  const beforeX = before
+	    ? before.getBoundingClientRect().left + before.getBoundingClientRect().width / 2
+	    : targetRect.right;
+	  const previousX = previous
+	    ? previous.getBoundingClientRect().left + previous.getBoundingClientRect().width / 2
+	    : targetRect.left;
 	  const beforeMid = before
 	    ? before.getBoundingClientRect().top + before.getBoundingClientRect().height / 2
 	    : targetRect.bottom;
@@ -170,8 +198,11 @@ class FeatureContext extends MinkContext {
 	    ? previous.getBoundingClientRect().top + previous.getBoundingClientRect().height / 2
 	    : targetRect.top;
 	  const targetItemCenterY = (beforeMid + previousMid) / 2;
+	  const targetItemCenterX = (beforeX + previousX) / 2;
 	  const targetPointerY = targetItemCenterY - pointerOffsetY;
-	  const x = targetRect.left + Math.min(20, targetRect.width / 2);
+	  const targetPointerX = horizontal
+	    ? targetItemCenterX - pointerOffsetX
+	    : targetRect.left + Math.min(20, targetRect.width / 2);
 	  const eventOptions = {
 	    bubbles: true,
 	    cancelable: true,
@@ -184,18 +215,18 @@ class FeatureContext extends MinkContext {
 
 	  handle.dispatchEvent(new PointerEvent("pointerdown", {
 	    ...eventOptions,
-	    clientX: handleRect.left + handleRect.width / 2,
+	    clientX: startX,
 	    clientY: startY,
 	  }));
 	  document.dispatchEvent(new PointerEvent("pointermove", {
 	    ...eventOptions,
-	    clientX: x,
+	    clientX: targetPointerX,
 	    clientY: targetPointerY,
 	  }));
 	  document.dispatchEvent(new PointerEvent("pointerup", {
 	    ...eventOptions,
 	    buttons: 0,
-	    clientX: x,
+	    clientX: targetPointerX,
 	    clientY: targetPointerY,
 	  }));
 	})()
