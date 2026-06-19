@@ -1,31 +1,18 @@
-import {Flux} from "./Flux.es6";
-
 /**
- * The `addEventListener` behaviour of the DOM is overridden here to provide
- * functionality for tracking event listeners added to elements.
- * This is necessary because as elements in the DOM are replaced/updated
- * dynamically, their corresponding event listeners will need to be reattached
- * automatically.
- *
- * Only one instance of the ElementEventMapper is necessary per Flux instance,
- * as the constructor handles the override.
- *
- * A reference to the original `addEventListener` functionality is stored in
- * `addEventListenerOriginal`, before it is replace by the function called
- * `addEventListenerFlux`.
- *
- * The map property is a map of objects: the outer map's key is the HTMLElement,
- * which contains an object, where the keys are the type of event listener such
- * as "click", "submit", etc.
+ * Records event listeners added to DOM elements after Flux starts.
+ * It wraps Element.addEventListener so DomBridge can reattach those
+ * listeners when an updated response replaces existing elements.
  */
 export class ElementEventMapper {
 	map;
 	addEventListenerOriginal;
 
-	constructor() {
+	constructor(logger = console, debug = false) {
 // TODO: Is a WeakMap a better choice than Map? WeakMaps will automatically get garbage-collected when DOM nodes are removed, but do not have iteration functions.
 		this.map = new WeakMap();
 		this.addEventListenerOriginal = EventTarget.prototype.addEventListener;
+		this.logger = logger;
+		this.debug = debug;
 
 		const self = this;
 		Element.prototype.addEventListener = function(type, listener, options) {
@@ -65,7 +52,9 @@ export class ElementEventMapper {
 			options,
 		);
 
-		Flux.DEBUG && console.debug(`Event ${type} added to element:`, element);
+		if(this.debug) {
+			this.logger.debug(`Event ${type} added to element:`, element);
+		}
 	}
 
 	mapTypeContains = (element, type, listener) => {

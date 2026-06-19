@@ -1,6 +1,11 @@
 import {DomPath} from "./DomPath.es6";
 
-export class FluxFormHandler {
+/**
+ * Wires Flux forms and submit buttons into background submission.
+ * It handles autosave, auto-submit, rate limiting, and focused
+ * field state capture before handing requests to NavigationController.
+ */
+export class FormHandler {
 	constructor(
 		navigationController,
 		focusStateManager,

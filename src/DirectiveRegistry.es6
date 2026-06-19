@@ -57,7 +57,12 @@ const DIRECTIVE_DEFINITIONS = Object.freeze({
 	},
 });
 
-export class FluxDirectiveRegistry {
+/**
+ * Maps data-flux attribute values to their internal handler functions.
+ * Flux asks this registry to initialise each element according to
+ * the directive declared in its data-flux value.
+ */
+export class DirectiveRegistry {
 	static DEFINITIONS = DIRECTIVE_DEFINITIONS;
 
 	constructor(handlers) {
@@ -72,7 +77,7 @@ export class FluxDirectiveRegistry {
 			}
 		}
 
-		let definition = FluxDirectiveRegistry.DEFINITIONS[fluxType];
+		let definition = DirectiveRegistry.DEFINITIONS[fluxType];
 		if(!definition) {
 			throw new TypeError(`Unknown flux element type: ${fluxType}`);
 		}
@@ -86,6 +91,6 @@ export class FluxDirectiveRegistry {
 	}
 
 	getDefinitions() {
-		return FluxDirectiveRegistry.DEFINITIONS;
+		return DirectiveRegistry.DEFINITIONS;
 	}
 }

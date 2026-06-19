@@ -5,16 +5,29 @@ import {UpdateTargetRegistry} from "./UpdateTargetRegistry.es6";
 import {FocusStateManager} from "./FocusStateManager.es6";
 import {NavigationController} from "./NavigationController.es6";
 import {DocumentUpdater} from "./DocumentUpdater.es6";
-import {FluxDirectiveRegistry} from "./FluxDirectiveRegistry.es6";
-import {FluxDomBridge} from "./FluxDomBridge.es6";
-import {FluxFormHandler} from "./FluxFormHandler.es6";
-import {FluxLinkHandler} from "./FluxLinkHandler.es6";
-import {FluxResponseHandler} from "./FluxResponseHandler.es6";
-import {FluxLiveHandler} from "./FluxLiveHandler.es6";
-import {FluxDragOrderHandler} from "./FluxDragOrderHandler.es6";
+import {DirectiveRegistry} from "./DirectiveRegistry.es6";
+import {DomBridge} from "./DomBridge.es6";
+import {FormHandler} from "./FormHandler.es6";
+import {LinkHandler} from "./LinkHandler.es6";
+import {ResponseHandler} from "./ResponseHandler.es6";
+import {LiveHandler} from "./LiveHandler.es6";
+import {Handler as DragOrderHandler} from "./DragOrder/Handler.es6";
+import {RuntimeConfig} from "./RuntimeConfig.es6";
 
+/**
+ * Main coordinator that boots Flux on the current document.
+ * It creates the small handlers, registers data-flux directives,
+ * and initialises every element that declares Flux behaviour.
+ */
 export class Flux {
-	static DEBUG = false;
+	static get DEBUG() {
+		return RuntimeConfig.debug;
+	}
+
+	static set DEBUG(value) {
+		RuntimeConfig.debug = Boolean(value);
+	}
+
 	style;
 	elementEventMapper;
 	navigationController;
@@ -51,42 +64,49 @@ export class Flux {
 		this.logger = logger ?? console;
 		style = style ?? new Style();
 		style.addToDocument();
-		this.elementEventMapper = elementEventMapper ?? new ElementEventMapper();
+		this.elementEventMapper = elementEventMapper ?? new ElementEventMapper(this.logger, Flux.DEBUG);
 		this.navigationController = navigationController ?? new NavigationController(
 			parser ?? new DOMParser(),
 		);
 		this.updateTargetRegistry = updateTargetRegistry ?? new UpdateTargetRegistry();
 		this.focusStateManager = focusStateManager ?? new FocusStateManager();
+		this.domBridge = domBridge ?? new DomBridge(
+			this.elementEventMapper,
+			this.initFluxElementSafely,
+			DomPath,
+			this.logger,
+			Flux.DEBUG,
+		);
 		this.documentUpdater = documentUpdater ?? new DocumentUpdater(
 			this.updateTargetRegistry,
 			this.focusStateManager,
 			(oldElement, newElement) => this.domBridge.prepareElementUpdate(oldElement, newElement),
 			DomPath,
-			console,
+			this.logger,
 			Flux.DEBUG,
 		);
-		this.responseHandler = responseHandler ?? new FluxResponseHandler(
+		this.responseHandler = responseHandler ?? new ResponseHandler(
 			this.documentUpdater,
-			console,
+			this.logger,
 			Flux.DEBUG,
 		);
-		this.formHandler = formHandler ?? new FluxFormHandler(
+		this.formHandler = formHandler ?? new FormHandler(
 			this.navigationController,
 			this.focusStateManager,
 			this.responseHandler.handleDocument,
 			this.responseHandler.handleLinkDocument,
-			console,
+			this.logger,
 			Flux.DEBUG,
 		);
-		this.linkHandler = linkHandler ?? new FluxLinkHandler(
+		this.linkHandler = linkHandler ?? new LinkHandler(
 			this.navigationController,
 			this.responseHandler.handleLinkDocument,
 		);
-		this.liveHandler = liveHandler ?? new FluxLiveHandler(
+		this.liveHandler = liveHandler ?? new LiveHandler(
 			this.navigationController,
 			this.updateTargetRegistry,
 			this.responseHandler.handleLiveDocument,
-			console,
+			this.logger,
 			Flux.DEBUG,
 			globalThis.setTimeout.bind(globalThis),
 			globalThis.clearTimeout.bind(globalThis),
@@ -95,20 +115,13 @@ export class Flux {
 			() => Date.now(),
 			DomPath,
 		);
-		this.dragOrderHandler = dragOrderHandler ?? new FluxDragOrderHandler(
+		this.dragOrderHandler = dragOrderHandler ?? new DragOrderHandler(
 			this.formHandler,
 			document,
-			console,
-			Flux.DEBUG,
-		);
-		this.domBridge = domBridge ?? new FluxDomBridge(
-			this.elementEventMapper,
-			this.initFluxElementSafely,
-			DomPath,
 			this.logger,
 			Flux.DEBUG,
 		);
-		this.directiveRegistry = directiveRegistry ?? new FluxDirectiveRegistry({
+		this.directiveRegistry = directiveRegistry ?? new DirectiveRegistry({
 			autoContainer: this.initAutoContainer,
 			autoSave: this.formHandler.initAutoSave,
 			updateOuter: this.storeOuterUpdateElement,
@@ -164,7 +177,9 @@ export class Flux {
 	 */
 	storeUpdateElement = (element, updateType) => {
 		this.updateTargetRegistry.add(element, updateType);
-		Flux.DEBUG && console.debug("storeUpdateElement completed", `Pushing into ${updateType}: `, element);
+		if(Flux.DEBUG) {
+			this.logger.debug("storeUpdateElement completed", `Pushing into ${updateType}: `, element);
+		}
 	}
 
 	storeOuterUpdateElement = (element) => {

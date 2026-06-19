@@ -1,3 +1,8 @@
+/**
+ * Performs the network requests behind Flux forms, links, and live polling.
+ * Converts responses into documents, updates browser history where appropriate,
+ * and manages temporary waiting classes.
+ */
 export class NavigationController {
 	constructor(
 		parser = new DOMParser(),

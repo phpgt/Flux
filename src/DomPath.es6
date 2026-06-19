@@ -1,3 +1,8 @@
+/**
+ * Finds matching DOM nodes across the current document and response document.
+ * Flux uses these simple XPath helpers when an update target has no
+ * id and must be matched by position instead.
+ */
 export class DomPath {
 	static getXPathForElement(element, context) {
 		if(!element) {

@@ -1,4 +1,9 @@
-export class FluxLiveHandler {
+/**
+ * Runs recurring background refreshes for live Flux regions.
+ * Registers live update targets, schedules polling based on
+ * data-flux-rate, and asks ResponseHandler to refresh only due elements.
+ */
+export class LiveHandler {
 	static UPDATE_TYPES = Object.freeze([
 		"live-outer",
 		"live-inner",
@@ -97,7 +102,7 @@ export class FluxLiveHandler {
 
 	hasLiveElements() {
 		let hasLiveElements = false;
-		for(let type of FluxLiveHandler.UPDATE_TYPES) {
+		for(let type of LiveHandler.UPDATE_TYPES) {
 			for(let element of this.getConnectedElements(type)) {
 				hasLiveElements = true;
 			}
@@ -114,7 +119,7 @@ export class FluxLiveHandler {
 		let now = this.now();
 		let dueTargets = [];
 
-		for(let type of FluxLiveHandler.UPDATE_TYPES) {
+		for(let type of LiveHandler.UPDATE_TYPES) {
 			for(let element of this.getConnectedElements(type)) {
 				let key = this.getTargetKey(type, element);
 				let rateMs = this.getRateMs(element);
@@ -133,7 +138,7 @@ export class FluxLiveHandler {
 		let now = this.now();
 		let minDelay = Infinity;
 
-		for(let type of FluxLiveHandler.UPDATE_TYPES) {
+		for(let type of LiveHandler.UPDATE_TYPES) {
 			for(let element of this.getConnectedElements(type)) {
 				hasTargets = true;
 				let key = this.getTargetKey(type, element);

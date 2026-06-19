@@ -6,13 +6,13 @@ import {UpdateTargetRegistry} from "../src/UpdateTargetRegistry.es6";
 import {FocusStateManager} from "../src/FocusStateManager.es6";
 import {NavigationController} from "../src/NavigationController.es6";
 import {DocumentUpdater} from "../src/DocumentUpdater.es6";
-import {FluxDirectiveRegistry} from "../src/FluxDirectiveRegistry.es6";
-import {FluxDomBridge} from "../src/FluxDomBridge.es6";
-import {FluxFormHandler} from "../src/FluxFormHandler.es6";
-import {FluxLinkHandler} from "../src/FluxLinkHandler.es6";
-import {FluxResponseHandler} from "../src/FluxResponseHandler.es6";
-import {FluxLiveHandler} from "../src/FluxLiveHandler.es6";
-import {FluxDragOrderHandler} from "../src/FluxDragOrderHandler.es6";
+import {DirectiveRegistry} from "../src/DirectiveRegistry.es6";
+import {DomBridge} from "../src/DomBridge.es6";
+import {FormHandler} from "../src/FormHandler.es6";
+import {LinkHandler} from "../src/LinkHandler.es6";
+import {ResponseHandler} from "../src/ResponseHandler.es6";
+import {LiveHandler} from "../src/LiveHandler.es6";
+import {Handler as DragOrderHandler} from "../src/DragOrder/Handler.es6";
 
 beforeEach(() => {
 	document.body.innerHTML = "";
@@ -1100,9 +1100,9 @@ describe("DocumentUpdater", () => {
 	});
 });
 
-describe("FluxDirectiveRegistry", () => {
+describe("DirectiveRegistry", () => {
 	it("defines every supported data-flux value in one place", () => {
-		expect(FluxDirectiveRegistry.DEFINITIONS).toEqual({
+		expect(DirectiveRegistry.DEFINITIONS).toEqual({
 			"": expect.objectContaining({handler: "autoContainer"}),
 			"autosave": expect.objectContaining({handler: "autoSave"}),
 			"update": expect.objectContaining({handler: "updateOuter"}),
@@ -1124,7 +1124,7 @@ describe("FluxDirectiveRegistry", () => {
 		document.body.innerHTML = `<button data-flux="autosave"></button>`;
 
 		let autoSave = vi.fn();
-		let registry = new FluxDirectiveRegistry({
+		let registry = new DirectiveRegistry({
 			autoContainer: vi.fn(),
 			autoSave,
 			updateOuter: vi.fn(),
@@ -1148,7 +1148,7 @@ describe("FluxDirectiveRegistry", () => {
 		document.body.innerHTML = `<a data-flux href="/next">Next</a>`;
 
 		let autoContainer = vi.fn();
-		let registry = new FluxDirectiveRegistry({
+		let registry = new DirectiveRegistry({
 			autoContainer,
 			autoSave: vi.fn(),
 			updateOuter: vi.fn(),
@@ -1172,7 +1172,7 @@ describe("FluxDirectiveRegistry", () => {
 		document.body.innerHTML = `<form><button data-flux>Save</button></form>`;
 
 		let autoSubmit = vi.fn();
-		let registry = new FluxDirectiveRegistry({
+		let registry = new DirectiveRegistry({
 			autoContainer: vi.fn(),
 			autoSave: vi.fn(),
 			updateOuter: vi.fn(),
@@ -1195,7 +1195,7 @@ describe("FluxDirectiveRegistry", () => {
 	it("throws when a data-flux value is not registered", () => {
 		document.body.innerHTML = `<div data-flux="unknown"></div>`;
 
-		let registry = new FluxDirectiveRegistry({
+		let registry = new DirectiveRegistry({
 			autoContainer: vi.fn(),
 			autoSave: vi.fn(),
 			updateOuter: vi.fn(),
@@ -1216,7 +1216,7 @@ describe("FluxDirectiveRegistry", () => {
 	});
 });
 
-describe("FluxFormHandler", () => {
+describe("FormHandler", () => {
 	it("prepares autosave form data using the configured button fallback", () => {
 		document.body.innerHTML = `
 		<form>
@@ -1227,7 +1227,7 @@ describe("FluxFormHandler", () => {
 
 		let form = document.querySelector("form");
 		let button = document.querySelector("button");
-		let handler = new FluxFormHandler(
+		let handler = new FormHandler(
 			{submitForm: vi.fn()},
 			{storeFormState: vi.fn()},
 			vi.fn(),
@@ -1249,7 +1249,7 @@ describe("FluxFormHandler", () => {
 
 		let form = document.querySelector("form");
 		let button = document.querySelector("button");
-		let handler = new FluxFormHandler(
+		let handler = new FormHandler(
 			{submitForm: vi.fn()},
 			{storeFormState: vi.fn()},
 			vi.fn(),
@@ -1273,7 +1273,7 @@ describe("FluxFormHandler", () => {
 		let onNavigationDocument = vi.fn();
 			let navigationController = {submitForm: vi.fn()};
 			let requestElementState = {path: "/HTML/BODY/FORM[1]/INPUT[1]", value: "One"};
-			let handler = new FluxFormHandler(
+			let handler = new FormHandler(
 				navigationController,
 				{
 					storeFormState: vi.fn(),
@@ -1309,7 +1309,7 @@ describe("FluxFormHandler", () => {
 		let onNavigationDocument = vi.fn();
 			let navigationController = {submitForm: vi.fn()};
 			let requestElementState = {path: "/HTML/BODY/FORM[1]/INPUT[1]", value: "One"};
-			let handler = new FluxFormHandler(
+			let handler = new FormHandler(
 				navigationController,
 				{
 					storeFormState: vi.fn(),
@@ -1347,7 +1347,7 @@ describe("FluxFormHandler", () => {
 				storeFormState: vi.fn(),
 				captureElementState: vi.fn().mockReturnValue(null),
 			};
-		let handler = new FluxFormHandler(
+		let handler = new FormHandler(
 			{submitForm: vi.fn()},
 			focusStateManager,
 			vi.fn(),
@@ -1375,7 +1375,7 @@ describe("FluxFormHandler", () => {
 		let form = document.querySelector("form");
 		let button = document.querySelector("button");
 		let navigationController = {submitForm: vi.fn()};
-			let handler = new FluxFormHandler(
+			let handler = new FormHandler(
 				navigationController,
 				{
 					storeFormState: vi.fn(),
@@ -1408,7 +1408,7 @@ describe("FluxFormHandler", () => {
 		`;
 
 		let navigationController = {submitForm: vi.fn()};
-			let handler = new FluxFormHandler(
+			let handler = new FormHandler(
 				navigationController,
 				{
 					storeFormState: vi.fn(),
@@ -1445,7 +1445,7 @@ describe("FluxFormHandler", () => {
 	});
 });
 
-describe("FluxDragOrderHandler", () => {
+describe("DragOrderHandler", () => {
 		it("hides the order controls and adds a draggable handle to the form", () => {
 		document.body.innerHTML = `
 		<ul>
@@ -1463,7 +1463,7 @@ describe("FluxDragOrderHandler", () => {
 		</ul>
 		`;
 
-		let handler = new FluxDragOrderHandler({submitForm: vi.fn()}, document);
+		let handler = new DragOrderHandler({submitForm: vi.fn()}, document);
 		let form = document.querySelector("form");
 
 		handler.initDragOrder(form);
@@ -1489,7 +1489,7 @@ describe("FluxDragOrderHandler", () => {
 			</ul>
 			`;
 
-			let handler = new FluxDragOrderHandler({submitForm: vi.fn()}, document);
+			let handler = new DragOrderHandler({submitForm: vi.fn()}, document);
 			let item = document.querySelector("li");
 
 			handler.initDragOrder(item);
@@ -1509,7 +1509,7 @@ describe("FluxDragOrderHandler", () => {
 			</ul>
 			`;
 
-			let handler = new FluxDragOrderHandler({submitForm: vi.fn()}, document);
+			let handler = new DragOrderHandler({submitForm: vi.fn()}, document);
 			let item = document.querySelector("li");
 
 			handler.initDragOrder(item);
@@ -1537,7 +1537,7 @@ describe("FluxDragOrderHandler", () => {
 			`;
 
 			let formHandler = {submitForm: vi.fn()};
-			let handler = new FluxDragOrderHandler(formHandler, document);
+			let handler = new DragOrderHandler(formHandler, document);
 			let items = [...document.querySelectorAll("[data-id]")];
 			items.forEach(item => handler.initDragOrder(item));
 			let item = document.querySelector("[data-id='1']");
@@ -1586,7 +1586,7 @@ describe("FluxDragOrderHandler", () => {
 			`;
 
 			let formHandler = {submitForm: vi.fn()};
-			let handler = new FluxDragOrderHandler(formHandler, document);
+			let handler = new DragOrderHandler(formHandler, document);
 			let items = [...document.querySelectorAll("[data-flux='drag-order']")];
 			items.forEach(item => handler.initDragOrder(item));
 
@@ -1639,7 +1639,7 @@ describe("FluxDragOrderHandler", () => {
 			`;
 
 			let formHandler = {submitForm: vi.fn()};
-			let handler = new FluxDragOrderHandler(formHandler, document);
+			let handler = new DragOrderHandler(formHandler, document);
 			let items = [...document.querySelectorAll("[data-flux='drag-order']")];
 			items.forEach(item => handler.initDragOrder(item));
 			let item = document.querySelector("[data-id='1']");
@@ -1693,7 +1693,7 @@ describe("FluxDragOrderHandler", () => {
 			</div>
 			`;
 
-			let handler = new FluxDragOrderHandler({submitForm: vi.fn()}, document);
+			let handler = new DragOrderHandler({submitForm: vi.fn()}, document);
 			let items = [...document.querySelectorAll("[data-flux='drag-order']")];
 			items.forEach(item => handler.initDragOrder(item));
 			let item = document.querySelector("[data-id='1']");
@@ -1735,7 +1735,7 @@ describe("FluxDragOrderHandler", () => {
 			`;
 
 			let formHandler = {submitForm: vi.fn()};
-			let handler = new FluxDragOrderHandler(formHandler, document);
+			let handler = new DragOrderHandler(formHandler, document);
 			let item = document.querySelector("[data-id='1']");
 			let form = item.querySelector("form");
 			handler.initDragOrder(item);
@@ -1795,7 +1795,7 @@ describe("FluxDragOrderHandler", () => {
 			</div>
 			`;
 
-			let handler = new FluxDragOrderHandler({submitForm: vi.fn()}, document);
+			let handler = new DragOrderHandler({submitForm: vi.fn()}, document);
 			let columns = [...document.querySelectorAll(".board > [data-flux='drag-order']")];
 			columns.forEach(column => handler.initDragOrder(column));
 			let column = document.querySelector("[data-id='todo']");
@@ -1853,7 +1853,7 @@ describe("FluxDragOrderHandler", () => {
 			`;
 
 			let formHandler = {submitForm: vi.fn()};
-			let handler = new FluxDragOrderHandler(formHandler, document);
+			let handler = new DragOrderHandler(formHandler, document);
 			document.querySelectorAll("[data-flux='drag-order']").forEach(item => handler.initDragOrder(item));
 			let card = document.querySelector("[data-id='1']");
 			let form = card.querySelector("form");
@@ -1931,7 +1931,7 @@ describe("FluxDragOrderHandler", () => {
 			</div>
 			`;
 
-			let handler = new FluxDragOrderHandler({submitForm: vi.fn()}, document);
+			let handler = new DragOrderHandler({submitForm: vi.fn()}, document);
 			document.querySelectorAll("[data-flux='drag-order']").forEach(item => handler.initDragOrder(item));
 			let card = document.querySelector("[data-id='1']");
 			let form = card.querySelector("form");
@@ -1975,7 +1975,7 @@ describe("FluxDragOrderHandler", () => {
 			`;
 
 			let formHandler = {submitForm: vi.fn()};
-			let handler = new FluxDragOrderHandler(formHandler, document);
+			let handler = new DragOrderHandler(formHandler, document);
 			let columns = [...document.querySelectorAll("section")];
 			columns.forEach((column, index) => {
 				column.getBoundingClientRect = () => ({
@@ -2021,7 +2021,7 @@ describe("FluxDragOrderHandler", () => {
 			</div>
 			`;
 
-			let handler = new FluxDragOrderHandler({submitForm: vi.fn()}, document);
+			let handler = new DragOrderHandler({submitForm: vi.fn()}, document);
 			let columns = [...document.querySelectorAll(".board > section")];
 			columns.forEach((column, index) => {
 				column.getBoundingClientRect = () => ({
@@ -2063,7 +2063,7 @@ describe("FluxDragOrderHandler", () => {
 		`;
 
 			let formHandler = {submitForm: vi.fn()};
-			let handler = new FluxDragOrderHandler(formHandler, document);
+			let handler = new DragOrderHandler(formHandler, document);
 			let forms = [...document.querySelectorAll("form")];
 			forms.forEach(form => handler.initDragOrder(form));
 			let form = document.querySelector("form");
@@ -2091,7 +2091,7 @@ describe("FluxDragOrderHandler", () => {
 			`;
 
 			let formHandler = {submitForm: vi.fn()};
-			let handler = new FluxDragOrderHandler(formHandler, document);
+			let handler = new DragOrderHandler(formHandler, document);
 			let forms = [...document.querySelectorAll("form")];
 			forms.forEach(form => handler.initDragOrder(form));
 			let form = document.querySelector("[data-id='3'] form");
@@ -2120,7 +2120,7 @@ describe("FluxDragOrderHandler", () => {
 		</ul>
 		`;
 
-			let handler = new FluxDragOrderHandler({submitForm: vi.fn()}, document);
+			let handler = new DragOrderHandler({submitForm: vi.fn()}, document);
 			let forms = [...document.querySelectorAll("form")];
 			forms.forEach(form => handler.initDragOrder(form));
 			let form = document.querySelector("form");
@@ -2150,7 +2150,7 @@ describe("FluxDragOrderHandler", () => {
 		</ul>
 		`;
 
-		let handler = new FluxDragOrderHandler({submitForm: vi.fn()}, document);
+		let handler = new DragOrderHandler({submitForm: vi.fn()}, document);
 		let form = document.querySelector("form");
 		handler.initDragOrder(form);
 
@@ -2199,7 +2199,7 @@ describe("FluxDragOrderHandler", () => {
 		</ul>
 		`;
 
-		let handler = new FluxDragOrderHandler({submitForm: vi.fn()}, document);
+		let handler = new DragOrderHandler({submitForm: vi.fn()}, document);
 		let item = document.querySelector("li");
 		let form = document.querySelector("form");
 		item.getBoundingClientRect = () => ({
@@ -2231,7 +2231,7 @@ describe("FluxDragOrderHandler", () => {
 	});
 });
 
-describe("FluxDomBridge", () => {
+describe("DomBridge", () => {
 	it("reinitialises flux elements and transfers fluxObj during element replacement", () => {
 		document.body.innerHTML = `
 		<div>
@@ -2257,7 +2257,7 @@ describe("FluxDomBridge", () => {
 		`, "text/html");
 		let newElement = newDocument.querySelector("div");
 		let initFluxElement = vi.fn();
-		let bridge = new FluxDomBridge(
+		let bridge = new DomBridge(
 			{has: vi.fn().mockReturnValue(false), get: vi.fn()},
 			initFluxElement,
 		);
@@ -2270,11 +2270,11 @@ describe("FluxDomBridge", () => {
 	});
 });
 
-describe("FluxResponseHandler", () => {
+describe("ResponseHandler", () => {
 	it("schedules document updates when the response document is valid", () => {
 		let apply = vi.fn();
 		let scheduler = vi.fn((callback) => callback());
-		let handler = new FluxResponseHandler(
+		let handler = new ResponseHandler(
 			{apply},
 			{error: vi.fn()},
 			false,
@@ -2298,7 +2298,7 @@ describe("FluxResponseHandler", () => {
 	it("routes live refresh documents to the live update types only", () => {
 		let apply = vi.fn();
 		let scheduler = vi.fn((callback) => callback());
-		let handler = new FluxResponseHandler(
+		let handler = new ResponseHandler(
 			{apply},
 			{error: vi.fn()},
 			false,
@@ -2321,7 +2321,7 @@ describe("FluxResponseHandler", () => {
 	it("can apply a live response to only the due live targets", () => {
 		let apply = vi.fn();
 		let scheduler = vi.fn((callback) => callback());
-		let handler = new FluxResponseHandler(
+		let handler = new ResponseHandler(
 			{apply},
 			{error: vi.fn()},
 			false,
@@ -2350,7 +2350,7 @@ describe("FluxResponseHandler", () => {
 		let scrollTo = vi.fn();
 		let scheduler = vi.fn((callback) => callback());
 		let animationFrame = vi.fn((callback) => callback());
-		let handler = new FluxResponseHandler(
+		let handler = new ResponseHandler(
 			{apply},
 			{error: vi.fn()},
 			false,
@@ -2384,11 +2384,11 @@ describe("FluxResponseHandler", () => {
 	});
 });
 
-describe("FluxLinkHandler", () => {
+describe("LinkHandler", () => {
 	it("scrolls to the top smoothly as soon as a flux link is clicked", () => {
 		let scrollTo = vi.fn();
 		let navigationController = {clickLink: vi.fn()};
-		let handler = new FluxLinkHandler(
+		let handler = new LinkHandler(
 			navigationController,
 			vi.fn(),
 			{scrollTo},
@@ -2414,7 +2414,7 @@ describe("FluxLinkHandler", () => {
 	it("rate limits links when data-flux-rate is present", () => {
 		let now = 1000;
 		let navigationController = {clickLink: vi.fn()};
-		let handler = new FluxLinkHandler(
+		let handler = new LinkHandler(
 			navigationController,
 			vi.fn(),
 			{scrollTo: vi.fn()},
@@ -2435,7 +2435,7 @@ describe("FluxLinkHandler", () => {
 	it("keeps link rate limiting after the link element is replaced", () => {
 		let now = 1000;
 		let navigationController = {clickLink: vi.fn()};
-		let handler = new FluxLinkHandler(
+		let handler = new LinkHandler(
 			navigationController,
 			vi.fn(),
 			{scrollTo: vi.fn()},
@@ -2463,7 +2463,7 @@ describe("FluxLinkHandler", () => {
 	});
 });
 
-describe("FluxLiveHandler", () => {
+describe("LiveHandler", () => {
 	it("uses one scheduled polling loop for multiple live elements", () => {
 		document.body.innerHTML = `
 		<main></main>
@@ -2473,7 +2473,7 @@ describe("FluxLiveHandler", () => {
 		let updateTargetRegistry = new UpdateTargetRegistry();
 		let scheduler = vi.fn().mockReturnValue(123);
 		let clearScheduler = vi.fn();
-		let handler = new FluxLiveHandler(
+		let handler = new LiveHandler(
 			{pollDocument: vi.fn()},
 			updateTargetRegistry,
 			vi.fn(),
@@ -2497,7 +2497,7 @@ describe("FluxLiveHandler", () => {
 		let updateTargetRegistry = new UpdateTargetRegistry();
 		let now = 0;
 		let scheduler = vi.fn().mockReturnValue(123);
-		let handler = new FluxLiveHandler(
+		let handler = new LiveHandler(
 			{pollDocument: vi.fn()},
 			updateTargetRegistry,
 			vi.fn(),
@@ -2528,7 +2528,7 @@ describe("FluxLiveHandler", () => {
 		document.body.innerHTML = `<main id="clock" data-flux="live"></main>`;
 
 		let updateTargetRegistry = new UpdateTargetRegistry();
-		let handler = new FluxLiveHandler(
+		let handler = new LiveHandler(
 			{pollDocument: vi.fn()},
 			updateTargetRegistry,
 			vi.fn(),
@@ -2558,7 +2558,7 @@ describe("FluxLiveHandler", () => {
 			`, "text/html");
 			callback(newDocument);
 		});
-		let handler = new FluxLiveHandler(
+		let handler = new LiveHandler(
 			{pollDocument},
 			updateTargetRegistry,
 			onDocument,
@@ -2609,7 +2609,7 @@ describe("FluxLiveHandler", () => {
 			documentUpdater.apply(newDocument, ["live-outer"]);
 		});
 		let scheduler = vi.fn().mockReturnValue(1);
-		let handler = new FluxLiveHandler(
+		let handler = new LiveHandler(
 			{pollDocument},
 			updateTargetRegistry,
 			onDocument,

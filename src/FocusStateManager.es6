@@ -1,5 +1,10 @@
 import {DomPath} from "./DomPath.es6";
 
+/**
+ * Preserves the user's focused field while Flux replaces parts of the DOM.
+ * Internally, it records values, selections, checked states, and autofocus
+ * markers, so updates do not interrupt in-progress typing.
+ */
 export class FocusStateManager {
 	constructor(domPath = DomPath) {
 		this.domPath = domPath;

@@ -1,5 +1,10 @@
 import {DomPath} from "./DomPath.es6";
 
+/**
+ * Applies parsed response documents to registered update targets.
+ * It performs outer, inner, and attribute-only updates while asking
+ * FocusStateManager and DomBridge to preserve the user interaction state.
+ */
 export class DocumentUpdater {
 	constructor(
 		updateTargetRegistry,
