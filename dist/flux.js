@@ -375,7 +375,7 @@ var NavigationController = class {
   }
   appendFormDataToUrl(url, formData) {
     let urlObject = new URL(url, globalThis.location?.href);
-    let searchParams = new URLSearchParams(urlObject.search);
+    let searchParams = new URLSearchParams();
     for (let [key, value] of formData.entries()) {
       searchParams.append(key, value);
     }

@@ -488,7 +488,7 @@ describe("NavigationController", () => {
 		expect(logger.error).not.toHaveBeenCalled();
 	});
 
-	it("submits GET forms by encoding form data into the URL query string", async () => {
+	it("submits GET forms by replacing the URL query string with encoded form data", async () => {
 		document.body.innerHTML = `
 		<form action="/search?scope=docs" method="get">
 			<input name="title" value="One">
@@ -499,7 +499,7 @@ describe("NavigationController", () => {
 		let callback = vi.fn();
 		let fetcher = vi.fn().mockResolvedValue({
 			ok: true,
-			url: "https://example.com/search?scope=docs&title=One",
+			url: "https://example.com/search?title=One",
 			text: vi.fn().mockResolvedValue("<html><head></head><body><main>Next</main></body></html>"),
 		});
 		let navigationController = new NavigationController(
@@ -512,11 +512,43 @@ describe("NavigationController", () => {
 		await navigationController.submitForm(form, new FormData(form), callback);
 
 		expect(fetcher).toHaveBeenCalledTimes(1);
-		expect(fetcher.mock.calls[0][0]).toBe("http://localhost:3000/search?scope=docs&title=One");
+		expect(fetcher.mock.calls[0][0]).toBe("http://localhost:3000/search?title=One");
 		expect(fetcher.mock.calls[0][1]).toEqual({
 			method: "get",
 			credentials: "same-origin",
 		});
+	});
+
+	it("does not accumulate previous query parameters when resubmitting a GET form", async () => {
+		window.history.replaceState({}, "", "/?name=Ada+Lovelace&do=greet");
+		document.body.innerHTML = `
+		<form method="get">
+			<input name="name" value="Grace Hopper">
+			<button name="do" value="greet">Greet</button>
+		</form>
+		`;
+
+		let form = document.querySelector("form");
+		let button = document.querySelector("button");
+		let callback = vi.fn();
+		let fetcher = vi.fn().mockResolvedValue({
+			ok: true,
+			url: "https://example.com/?name=Grace+Hopper&do=greet",
+			text: vi.fn().mockResolvedValue("<html><head></head><body><main>Next</main></body></html>"),
+		});
+		let navigationController = new NavigationController(
+			new DOMParser(),
+			fetcher,
+			{pushState: vi.fn()},
+			{error: vi.fn()},
+		);
+
+		let formData = new FormData(form);
+		formData.set(button.name, button.value);
+		await navigationController.submitForm(form, formData, callback, button);
+
+		expect(fetcher).toHaveBeenCalledTimes(1);
+		expect(fetcher.mock.calls[0][0]).toBe("http://localhost:3000/?name=Grace+Hopper&do=greet");
 	});
 
 	it("logs network request errors and clears waiting state classes", async () => {
