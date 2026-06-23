@@ -1,4 +1,9 @@
-export class FluxResponseHandler {
+/**
+ * Decides how a fetched HTML document should update the current page.
+ * It validates responses, schedules DOM updates, and applies the right update
+ * types for forms, links, and live polling.
+ */
+export class ResponseHandler {
 	static DEFAULT_UPDATE_TYPES = Object.freeze([
 		"outer",
 		"inner",
@@ -6,7 +11,7 @@ export class FluxResponseHandler {
 	]);
 
 	static LINK_UPDATE_TYPES = Object.freeze([
-		...FluxResponseHandler.DEFAULT_UPDATE_TYPES,
+		...ResponseHandler.DEFAULT_UPDATE_TYPES,
 		"link-outer",
 		"link-inner",
 	]);
@@ -36,23 +41,33 @@ export class FluxResponseHandler {
 		this.animationFrame = animationFrame;
 	}
 
-	handleDocument = (newDocument) => {
+	handleDocument = (newDocument, requestElementState = null) => {
 		if(!this.isProcessableDocument(newDocument)) {
 			return;
 		}
 
 		this.scheduler(() => {
-			this.documentUpdater.apply(newDocument, FluxResponseHandler.DEFAULT_UPDATE_TYPES);
+			this.documentUpdater.apply(
+				newDocument,
+				ResponseHandler.DEFAULT_UPDATE_TYPES,
+				undefined,
+				requestElementState,
+			);
 		}, 0);
 	}
 
-	handleLinkDocument = (newDocument) => {
+	handleLinkDocument = (newDocument, requestElementState = null) => {
 		if(!this.isProcessableDocument(newDocument)) {
 			return;
 		}
 
 		this.scheduler(() => {
-			this.documentUpdater.apply(newDocument, FluxResponseHandler.LINK_UPDATE_TYPES);
+			this.documentUpdater.apply(
+				newDocument,
+				ResponseHandler.LINK_UPDATE_TYPES,
+				undefined,
+				requestElementState,
+			);
 			this.scrollToTopAfterPaint();
 		}, 0);
 	}
@@ -63,7 +78,7 @@ export class FluxResponseHandler {
 		}
 
 		this.scheduler(() => {
-			this.documentUpdater.apply(newDocument, FluxResponseHandler.LIVE_UPDATE_TYPES, allowedTargetKeys);
+			this.documentUpdater.apply(newDocument, ResponseHandler.LIVE_UPDATE_TYPES, allowedTargetKeys);
 		}, 0);
 	}
 

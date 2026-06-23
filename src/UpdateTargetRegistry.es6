@@ -1,3 +1,8 @@
+/**
+ * Tracks the current DOM elements registered for Flux updates.
+ * Internally, handlers add elements here, so DocumentUpdater knows which parts
+ * of the page should be replaced after a background request.
+ */
 export class UpdateTargetRegistry {
 	collection = {};
 

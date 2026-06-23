@@ -6,13 +6,14 @@ import {UpdateTargetRegistry} from "../src/UpdateTargetRegistry.es6";
 import {FocusStateManager} from "../src/FocusStateManager.es6";
 import {NavigationController} from "../src/NavigationController.es6";
 import {DocumentUpdater} from "../src/DocumentUpdater.es6";
-import {FluxDirectiveRegistry} from "../src/FluxDirectiveRegistry.es6";
-import {FluxDomBridge} from "../src/FluxDomBridge.es6";
-import {FluxFormHandler} from "../src/FluxFormHandler.es6";
-import {FluxLinkHandler} from "../src/FluxLinkHandler.es6";
-import {FluxResponseHandler} from "../src/FluxResponseHandler.es6";
-import {FluxLiveHandler} from "../src/FluxLiveHandler.es6";
-import {FluxDragOrderHandler} from "../src/FluxDragOrderHandler.es6";
+import {DirectiveRegistry} from "../src/DirectiveRegistry.es6";
+import {DomBridge} from "../src/DomBridge.es6";
+import {FormHandler} from "../src/FormHandler.es6";
+import {LinkHandler} from "../src/LinkHandler.es6";
+import {ResponseHandler} from "../src/ResponseHandler.es6";
+import {LiveHandler} from "../src/LiveHandler.es6";
+import {Handler as DragOrderHandler} from "../src/DragOrder/Handler.es6";
+import {Preview} from "../src/DragOrder/Preview.es6";
 
 beforeEach(() => {
 	document.body.innerHTML = "";
@@ -487,7 +488,7 @@ describe("NavigationController", () => {
 		expect(logger.error).not.toHaveBeenCalled();
 	});
 
-	it("submits GET forms by encoding form data into the URL query string", async () => {
+	it("submits GET forms by replacing the URL query string with encoded form data", async () => {
 		document.body.innerHTML = `
 		<form action="/search?scope=docs" method="get">
 			<input name="title" value="One">
@@ -498,7 +499,7 @@ describe("NavigationController", () => {
 		let callback = vi.fn();
 		let fetcher = vi.fn().mockResolvedValue({
 			ok: true,
-			url: "https://example.com/search?scope=docs&title=One",
+			url: "https://example.com/search?title=One",
 			text: vi.fn().mockResolvedValue("<html><head></head><body><main>Next</main></body></html>"),
 		});
 		let navigationController = new NavigationController(
@@ -511,11 +512,43 @@ describe("NavigationController", () => {
 		await navigationController.submitForm(form, new FormData(form), callback);
 
 		expect(fetcher).toHaveBeenCalledTimes(1);
-		expect(fetcher.mock.calls[0][0]).toBe("http://localhost:3000/search?scope=docs&title=One");
+		expect(fetcher.mock.calls[0][0]).toBe("http://localhost:3000/search?title=One");
 		expect(fetcher.mock.calls[0][1]).toEqual({
 			method: "get",
 			credentials: "same-origin",
 		});
+	});
+
+	it("does not accumulate previous query parameters when resubmitting a GET form", async () => {
+		window.history.replaceState({}, "", "/?name=Ada+Lovelace&do=greet");
+		document.body.innerHTML = `
+		<form method="get">
+			<input name="name" value="Grace Hopper">
+			<button name="do" value="greet">Greet</button>
+		</form>
+		`;
+
+		let form = document.querySelector("form");
+		let button = document.querySelector("button");
+		let callback = vi.fn();
+		let fetcher = vi.fn().mockResolvedValue({
+			ok: true,
+			url: "https://example.com/?name=Grace+Hopper&do=greet",
+			text: vi.fn().mockResolvedValue("<html><head></head><body><main>Next</main></body></html>"),
+		});
+		let navigationController = new NavigationController(
+			new DOMParser(),
+			fetcher,
+			{pushState: vi.fn()},
+			{error: vi.fn()},
+		);
+
+		let formData = new FormData(form);
+		formData.set(button.name, button.value);
+		await navigationController.submitForm(form, formData, callback, button);
+
+		expect(fetcher).toHaveBeenCalledTimes(1);
+		expect(fetcher.mock.calls[0][0]).toBe("http://localhost:3000/?name=Grace+Hopper&do=greet");
 	});
 
 	it("logs network request errors and clears waiting state classes", async () => {
@@ -1016,11 +1049,93 @@ describe("DocumentUpdater", () => {
 		expect(updatedInput.selectionStart).toBe(6);
 		expect(updatedInput.selectionEnd).toBe(6);
 	});
+
+	it("uses the response value when an active input has not changed since the request started", () => {
+		document.body.innerHTML = `
+		<form data-flux="update-inner">
+			<ul></ul>
+			<input name="new-item">
+		</form>
+		`;
+
+		let form = document.querySelector("form");
+		let input = document.querySelector("input");
+		let updateTargetRegistry = new UpdateTargetRegistry();
+		let focusStateManager = new FocusStateManager();
+		updateTargetRegistry.add(form, "inner");
+		let documentUpdater = new DocumentUpdater(
+			updateTargetRegistry,
+			focusStateManager,
+			vi.fn(),
+		);
+		input.focus();
+		input.value = "Milk";
+		let requestElementState = focusStateManager.captureElementState(form);
+		let newDocument = new DOMParser().parseFromString(`
+			<html>
+				<body>
+					<form data-flux="update-inner">
+						<ul><li>Milk</li></ul>
+						<input name="new-item">
+					</form>
+				</body>
+			</html>
+		`, "text/html");
+
+		documentUpdater.apply(newDocument, ["inner"], undefined, requestElementState);
+
+		let updatedInput = document.querySelector("input");
+		expect(updatedInput.value).toBe("");
+		expect(document.activeElement).toBe(updatedInput);
+	});
+
+	it("preserves the active input value when it changes after the request starts", () => {
+		document.body.innerHTML = `
+		<form data-flux="update-inner">
+			<ul></ul>
+			<input name="new-item">
+		</form>
+		`;
+
+		let form = document.querySelector("form");
+		let input = document.querySelector("input");
+		let updateTargetRegistry = new UpdateTargetRegistry();
+		let focusStateManager = new FocusStateManager();
+		updateTargetRegistry.add(form, "inner");
+		let documentUpdater = new DocumentUpdater(
+			updateTargetRegistry,
+			focusStateManager,
+			vi.fn(),
+		);
+		input.focus();
+		input.value = "Milk";
+		let requestElementState = focusStateManager.captureElementState(form);
+		input.value = "Milk and bread";
+		input.setSelectionRange(14, 14);
+		let newDocument = new DOMParser().parseFromString(`
+			<html>
+				<body>
+					<form data-flux="update-inner">
+						<ul><li>Milk</li></ul>
+						<input name="new-item">
+					</form>
+				</body>
+			</html>
+		`, "text/html");
+
+		documentUpdater.apply(newDocument, ["inner"], undefined, requestElementState);
+
+		let updatedInput = document.querySelector("input");
+		expect(updatedInput.value).toBe("Milk and bread");
+		expect(document.activeElement).toBe(updatedInput);
+		expect(updatedInput.selectionStart).toBe(14);
+		expect(updatedInput.selectionEnd).toBe(14);
+	});
 });
 
-describe("FluxDirectiveRegistry", () => {
+describe("DirectiveRegistry", () => {
 	it("defines every supported data-flux value in one place", () => {
-		expect(FluxDirectiveRegistry.DEFINITIONS).toEqual({
+		expect(DirectiveRegistry.DEFINITIONS).toEqual({
 			"": expect.objectContaining({handler: "autoContainer"}),
 			"autosave": expect.objectContaining({handler: "autoSave"}),
 			"update": expect.objectContaining({handler: "updateOuter"}),
@@ -1042,7 +1157,7 @@ describe("FluxDirectiveRegistry", () => {
 		document.body.innerHTML = `<button data-flux="autosave"></button>`;
 
 		let autoSave = vi.fn();
-		let registry = new FluxDirectiveRegistry({
+		let registry = new DirectiveRegistry({
 			autoContainer: vi.fn(),
 			autoSave,
 			updateOuter: vi.fn(),
@@ -1066,7 +1181,7 @@ describe("FluxDirectiveRegistry", () => {
 		document.body.innerHTML = `<a data-flux href="/next">Next</a>`;
 
 		let autoContainer = vi.fn();
-		let registry = new FluxDirectiveRegistry({
+		let registry = new DirectiveRegistry({
 			autoContainer,
 			autoSave: vi.fn(),
 			updateOuter: vi.fn(),
@@ -1090,7 +1205,7 @@ describe("FluxDirectiveRegistry", () => {
 		document.body.innerHTML = `<form><button data-flux>Save</button></form>`;
 
 		let autoSubmit = vi.fn();
-		let registry = new FluxDirectiveRegistry({
+		let registry = new DirectiveRegistry({
 			autoContainer: vi.fn(),
 			autoSave: vi.fn(),
 			updateOuter: vi.fn(),
@@ -1113,7 +1228,7 @@ describe("FluxDirectiveRegistry", () => {
 	it("throws when a data-flux value is not registered", () => {
 		document.body.innerHTML = `<div data-flux="unknown"></div>`;
 
-		let registry = new FluxDirectiveRegistry({
+		let registry = new DirectiveRegistry({
 			autoContainer: vi.fn(),
 			autoSave: vi.fn(),
 			updateOuter: vi.fn(),
@@ -1134,7 +1249,7 @@ describe("FluxDirectiveRegistry", () => {
 	});
 });
 
-describe("FluxFormHandler", () => {
+describe("FormHandler", () => {
 	it("prepares autosave form data using the configured button fallback", () => {
 		document.body.innerHTML = `
 		<form>
@@ -1145,7 +1260,7 @@ describe("FluxFormHandler", () => {
 
 		let form = document.querySelector("form");
 		let button = document.querySelector("button");
-		let handler = new FluxFormHandler(
+		let handler = new FormHandler(
 			{submitForm: vi.fn()},
 			{storeFormState: vi.fn()},
 			vi.fn(),
@@ -1167,7 +1282,7 @@ describe("FluxFormHandler", () => {
 
 		let form = document.querySelector("form");
 		let button = document.querySelector("button");
-		let handler = new FluxFormHandler(
+		let handler = new FormHandler(
 			{submitForm: vi.fn()},
 			{storeFormState: vi.fn()},
 			vi.fn(),
@@ -1189,23 +1304,31 @@ describe("FluxFormHandler", () => {
 		let form = document.querySelector("form");
 		let onDocument = vi.fn();
 		let onNavigationDocument = vi.fn();
-		let navigationController = {submitForm: vi.fn()};
-		let handler = new FluxFormHandler(
-			navigationController,
-			{storeFormState: vi.fn()},
-			onDocument,
-			onNavigationDocument,
-		);
+			let navigationController = {submitForm: vi.fn()};
+			let requestElementState = {path: "/HTML/BODY/FORM[1]/INPUT[1]", value: "One"};
+			let handler = new FormHandler(
+				navigationController,
+				{
+					storeFormState: vi.fn(),
+					captureElementState: vi.fn().mockReturnValue(requestElementState),
+				},
+				onDocument,
+				onNavigationDocument,
+			);
 
-		handler.submitForm(form);
+			handler.submitForm(form);
+			let responseHandler = navigationController.submitForm.mock.calls[0][2];
+			let newDocument = new DOMParser().parseFromString("<html><head><title>Ok</title></head><body></body></html>", "text/html");
+			responseHandler(newDocument);
 
-		expect(navigationController.submitForm).toHaveBeenCalledWith(
-			form,
-			expect.any(FormData),
-			onNavigationDocument,
-			undefined,
-		);
-	});
+			expect(navigationController.submitForm).toHaveBeenCalledWith(
+				form,
+				expect.any(FormData),
+				expect.any(Function),
+				undefined,
+			);
+			expect(onNavigationDocument).toHaveBeenCalledWith(newDocument, requestElementState);
+		});
 
 	it("keeps in-place document handling for forms without an explicit action attribute", () => {
 		document.body.innerHTML = `
@@ -1217,23 +1340,31 @@ describe("FluxFormHandler", () => {
 		let form = document.querySelector("form");
 		let onDocument = vi.fn();
 		let onNavigationDocument = vi.fn();
-		let navigationController = {submitForm: vi.fn()};
-		let handler = new FluxFormHandler(
-			navigationController,
-			{storeFormState: vi.fn()},
-			onDocument,
-			onNavigationDocument,
-		);
+			let navigationController = {submitForm: vi.fn()};
+			let requestElementState = {path: "/HTML/BODY/FORM[1]/INPUT[1]", value: "One"};
+			let handler = new FormHandler(
+				navigationController,
+				{
+					storeFormState: vi.fn(),
+					captureElementState: vi.fn().mockReturnValue(requestElementState),
+				},
+				onDocument,
+				onNavigationDocument,
+			);
 
-		handler.submitForm(form);
+			handler.submitForm(form);
+			let responseHandler = navigationController.submitForm.mock.calls[0][2];
+			let newDocument = new DOMParser().parseFromString("<html><head><title>Ok</title></head><body></body></html>", "text/html");
+			responseHandler(newDocument);
 
-		expect(navigationController.submitForm).toHaveBeenCalledWith(
-			form,
-			expect.any(FormData),
-			onDocument,
-			undefined,
-		);
-	});
+			expect(navigationController.submitForm).toHaveBeenCalledWith(
+				form,
+				expect.any(FormData),
+				expect.any(Function),
+				undefined,
+			);
+			expect(onDocument).toHaveBeenCalledWith(newDocument, requestElementState);
+		});
 
 	it("stores the newly focused field during autosave submit without blurring it", () => {
 		document.body.innerHTML = `
@@ -1245,8 +1376,11 @@ describe("FluxFormHandler", () => {
 
 		let form = document.querySelector("form");
 		let secondInput = document.querySelectorAll("input")[1];
-		let focusStateManager = {storeFormState: vi.fn()};
-		let handler = new FluxFormHandler(
+			let focusStateManager = {
+				storeFormState: vi.fn(),
+				captureElementState: vi.fn().mockReturnValue(null),
+			};
+		let handler = new FormHandler(
 			{submitForm: vi.fn()},
 			focusStateManager,
 			vi.fn(),
@@ -1274,12 +1408,15 @@ describe("FluxFormHandler", () => {
 		let form = document.querySelector("form");
 		let button = document.querySelector("button");
 		let navigationController = {submitForm: vi.fn()};
-		let handler = new FluxFormHandler(
-			navigationController,
-			{storeFormState: vi.fn()},
-			vi.fn(),
-			vi.fn(),
-			console,
+			let handler = new FormHandler(
+				navigationController,
+				{
+					storeFormState: vi.fn(),
+					captureElementState: vi.fn().mockReturnValue(null),
+				},
+				vi.fn(),
+				vi.fn(),
+				console,
 			false,
 			() => now,
 		);
@@ -1304,12 +1441,15 @@ describe("FluxFormHandler", () => {
 		`;
 
 		let navigationController = {submitForm: vi.fn()};
-		let handler = new FluxFormHandler(
-			navigationController,
-			{storeFormState: vi.fn()},
-			vi.fn(),
-			vi.fn(),
-			console,
+			let handler = new FormHandler(
+				navigationController,
+				{
+					storeFormState: vi.fn(),
+					captureElementState: vi.fn().mockReturnValue(null),
+				},
+				vi.fn(),
+				vi.fn(),
+				console,
 			false,
 			() => now,
 		);
@@ -1338,7 +1478,7 @@ describe("FluxFormHandler", () => {
 	});
 });
 
-describe("FluxDragOrderHandler", () => {
+describe("DragOrderHandler", () => {
 		it("hides the order controls and adds a draggable handle to the form", () => {
 		document.body.innerHTML = `
 		<ul>
@@ -1356,18 +1496,58 @@ describe("FluxDragOrderHandler", () => {
 		</ul>
 		`;
 
-		let handler = new FluxDragOrderHandler({submitForm: vi.fn()}, document);
+		let handler = new DragOrderHandler({submitForm: vi.fn()}, document);
 		let form = document.querySelector("form");
 
 		handler.initDragOrder(form);
 
 			let handle = form.querySelector(".drag-handle");
 			expect(handle).toBeInstanceOf(HTMLElement);
-			expect(handle.draggable).toBe(true);
+			expect(handle.draggable).toBe(false);
 			expect(handle.dataset["fluxTitle"]).toBe("Drag");
 			expect(form.querySelector("input[name='order']").hidden).toBe(true);
 			expect(form.querySelector("button[name='do']").hidden).toBe(true);
 			expect(form.querySelector("label").hidden).toBe(true);
+		});
+
+		it("uses the drag element handle title when provided", () => {
+			document.body.innerHTML = `
+			<ul>
+				<li data-flux="drag-order" data-flux-drag-handle="Move card">
+					<form method="post">
+						<input name="order">
+						<button name="do" value="move">Move</button>
+					</form>
+				</li>
+			</ul>
+			`;
+
+			let handler = new DragOrderHandler({submitForm: vi.fn()}, document);
+			let item = document.querySelector("li");
+
+			handler.initDragOrder(item);
+
+			expect(item.querySelector(".drag-handle").dataset["fluxTitle"]).toBe("Move card");
+		});
+
+		it("uses the parent handle title when the drag element does not provide one", () => {
+			document.body.innerHTML = `
+			<ul data-flux-drag-handle="Move task">
+				<li data-flux="drag-order">
+					<form method="post">
+						<input name="order">
+						<button name="do" value="move">Move</button>
+					</form>
+				</li>
+			</ul>
+			`;
+
+			let handler = new DragOrderHandler({submitForm: vi.fn()}, document);
+			let item = document.querySelector("li");
+
+			handler.initDragOrder(item);
+
+			expect(item.querySelector(".drag-handle").dataset["fluxTitle"]).toBe("Move task");
 		});
 
 		it("allows drag-order on a parent element and drags that element", () => {
@@ -1390,7 +1570,7 @@ describe("FluxDragOrderHandler", () => {
 			`;
 
 			let formHandler = {submitForm: vi.fn()};
-			let handler = new FluxDragOrderHandler(formHandler, document);
+			let handler = new DragOrderHandler(formHandler, document);
 			let items = [...document.querySelectorAll("[data-id]")];
 			items.forEach(item => handler.initDragOrder(item));
 			let item = document.querySelector("[data-id='1']");
@@ -1439,7 +1619,7 @@ describe("FluxDragOrderHandler", () => {
 			`;
 
 			let formHandler = {submitForm: vi.fn()};
-			let handler = new FluxDragOrderHandler(formHandler, document);
+			let handler = new DragOrderHandler(formHandler, document);
 			let items = [...document.querySelectorAll("[data-flux='drag-order']")];
 			items.forEach(item => handler.initDragOrder(item));
 
@@ -1460,6 +1640,446 @@ describe("FluxDragOrderHandler", () => {
 				.toEqual(["Secrets", "New request", "3", "1", "2"]);
 		});
 
+		it("moves items across parent containers and submits the new parent", () => {
+			document.body.innerHTML = `
+			<div class="board">
+				<ul data-flux-drag-parent="todo">
+					<li data-id="1" data-flux="drag-order">
+						<form method="post">
+							<input name="id" value="1">
+							<input name="parent">
+							<label><input name="order"><button name="do" value="move">Move</button></label>
+						</form>
+					</li>
+					<li data-id="2" data-flux="drag-order">
+						<form method="post">
+							<input name="id" value="2">
+							<input name="parent">
+							<label><input name="order"><button name="do" value="move">Move</button></label>
+						</form>
+					</li>
+				</ul>
+				<ul data-flux-drag-parent="doing">
+					<li data-id="3" data-flux="drag-order">
+						<form method="post">
+							<input name="id" value="3">
+							<input name="parent">
+							<label><input name="order"><button name="do" value="move">Move</button></label>
+						</form>
+					</li>
+				</ul>
+			</div>
+			`;
+
+			let formHandler = {submitForm: vi.fn()};
+			let handler = new DragOrderHandler(formHandler, document);
+			let items = [...document.querySelectorAll("[data-flux='drag-order']")];
+			items.forEach(item => handler.initDragOrder(item));
+			let item = document.querySelector("[data-id='1']");
+			let form = item.querySelector("form");
+			let doing = document.querySelector("[data-flux-drag-parent='doing']");
+			document.querySelector("[data-id='3']").getBoundingClientRect = () => ({
+				top: 100,
+				height: 100,
+			});
+
+			handler.startDrag(form, null, item);
+			handler.moveItem(100, doing);
+			handler.submitDrag();
+
+			expect(form.querySelector("input[name='order']").value).toBe("0");
+			expect(form.querySelector("input[name='parent']").value).toBe("doing");
+			expect([...document.querySelectorAll("[data-flux-drag-parent='todo'] > li")].map(li => li.dataset["id"]))
+				.toEqual(["2"]);
+			expect([...document.querySelectorAll("[data-flux-drag-parent='doing'] > li")].map(li => li.dataset["id"]))
+				.toEqual(["1", "3"]);
+			expect(formHandler.submitForm).toHaveBeenCalledWith(
+				form,
+				form.querySelector("button[name='do']"),
+			);
+		});
+
+		it("inserts before non-sortable controls when dragging into a parent container", () => {
+			document.body.innerHTML = `
+			<div class="board">
+				<ul data-flux-drag-parent="todo">
+					<li data-id="1" data-flux="drag-order">
+						<form method="post">
+							<input name="id" value="1">
+							<input name="parent">
+							<input name="order">
+							<button name="do" value="move">Move</button>
+						</form>
+					</li>
+				</ul>
+				<ul data-flux-drag-parent="done">
+					<li data-id="2" data-flux="drag-order">
+						<form method="post">
+							<input name="id" value="2">
+							<input name="parent">
+							<input name="order">
+							<button name="do" value="move">Move</button>
+						</form>
+					</li>
+					<li class="new-card"><form><input name="title"></form></li>
+				</ul>
+			</div>
+			`;
+
+			let handler = new DragOrderHandler({submitForm: vi.fn()}, document);
+			let items = [...document.querySelectorAll("[data-flux='drag-order']")];
+			items.forEach(item => handler.initDragOrder(item));
+			let item = document.querySelector("[data-id='1']");
+			let form = item.querySelector("form");
+			let done = document.querySelector("[data-flux-drag-parent='done']");
+			document.querySelector("[data-id='2']").getBoundingClientRect = () => ({
+				top: 0,
+				height: 100,
+			});
+
+			handler.startDrag(form, null, item);
+			handler.moveItem(200, done);
+
+			expect([...done.children].map(child => child.dataset["id"] ?? child.className))
+				.toEqual(["2", "1", "new-card"]);
+		});
+
+		it("moves into an empty parent container with only non-sortable controls", () => {
+			document.body.innerHTML = `
+			<div class="board">
+				<section class="column">
+					<ul data-flux-drag-parent="todo">
+						<li data-id="1" data-flux="drag-order">
+							<form method="post">
+								<input name="id" value="1">
+								<input name="parent">
+								<input name="order">
+								<button name="do" value="move">Move</button>
+							</form>
+						</li>
+					</ul>
+				</section>
+				<section class="column">
+					<ul data-flux-drag-parent="done">
+						<li class="new-card"><form><input name="title"></form></li>
+					</ul>
+				</section>
+			</div>
+			`;
+
+			let formHandler = {submitForm: vi.fn()};
+			let handler = new DragOrderHandler(formHandler, document);
+			let item = document.querySelector("[data-id='1']");
+			let form = item.querySelector("form");
+			handler.initDragOrder(item);
+			let done = document.querySelector("[data-flux-drag-parent='done']");
+			let column = document.querySelectorAll(".column")[1];
+			done.getBoundingClientRect = () => ({
+				left: 100,
+				right: 300,
+				top: 0,
+				bottom: 300,
+			});
+			document.elementFromPoint = () => column;
+
+			handler.startDrag(form, null, item);
+			handler.pointerMove({
+				pointerId: null,
+				clientX: 150,
+				clientY: 150,
+				preventDefault: vi.fn(),
+			});
+			handler.submitDrag();
+
+			expect(form.querySelector("input[name='order']").value).toBe("0");
+			expect(form.querySelector("input[name='parent']").value).toBe("done");
+			expect([...done.children].map(child => child.dataset["id"] ?? child.className))
+				.toEqual(["1", "new-card"]);
+			expect(formHandler.submitForm).toHaveBeenCalledWith(
+				form,
+				form.querySelector("button[name='do']"),
+			);
+		});
+
+		it("keeps parent item drags in their original container when hovering nested drag parents", () => {
+			document.body.innerHTML = `
+			<div class="board" data-flux-drag-parent="columns">
+				<section data-id="todo" data-flux="drag-order">
+					<form method="post">
+						<input name="order">
+						<button name="do" value="move-list">Move</button>
+					</form>
+					<ul data-flux-drag-parent="todo">
+						<li data-id="1" data-flux="drag-order">
+							<form method="post">
+								<input name="order">
+								<button name="do" value="move">Move</button>
+							</form>
+						</li>
+					</ul>
+				</section>
+				<section data-id="done" data-flux="drag-order">
+					<form method="post">
+						<input name="order">
+						<button name="do" value="move-list">Move</button>
+					</form>
+					<ul data-flux-drag-parent="done"></ul>
+				</section>
+			</div>
+			`;
+
+			let handler = new DragOrderHandler({submitForm: vi.fn()}, document);
+			let columns = [...document.querySelectorAll(".board > [data-flux='drag-order']")];
+			columns.forEach(column => handler.initDragOrder(column));
+			let column = document.querySelector("[data-id='todo']");
+			let form = column.querySelector("form");
+			let nestedList = document.querySelector("[data-flux-drag-parent='done']");
+			document.elementFromPoint = () => nestedList;
+
+			handler.startDrag(form, null, column);
+			handler.pointerMove({
+				pointerId: null,
+				clientX: 10,
+				clientY: 10,
+				preventDefault: vi.fn(),
+			});
+
+			expect(column.parentElement).toBe(document.querySelector(".board"));
+		});
+
+		it("moves a card to the nested list when hovering another draggable column shell", () => {
+			document.body.innerHTML = `
+			<div class="board" data-flux-drag-parent="columns">
+				<section data-id="todo" data-flux="drag-order">
+					<form method="post">
+						<input name="order">
+						<button name="do" value="move-list">Move list</button>
+					</form>
+					<ul data-flux-drag-parent="todo">
+						<li data-id="1" data-flux="drag-order">
+							<form method="post">
+								<input name="id" value="1">
+								<input name="parent">
+								<input name="order">
+								<button name="do" value="move">Move</button>
+							</form>
+						</li>
+					</ul>
+				</section>
+				<section data-id="doing" data-flux="drag-order">
+					<form method="post">
+						<input name="order">
+						<button name="do" value="move-list">Move list</button>
+					</form>
+					<ul data-flux-drag-parent="doing">
+						<li data-id="2" data-flux="drag-order">
+							<form method="post">
+								<input name="id" value="2">
+								<input name="parent">
+								<input name="order">
+								<button name="do" value="move">Move</button>
+							</form>
+						</li>
+					</ul>
+				</section>
+			</div>
+			`;
+
+			let formHandler = {submitForm: vi.fn()};
+			let handler = new DragOrderHandler(formHandler, document);
+			document.querySelectorAll("[data-flux='drag-order']").forEach(item => handler.initDragOrder(item));
+			let card = document.querySelector("[data-id='1']");
+			let form = card.querySelector("form");
+			let doingColumn = document.querySelector("[data-id='doing']");
+			let doingList = document.querySelector("[data-flux-drag-parent='doing']");
+			document.querySelector("[data-id='2']").getBoundingClientRect = () => ({
+				top: 200,
+				height: 100,
+			});
+			doingList.getBoundingClientRect = () => ({
+				left: 100,
+				right: 300,
+				top: 100,
+				bottom: 300,
+			});
+			document.elementFromPoint = () => doingColumn;
+
+			handler.startDrag(form, null, card);
+			handler.pointerMove({
+				pointerId: null,
+				clientX: 150,
+				clientY: 150,
+				preventDefault: vi.fn(),
+			});
+			handler.submitDrag();
+
+			expect([...document.querySelectorAll("[data-flux-drag-parent='todo'] > li")].map(li => li.dataset["id"]))
+				.toEqual([]);
+			expect([...document.querySelectorAll("[data-flux-drag-parent='doing'] > li")].map(li => li.dataset["id"]))
+				.toEqual(["1", "2"]);
+			expect([...document.querySelectorAll(".board > section")].map(section => section.dataset["id"]))
+				.toEqual(["todo", "doing"]);
+			expect(form.querySelector("input[name='parent']").value).toBe("doing");
+			expect(formHandler.submitForm).toHaveBeenCalledWith(
+				form,
+				form.querySelector("button[name='do']"),
+			);
+		});
+
+		it("does not let native dragover bubbling move a card into the outer board", () => {
+			document.body.innerHTML = `
+			<div class="board" data-flux-drag-parent="columns">
+				<section data-id="todo" data-flux="drag-order">
+					<form method="post">
+						<input name="order">
+						<button name="do" value="move-list">Move list</button>
+					</form>
+					<ul data-flux-drag-parent="todo">
+						<li data-id="1" data-flux="drag-order">
+							<form method="post">
+								<input name="id" value="1">
+								<input name="parent">
+								<input name="order">
+								<button name="do" value="move">Move</button>
+							</form>
+						</li>
+					</ul>
+				</section>
+				<section data-id="doing" data-flux="drag-order">
+					<form method="post">
+						<input name="order">
+						<button name="do" value="move-list">Move list</button>
+					</form>
+					<ul data-flux-drag-parent="doing">
+						<li data-id="2" data-flux="drag-order">
+							<form method="post">
+								<input name="id" value="2">
+								<input name="parent">
+								<input name="order">
+								<button name="do" value="move">Move</button>
+							</form>
+						</li>
+					</ul>
+				</section>
+			</div>
+			`;
+
+			let handler = new DragOrderHandler({submitForm: vi.fn()}, document);
+			document.querySelectorAll("[data-flux='drag-order']").forEach(item => handler.initDragOrder(item));
+			let card = document.querySelector("[data-id='1']");
+			let form = card.querySelector("form");
+			let board = document.querySelector(".board");
+			let doingList = document.querySelector("[data-flux-drag-parent='doing']");
+
+			handler.startDrag(form, null, card);
+			handler.dragOver({
+				clientX: 0,
+				clientY: 0,
+				currentTarget: doingList,
+				preventDefault: vi.fn(),
+				stopPropagation: vi.fn(),
+			});
+			handler.dragOver({
+				clientX: 0,
+				clientY: 0,
+				currentTarget: board,
+				preventDefault: vi.fn(),
+				stopPropagation: vi.fn(),
+			});
+
+			expect(card.parentElement).toBe(doingList);
+			expect([...document.querySelectorAll(".board > section")].map(section => section.dataset["id"]))
+				.toEqual(["todo", "doing"]);
+		});
+
+		it("reorders horizontal containers using the pointer x position", () => {
+			document.body.innerHTML = `
+			<div class="board" data-flux-drag-parent="columns">
+				<section data-id="todo" data-flux="drag-order">
+					<form method="post"><input name="order"><button name="do" value="move-list">Move</button></form>
+				</section>
+				<section data-id="doing" data-flux="drag-order">
+					<form method="post"><input name="order"><button name="do" value="move-list">Move</button></form>
+				</section>
+				<section data-id="done" data-flux="drag-order">
+					<form method="post"><input name="order"><button name="do" value="move-list">Move</button></form>
+				</section>
+			</div>
+			`;
+
+			let formHandler = {submitForm: vi.fn()};
+			let handler = new DragOrderHandler(formHandler, document);
+			let columns = [...document.querySelectorAll("section")];
+			columns.forEach((column, index) => {
+				column.getBoundingClientRect = () => ({
+					left: index * 200,
+					top: 0,
+					width: 100,
+					height: 400,
+				});
+				handler.initDragOrder(column);
+			});
+			let column = document.querySelector("[data-id='done']");
+			let form = column.querySelector("form");
+
+			handler.startDrag(form, 0, column, 400);
+			handler.moveItem(0, document.querySelector(".board"), -100);
+			handler.submitDrag();
+
+			expect(form.querySelector("input[name='order']").value).toBe("0");
+			expect([...document.querySelectorAll(".board > section")].map(section => section.dataset["id"]))
+				.toEqual(["done", "todo", "doing"]);
+			expect(formHandler.submitForm).toHaveBeenCalledWith(
+				form,
+				form.querySelector("button[name='do']"),
+			);
+		});
+
+		it("preserves nested cards when reordering outer list containers", () => {
+			document.body.innerHTML = `
+			<div class="board" data-flux-drag-parent="columns">
+				<section data-id="todo" data-flux="drag-order">
+					<form method="post"><input name="order"><button name="do" value="move-list">Move</button></form>
+					<ul data-flux-drag-parent="todo">
+						<li data-id="1" data-flux="drag-order"><form><input name="order"><button name="do" value="move">Move</button></form></li>
+						<li data-id="2" data-flux="drag-order"><form><input name="order"><button name="do" value="move">Move</button></form></li>
+					</ul>
+				</section>
+				<section data-id="doing" data-flux="drag-order">
+					<form method="post"><input name="order"><button name="do" value="move-list">Move</button></form>
+					<ul data-flux-drag-parent="doing">
+						<li data-id="3" data-flux="drag-order"><form><input name="order"><button name="do" value="move">Move</button></form></li>
+					</ul>
+				</section>
+			</div>
+			`;
+
+			let handler = new DragOrderHandler({submitForm: vi.fn()}, document);
+			let columns = [...document.querySelectorAll(".board > section")];
+			columns.forEach((column, index) => {
+				column.getBoundingClientRect = () => ({
+					left: index * 200,
+					top: 0,
+					width: 100,
+					height: 400,
+				});
+				handler.initDragOrder(column);
+			});
+			let column = document.querySelector("[data-id='doing']");
+			let form = column.querySelector("form");
+
+			handler.startDrag(form, 0, column, 200);
+			handler.moveItem(0, document.querySelector(".board"), -100);
+			handler.submitDrag();
+
+			expect([...document.querySelectorAll(".board > section")].map(section => section.dataset["id"]))
+				.toEqual(["doing", "todo"]);
+			expect([...document.querySelectorAll("[data-flux-drag-parent='todo'] > li")].map(li => li.dataset["id"]))
+				.toEqual(["1", "2"]);
+			expect([...document.querySelectorAll("[data-flux-drag-parent='doing'] > li")].map(li => li.dataset["id"]))
+				.toEqual(["3"]);
+		});
+
 		it("sets the order input and submits the form when an item is dropped", () => {
 		document.body.innerHTML = `
 		<ul>
@@ -1476,7 +2096,7 @@ describe("FluxDragOrderHandler", () => {
 		`;
 
 			let formHandler = {submitForm: vi.fn()};
-			let handler = new FluxDragOrderHandler(formHandler, document);
+			let handler = new DragOrderHandler(formHandler, document);
 			let forms = [...document.querySelectorAll("form")];
 			forms.forEach(form => handler.initDragOrder(form));
 			let form = document.querySelector("form");
@@ -1504,7 +2124,7 @@ describe("FluxDragOrderHandler", () => {
 			`;
 
 			let formHandler = {submitForm: vi.fn()};
-			let handler = new FluxDragOrderHandler(formHandler, document);
+			let handler = new DragOrderHandler(formHandler, document);
 			let forms = [...document.querySelectorAll("form")];
 			forms.forEach(form => handler.initDragOrder(form));
 			let form = document.querySelector("[data-id='3'] form");
@@ -1533,7 +2153,7 @@ describe("FluxDragOrderHandler", () => {
 		</ul>
 		`;
 
-			let handler = new FluxDragOrderHandler({submitForm: vi.fn()}, document);
+			let handler = new DragOrderHandler({submitForm: vi.fn()}, document);
 			let forms = [...document.querySelectorAll("form")];
 			forms.forEach(form => handler.initDragOrder(form));
 			let form = document.querySelector("form");
@@ -1548,7 +2168,7 @@ describe("FluxDragOrderHandler", () => {
 		handler.startDrag(form, 10);
 		handler.moveItem(120);
 
-		expect([...document.querySelectorAll("li")].map(li => li.dataset["id"])).toEqual(["2", "1", "3"]);
+		expect([...document.querySelectorAll("ul > li")].map(li => li.dataset["id"])).toEqual(["2", "1", "3"]);
 	});
 
 	it("tracks touch movement and release on the document during an active drag", () => {
@@ -1563,7 +2183,7 @@ describe("FluxDragOrderHandler", () => {
 		</ul>
 		`;
 
-		let handler = new FluxDragOrderHandler({submitForm: vi.fn()}, document);
+		let handler = new DragOrderHandler({submitForm: vi.fn()}, document);
 		let form = document.querySelector("form");
 		handler.initDragOrder(form);
 
@@ -1591,9 +2211,130 @@ describe("FluxDragOrderHandler", () => {
 		expect(removeSpy).toHaveBeenCalledWith("pointermove", handler.pointerMove, true);
 		expect(document.querySelector("[data-id='1']").classList.contains("flux-drag-order-dragging")).toBe(false);
 	});
+
+	it("uses a floating clone while the real item reserves its place", () => {
+		document.body.innerHTML = `
+		<style>
+			.drag-list > li {
+				border-top-color: rgb(1, 2, 3);
+				border-top-style: solid;
+				border-top-width: 4px;
+			}
+		</style>
+		<ul class="drag-list">
+			<li data-id="1">
+				<form data-flux="drag-order">
+					<input name="order">
+					<button name="do" value="move">Move</button>
+				</form>
+				<span>one</span>
+			</li>
+		</ul>
+		`;
+
+		let handler = new DragOrderHandler({submitForm: vi.fn()}, document);
+		let item = document.querySelector("li");
+		let form = document.querySelector("form");
+		item.getBoundingClientRect = () => ({
+			left: 20,
+			top: 40,
+			width: 120,
+			height: 50,
+		});
+
+		handler.initDragOrder(form);
+		handler.startDrag(form, 50, item, 30);
+		handler.moveItem(70, document.querySelector("ul"), 50);
+
+		let floatingItem = document.querySelector(".flux-drag-order-floating");
+		expect(item.classList.contains("flux-drag-order-dragging")).toBe(true);
+		expect(floatingItem).toBeInstanceOf(HTMLElement);
+		expect(floatingItem).not.toBe(item);
+		expect(floatingItem.style.width).toBe("120px");
+		expect(floatingItem.style.height).toBe("50px");
+		expect(floatingItem.style.borderTopColor).toBe("rgb(1, 2, 3)");
+		expect(floatingItem.style.borderTopStyle).toBe("solid");
+		expect(floatingItem.style.borderTopWidth).toBe("4px");
+		expect(floatingItem.style.transform).toBe("translate(40px, 60px)");
+
+		handler.endDrag();
+
+		expect(document.querySelector(".flux-drag-order-floating")).toBe(null);
+		expect(item.classList.contains("flux-drag-order-dragging")).toBe(false);
+	});
 });
 
-describe("FluxDomBridge", () => {
+describe("DragOrder Preview", () => {
+	it("copies pseudo-elements into the floating clone", () => {
+		document.body.innerHTML = `
+		<li>
+			<form>
+				<span class="drag-handle"></span>
+			</form>
+		</li>
+		`;
+
+		let styleReader = (element, pseudoElement) => {
+			let properties = {
+				display: "block",
+			};
+
+			if(element.matches?.(".drag-handle") && pseudoElement === "::before") {
+				properties = {
+					content: "\"\"",
+					display: "block",
+					width: "12px",
+					height: "12px",
+					"background-color": "rgb(1, 2, 3)",
+				};
+			}
+			else if(element.matches?.(".drag-handle") && pseudoElement === "::after") {
+				properties = {
+					content: "\"suffix\"",
+					display: "inline",
+					color: "rgb(4, 5, 6)",
+				};
+			}
+			else if(pseudoElement) {
+				properties = {
+					content: "normal",
+				};
+			}
+
+			return createStyleDeclaration(properties);
+		};
+
+		let preview = new Preview(document, styleReader);
+		let floatingItem = preview.create(document.querySelector("li"), {
+			width: 100,
+			height: 40,
+		});
+		let floatingHandle = floatingItem.querySelector(".drag-handle");
+		let before = floatingHandle.querySelector("[data-flux-pseudo='before']");
+		let after = floatingHandle.querySelector("[data-flux-pseudo='after']");
+
+		expect(before).toBeInstanceOf(HTMLElement);
+		expect(before.textContent).toBe("");
+		expect(before.style.width).toBe("12px");
+		expect(before.style.height).toBe("12px");
+		expect(before.style.backgroundColor).toBe("rgb(1, 2, 3)");
+		expect(after).toBeInstanceOf(HTMLElement);
+		expect(after.textContent).toBe("suffix");
+		expect(after.style.color).toBe("rgb(4, 5, 6)");
+	});
+});
+
+function createStyleDeclaration(properties) {
+	let propertyNames = Object.keys(properties);
+	return {
+		length: propertyNames.length,
+		item: index => propertyNames[index],
+		getPropertyValue: property => properties[property] ?? "",
+		getPropertyPriority: () => "",
+	};
+}
+
+describe("DomBridge", () => {
 	it("reinitialises flux elements and transfers fluxObj during element replacement", () => {
 		document.body.innerHTML = `
 		<div>
@@ -1619,7 +2360,7 @@ describe("FluxDomBridge", () => {
 		`, "text/html");
 		let newElement = newDocument.querySelector("div");
 		let initFluxElement = vi.fn();
-		let bridge = new FluxDomBridge(
+		let bridge = new DomBridge(
 			{has: vi.fn().mockReturnValue(false), get: vi.fn()},
 			initFluxElement,
 		);
@@ -1632,11 +2373,11 @@ describe("FluxDomBridge", () => {
 	});
 });
 
-describe("FluxResponseHandler", () => {
+describe("ResponseHandler", () => {
 	it("schedules document updates when the response document is valid", () => {
 		let apply = vi.fn();
 		let scheduler = vi.fn((callback) => callback());
-		let handler = new FluxResponseHandler(
+		let handler = new ResponseHandler(
 			{apply},
 			{error: vi.fn()},
 			false,
@@ -1654,13 +2395,13 @@ describe("FluxResponseHandler", () => {
 		handler.handleDocument(newDocument);
 
 		expect(scheduler).toHaveBeenCalledWith(expect.any(Function), 0);
-		expect(apply).toHaveBeenCalledWith(newDocument, ["outer", "inner", "attributes"]);
+			expect(apply).toHaveBeenCalledWith(newDocument, ["outer", "inner", "attributes"], undefined, null);
 	});
 
 	it("routes live refresh documents to the live update types only", () => {
 		let apply = vi.fn();
 		let scheduler = vi.fn((callback) => callback());
-		let handler = new FluxResponseHandler(
+		let handler = new ResponseHandler(
 			{apply},
 			{error: vi.fn()},
 			false,
@@ -1683,7 +2424,7 @@ describe("FluxResponseHandler", () => {
 	it("can apply a live response to only the due live targets", () => {
 		let apply = vi.fn();
 		let scheduler = vi.fn((callback) => callback());
-		let handler = new FluxResponseHandler(
+		let handler = new ResponseHandler(
 			{apply},
 			{error: vi.fn()},
 			false,
@@ -1712,7 +2453,7 @@ describe("FluxResponseHandler", () => {
 		let scrollTo = vi.fn();
 		let scheduler = vi.fn((callback) => callback());
 		let animationFrame = vi.fn((callback) => callback());
-		let handler = new FluxResponseHandler(
+		let handler = new ResponseHandler(
 			{apply},
 			{error: vi.fn()},
 			false,
@@ -1731,7 +2472,12 @@ describe("FluxResponseHandler", () => {
 
 		handler.handleLinkDocument(newDocument);
 
-		expect(apply).toHaveBeenCalledWith(newDocument, ["outer", "inner", "attributes", "link-outer", "link-inner"]);
+			expect(apply).toHaveBeenCalledWith(
+				newDocument,
+				["outer", "inner", "attributes", "link-outer", "link-inner"],
+				undefined,
+				null,
+			);
 		expect(animationFrame).toHaveBeenCalledTimes(2);
 		expect(scrollTo).toHaveBeenCalledWith({
 			top: 0,
@@ -1741,11 +2487,11 @@ describe("FluxResponseHandler", () => {
 	});
 });
 
-describe("FluxLinkHandler", () => {
+describe("LinkHandler", () => {
 	it("scrolls to the top smoothly as soon as a flux link is clicked", () => {
 		let scrollTo = vi.fn();
 		let navigationController = {clickLink: vi.fn()};
-		let handler = new FluxLinkHandler(
+		let handler = new LinkHandler(
 			navigationController,
 			vi.fn(),
 			{scrollTo},
@@ -1771,7 +2517,7 @@ describe("FluxLinkHandler", () => {
 	it("rate limits links when data-flux-rate is present", () => {
 		let now = 1000;
 		let navigationController = {clickLink: vi.fn()};
-		let handler = new FluxLinkHandler(
+		let handler = new LinkHandler(
 			navigationController,
 			vi.fn(),
 			{scrollTo: vi.fn()},
@@ -1792,7 +2538,7 @@ describe("FluxLinkHandler", () => {
 	it("keeps link rate limiting after the link element is replaced", () => {
 		let now = 1000;
 		let navigationController = {clickLink: vi.fn()};
-		let handler = new FluxLinkHandler(
+		let handler = new LinkHandler(
 			navigationController,
 			vi.fn(),
 			{scrollTo: vi.fn()},
@@ -1820,7 +2566,7 @@ describe("FluxLinkHandler", () => {
 	});
 });
 
-describe("FluxLiveHandler", () => {
+describe("LiveHandler", () => {
 	it("uses one scheduled polling loop for multiple live elements", () => {
 		document.body.innerHTML = `
 		<main></main>
@@ -1830,7 +2576,7 @@ describe("FluxLiveHandler", () => {
 		let updateTargetRegistry = new UpdateTargetRegistry();
 		let scheduler = vi.fn().mockReturnValue(123);
 		let clearScheduler = vi.fn();
-		let handler = new FluxLiveHandler(
+		let handler = new LiveHandler(
 			{pollDocument: vi.fn()},
 			updateTargetRegistry,
 			vi.fn(),
@@ -1854,7 +2600,7 @@ describe("FluxLiveHandler", () => {
 		let updateTargetRegistry = new UpdateTargetRegistry();
 		let now = 0;
 		let scheduler = vi.fn().mockReturnValue(123);
-		let handler = new FluxLiveHandler(
+		let handler = new LiveHandler(
 			{pollDocument: vi.fn()},
 			updateTargetRegistry,
 			vi.fn(),
@@ -1885,7 +2631,7 @@ describe("FluxLiveHandler", () => {
 		document.body.innerHTML = `<main id="clock" data-flux="live"></main>`;
 
 		let updateTargetRegistry = new UpdateTargetRegistry();
-		let handler = new FluxLiveHandler(
+		let handler = new LiveHandler(
 			{pollDocument: vi.fn()},
 			updateTargetRegistry,
 			vi.fn(),
@@ -1915,7 +2661,7 @@ describe("FluxLiveHandler", () => {
 			`, "text/html");
 			callback(newDocument);
 		});
-		let handler = new FluxLiveHandler(
+		let handler = new LiveHandler(
 			{pollDocument},
 			updateTargetRegistry,
 			onDocument,
@@ -1966,7 +2712,7 @@ describe("FluxLiveHandler", () => {
 			documentUpdater.apply(newDocument, ["live-outer"]);
 		});
 		let scheduler = vi.fn().mockReturnValue(1);
-		let handler = new FluxLiveHandler(
+		let handler = new LiveHandler(
 			{pollDocument},
 			updateTargetRegistry,
 			onDocument,

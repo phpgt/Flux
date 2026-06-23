@@ -1,3 +1,8 @@
+/**
+ * Performs the network requests behind Flux forms, links, and live polling.
+ * Converts responses into documents, updates browser history where appropriate,
+ * and manages temporary waiting classes.
+ */
 export class NavigationController {
 	constructor(
 		parser = new DOMParser(),
@@ -43,7 +48,7 @@ export class NavigationController {
 
 	appendFormDataToUrl(url, formData) {
 		let urlObject = new URL(url, globalThis.location?.href);
-		let searchParams = new URLSearchParams(urlObject.search);
+		let searchParams = new URLSearchParams();
 
 		for(let [key, value] of formData.entries()) {
 			searchParams.append(key, value);

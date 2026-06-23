@@ -1,16 +1,17 @@
 // src/Style.es6
 var Style = class {
   element;
-  constructor() {
+  constructor(documentObject = globalThis.document) {
+    this.documentObject = documentObject;
     this.setupElement();
   }
   setupElement() {
-    this.element = document.createElement("style");
+    this.element = this.documentObject.createElement("style");
     this.element.id = "flux-style";
     this.element.innerHTML = CSS_CONTENT;
   }
   addToDocument() {
-    document.head.append(this.element);
+    this.documentObject.head.append(this.element);
   }
 };
 var CSS_CONTENT = `
@@ -29,7 +30,16 @@ var CSS_CONTENT = `
 }
 
 .flux-drag-order-dragging {
-	opacity: 0.5;
+	opacity: 0;
+}
+
+.flux-drag-order-floating {
+	box-sizing: border-box;
+	position: fixed;
+	z-index: 2147483647;
+	pointer-events: none;
+	opacity: 0.85;
+	transform-origin: top left;
 }
 `;
 
@@ -37,9 +47,11 @@ var CSS_CONTENT = `
 var ElementEventMapper = class {
   map;
   addEventListenerOriginal;
-  constructor() {
+  constructor(logger = console, debug = false) {
     this.map = /* @__PURE__ */ new WeakMap();
     this.addEventListenerOriginal = EventTarget.prototype.addEventListener;
+    this.logger = logger;
+    this.debug = debug;
     const self = this;
     Element.prototype.addEventListener = function(type, listener, options) {
       self.addEventListenerFlux(type, listener, options, this);
@@ -73,7 +85,9 @@ var ElementEventMapper = class {
       listener,
       options
     );
-    Flux.DEBUG && console.debug(`Event ${type} added to element:`, element);
+    if (this.debug) {
+      this.logger.debug(`Event ${type} added to element:`, element);
+    }
   };
   mapTypeContains = (element, type, listener) => {
     let mapObj = this.map.get(element);
@@ -269,6 +283,35 @@ var FocusStateManager = class {
       );
     }
   }
+  withoutUnchangedRequestValues(elementState, requestElementState) {
+    if (!elementState || !requestElementState) {
+      return elementState;
+    }
+    if (elementState.path !== requestElementState.path) {
+      return elementState;
+    }
+    let restoreState = { ...elementState };
+    if ("value" in restoreState && "value" in requestElementState && restoreState.value === requestElementState.value) {
+      delete restoreState.value;
+      delete restoreState.selection;
+    }
+    if ("selectedValues" in restoreState && "selectedValues" in requestElementState && this.arraysMatch(restoreState.selectedValues, requestElementState.selectedValues)) {
+      delete restoreState.selectedValues;
+    }
+    if ("checked" in restoreState && "checked" in requestElementState && restoreState.checked === requestElementState.checked) {
+      delete restoreState.checked;
+    }
+    return restoreState;
+  }
+  arraysMatch(left, right) {
+    if (!Array.isArray(left) || !Array.isArray(right)) {
+      return false;
+    }
+    if (left.length !== right.length) {
+      return false;
+    }
+    return left.every((value, index) => value === right[index]);
+  }
   restorePendingActiveElement(newActiveElement) {
     if (!newActiveElement) {
       return;
@@ -332,7 +375,7 @@ var NavigationController = class {
   }
   appendFormDataToUrl(url, formData) {
     let urlObject = new URL(url, globalThis.location?.href);
-    let searchParams = new URLSearchParams(urlObject.search);
+    let searchParams = new URLSearchParams();
     for (let [key, value] of formData.entries()) {
       searchParams.append(key, value);
     }
@@ -450,7 +493,7 @@ var DocumentUpdater = class {
     this.logger = logger;
     this.debug = debug;
   }
-  apply(newDocument, allowedTypes = void 0, allowedTargetKeys = void 0) {
+  apply(newDocument, allowedTypes = void 0, allowedTargetKeys = void 0, requestElementState = null) {
     this.focusStateManager.markAutofocus(newDocument);
     let newActiveElement = this.focusStateManager.capturePendingActiveElement(newDocument);
     let allowedTypeSet = allowedTypes ? new Set(allowedTypes) : null;
@@ -470,7 +513,7 @@ var DocumentUpdater = class {
             return;
           }
         }
-        this.applyUpdateTarget(type, existingElement, newDocument);
+        this.applyUpdateTarget(type, existingElement, newDocument, requestElementState);
       });
     }
     this.focusStateManager.restorePendingActiveElement(newActiveElement);
@@ -479,7 +522,7 @@ var DocumentUpdater = class {
     }
     this.focusStateManager.focusMarkedAutofocusElements();
   }
-  applyUpdateTarget(type, existingElement, newDocument) {
+  applyUpdateTarget(type, existingElement, newDocument, requestElementState = null) {
     if (!existingElement) {
       return;
     }
@@ -488,6 +531,12 @@ var DocumentUpdater = class {
       return;
     }
     let activeElementState = this.focusStateManager.captureElementState(existingElement);
+    if (activeElementState && requestElementState) {
+      activeElementState = this.focusStateManager.withoutUnchangedRequestValues(
+        activeElementState,
+        requestElementState
+      );
+    }
     let newElement = this.findMatchingElement(existingElement, newDocument);
     if (type === "outer" || type === "link-outer" || type === "live-outer") {
       this.applyOuterUpdate(type, existingElement, newElement);
@@ -548,7 +597,7 @@ var DocumentUpdater = class {
   }
 };
 
-// src/FluxDirectiveRegistry.es6
+// src/DirectiveRegistry.es6
 var DIRECTIVE_DEFINITIONS = Object.freeze({
   "": {
     handler: "autoContainer",
@@ -607,7 +656,7 @@ var DIRECTIVE_DEFINITIONS = Object.freeze({
     description: "Turn a server-ordered form into a draggable ordering control."
   }
 });
-var FluxDirectiveRegistry = class _FluxDirectiveRegistry {
+var DirectiveRegistry = class _DirectiveRegistry {
   static DEFINITIONS = DIRECTIVE_DEFINITIONS;
   constructor(handlers) {
     this.handlers = handlers;
@@ -619,7 +668,7 @@ var FluxDirectiveRegistry = class _FluxDirectiveRegistry {
         fluxType = "submit";
       }
     }
-    let definition = _FluxDirectiveRegistry.DEFINITIONS[fluxType];
+    let definition = _DirectiveRegistry.DEFINITIONS[fluxType];
     if (!definition) {
       throw new TypeError(`Unknown flux element type: ${fluxType}`);
     }
@@ -630,12 +679,12 @@ var FluxDirectiveRegistry = class _FluxDirectiveRegistry {
     handler(fluxElement);
   }
   getDefinitions() {
-    return _FluxDirectiveRegistry.DEFINITIONS;
+    return _DirectiveRegistry.DEFINITIONS;
   }
 };
 
-// src/FluxDomBridge.es6
-var FluxDomBridge = class {
+// src/DomBridge.es6
+var DomBridge = class {
   constructor(elementEventMapper, initFluxElement, domPath = DomPath, logger = console, debug = false) {
     this.elementEventMapper = elementEventMapper;
     this.initFluxElement = initFluxElement;
@@ -696,8 +745,8 @@ var FluxDomBridge = class {
   }
 };
 
-// src/FluxFormHandler.es6
-var FluxFormHandler = class {
+// src/FormHandler.es6
+var FormHandler = class {
   constructor(navigationController, focusStateManager, onDocument, onNavigationDocument = onDocument, logger = console, debug = false, now = () => Date.now(), domPath = DomPath) {
     this.navigationController = navigationController;
     this.focusStateManager = focusStateManager;
@@ -788,8 +837,9 @@ var FluxFormHandler = class {
     if (this.isRateLimited(submitter)) {
       return Promise.resolve(null);
     }
+    let requestElementState = this.focusStateManager.captureElementState(form);
     let formData = this.getFormDataForButton(form, "autoSave", submitter);
-    let responseHandler = form.hasAttribute("action") ? this.onNavigationDocument : this.onDocument;
+    let responseHandler = form.hasAttribute("action") ? (newDocument) => this.onNavigationDocument(newDocument, requestElementState) : (newDocument) => this.onDocument(newDocument, requestElementState);
     return this.navigationController.submitForm(form, formData, responseHandler, submitter);
   }
   isRateLimited(submitter) {
@@ -827,8 +877,8 @@ var FluxFormHandler = class {
   }
 };
 
-// src/FluxLinkHandler.es6
-var FluxLinkHandler = class {
+// src/LinkHandler.es6
+var LinkHandler = class {
   constructor(navigationController, onDocument, windowObject = globalThis.window, now = () => Date.now(), domPath = DomPath) {
     this.navigationController = navigationController;
     this.onDocument = onDocument;
@@ -839,7 +889,7 @@ var FluxLinkHandler = class {
   }
   initAutoLink = (fluxElement) => {
     if (!(fluxElement instanceof HTMLAnchorElement)) {
-      throw new TypeError('data-type type "link" must be applied to an anchor element.');
+      throw new TypeError('data-flux type "link" must be applied to an anchor element.');
     }
     fluxElement.addEventListener("click", this.autoClick);
   };
@@ -887,15 +937,15 @@ var FluxLinkHandler = class {
   }
 };
 
-// src/FluxResponseHandler.es6
-var FluxResponseHandler = class _FluxResponseHandler {
+// src/ResponseHandler.es6
+var ResponseHandler = class _ResponseHandler {
   static DEFAULT_UPDATE_TYPES = Object.freeze([
     "outer",
     "inner",
     "attributes"
   ]);
   static LINK_UPDATE_TYPES = Object.freeze([
-    ..._FluxResponseHandler.DEFAULT_UPDATE_TYPES,
+    ..._ResponseHandler.DEFAULT_UPDATE_TYPES,
     "link-outer",
     "link-inner"
   ]);
@@ -913,20 +963,30 @@ var FluxResponseHandler = class _FluxResponseHandler {
     this.windowObject = windowObject;
     this.animationFrame = animationFrame;
   }
-  handleDocument = (newDocument) => {
+  handleDocument = (newDocument, requestElementState = null) => {
     if (!this.isProcessableDocument(newDocument)) {
       return;
     }
     this.scheduler(() => {
-      this.documentUpdater.apply(newDocument, _FluxResponseHandler.DEFAULT_UPDATE_TYPES);
+      this.documentUpdater.apply(
+        newDocument,
+        _ResponseHandler.DEFAULT_UPDATE_TYPES,
+        void 0,
+        requestElementState
+      );
     }, 0);
   };
-  handleLinkDocument = (newDocument) => {
+  handleLinkDocument = (newDocument, requestElementState = null) => {
     if (!this.isProcessableDocument(newDocument)) {
       return;
     }
     this.scheduler(() => {
-      this.documentUpdater.apply(newDocument, _FluxResponseHandler.LINK_UPDATE_TYPES);
+      this.documentUpdater.apply(
+        newDocument,
+        _ResponseHandler.LINK_UPDATE_TYPES,
+        void 0,
+        requestElementState
+      );
       this.scrollToTopAfterPaint();
     }, 0);
   };
@@ -935,7 +995,7 @@ var FluxResponseHandler = class _FluxResponseHandler {
       return;
     }
     this.scheduler(() => {
-      this.documentUpdater.apply(newDocument, _FluxResponseHandler.LIVE_UPDATE_TYPES, allowedTargetKeys);
+      this.documentUpdater.apply(newDocument, _ResponseHandler.LIVE_UPDATE_TYPES, allowedTargetKeys);
     }, 0);
   };
   isProcessableDocument(newDocument) {
@@ -974,8 +1034,8 @@ var FluxResponseHandler = class _FluxResponseHandler {
   }
 };
 
-// src/FluxLiveHandler.es6
-var FluxLiveHandler = class _FluxLiveHandler {
+// src/LiveHandler.es6
+var LiveHandler = class _LiveHandler {
   static UPDATE_TYPES = Object.freeze([
     "live-outer",
     "live-inner"
@@ -1049,7 +1109,7 @@ var FluxLiveHandler = class _FluxLiveHandler {
   };
   hasLiveElements() {
     let hasLiveElements = false;
-    for (let type of _FluxLiveHandler.UPDATE_TYPES) {
+    for (let type of _LiveHandler.UPDATE_TYPES) {
       for (let element of this.getConnectedElements(type)) {
         hasLiveElements = true;
       }
@@ -1062,7 +1122,7 @@ var FluxLiveHandler = class _FluxLiveHandler {
   getDueTargets() {
     let now = this.now();
     let dueTargets = [];
-    for (let type of _FluxLiveHandler.UPDATE_TYPES) {
+    for (let type of _LiveHandler.UPDATE_TYPES) {
       for (let element of this.getConnectedElements(type)) {
         let key = this.getTargetKey(type, element);
         let rateMs = this.getRateMs(element);
@@ -1078,7 +1138,7 @@ var FluxLiveHandler = class _FluxLiveHandler {
     let hasTargets = false;
     let now = this.now();
     let minDelay = Infinity;
-    for (let type of _FluxLiveHandler.UPDATE_TYPES) {
+    for (let type of _LiveHandler.UPDATE_TYPES) {
       for (let element of this.getConnectedElements(type)) {
         hasTargets = true;
         let key = this.getTargetKey(type, element);
@@ -1132,55 +1192,53 @@ var FluxLiveHandler = class _FluxLiveHandler {
   }
 };
 
-// src/FluxDragOrderHandler.es6
-var FluxDragOrderHandler = class _FluxDragOrderHandler {
-  static LEGACY_SORTABLE_ITEM_ATTRIBUTE = "data-flux-drag-order-item";
-  constructor(formHandler, documentObject = globalThis.document, logger = console, debug = false) {
-    this.formHandler = formHandler;
+// src/DragOrder/DropTargetResolver.es6
+var DropTargetResolver = class {
+  constructor(documentObject = globalThis.document) {
     this.documentObject = documentObject;
-    this.logger = logger;
-    this.debug = debug;
-    this.containerState = /* @__PURE__ */ new WeakSet();
-    this.dragState = null;
-    this.activePointerId = null;
   }
-  initDragOrder = (dragElement) => {
-    if (!(dragElement instanceof HTMLElement)) {
-      throw new TypeError('data-flux type "drag-order" must be applied to an HTML element.');
+  getContainer(event, dragState) {
+    if (typeof this.documentObject.elementFromPoint !== "function" || !Number.isFinite(event.clientX) || !Number.isFinite(event.clientY)) {
+      return dragState.container;
     }
-    if (dragElement.dataset["fluxDragOrderInit"] !== void 0) {
-      return;
+    let element = this.documentObject.elementFromPoint(event.clientX, event.clientY);
+    let container = element ? this.getNestedContainer(element, event.clientX, event.clientY, dragState) : null;
+    container ??= element?.closest("[data-flux-drag-parent]") ?? this.getParentContainerAtPoint(event.clientX, event.clientY) ?? dragState.container;
+    return this.getCompatibleContainer(container, dragState);
+  }
+  getCompatibleContainer(container, dragState) {
+    let { initialContainer } = dragState;
+    if (container !== initialContainer && (initialContainer.contains(container) || container.contains(initialContainer))) {
+      return dragState.container;
     }
-    let form = this.getForm(dragElement);
-    let orderInput = this.getOrderInput(form);
-    let submitButton = this.getSubmitButton(form);
-    let item = this.getItem(dragElement, form);
-    let container = item.parentElement;
-    dragElement.dataset["fluxDragOrderInit"] = "";
-    if (dragElement instanceof HTMLFormElement) {
-      item.setAttribute(_FluxDragOrderHandler.LEGACY_SORTABLE_ITEM_ATTRIBUTE, "");
+    return container;
+  }
+  getNestedContainer(element, clientX, clientY, dragState) {
+    let outerContainer = element.closest("[data-flux-drag-parent]");
+    if (!outerContainer?.contains(dragState.initialContainer)) {
+      return null;
     }
-    this.hideFormControls(form, orderInput, submitButton);
-    let handle = this.documentObject.createElement("span");
-    handle.className = "drag-handle";
-    handle.draggable = true;
-    handle.role = "button";
-    handle.tabIndex = 0;
-    handle.ariaLabel = "Drag to reorder";
-    handle.dataset["fluxTitle"] = "Drag";
-    form.prepend(handle);
-    handle.addEventListener("dragstart", (e) => this.startNativeDrag(e, form, item));
-    handle.addEventListener("dragend", this.endNativeDrag);
-    handle.addEventListener("pointerdown", (e) => this.startPointerDrag(e, form, item));
-    if (!this.containerState.has(container)) {
-      this.containerState.add(container);
-      container.addEventListener("dragover", this.dragOver);
-      container.addEventListener("drop", this.drop);
+    let host = element.closest("[data-flux='drag-order']");
+    if (!host || host === dragState.item) {
+      return null;
     }
-    if (this.debug) {
-      this.logger.debug("initDragOrder completed", dragElement);
-    }
-  };
+    let candidates = [...host.querySelectorAll("[data-flux-drag-parent]")];
+    return candidates.find((container) => {
+      let rect = container.getBoundingClientRect();
+      return clientX >= rect.left && clientX <= rect.right && clientY >= rect.top && clientY <= rect.bottom;
+    }) ?? candidates[0] ?? null;
+  }
+  getParentContainerAtPoint(clientX, clientY) {
+    let containers = this.documentObject.querySelectorAll("[data-flux-drag-parent]");
+    return [...containers].reverse().find((container) => {
+      let rect = container.getBoundingClientRect();
+      return clientX >= rect.left && clientX <= rect.right && clientY >= rect.top && clientY <= rect.bottom;
+    });
+  }
+};
+
+// src/DragOrder/FormControls.es6
+var FormControls = class {
   getForm(dragElement) {
     if (dragElement instanceof HTMLFormElement) {
       return dragElement;
@@ -1205,6 +1263,12 @@ var FluxDragOrderHandler = class _FluxDragOrderHandler {
     }
     return submitButton;
   }
+  getParentInput(form) {
+    return form.querySelector("input[name='parent']");
+  }
+  getParentValue(container) {
+    return container.dataset["fluxDragParent"] ?? "";
+  }
   getItem(dragElement, form = dragElement instanceof HTMLFormElement ? dragElement : null) {
     let item = dragElement instanceof HTMLFormElement ? form?.parentElement : dragElement;
     if (!item?.parentElement) {
@@ -1212,9 +1276,12 @@ var FluxDragOrderHandler = class _FluxDragOrderHandler {
     }
     return item;
   }
-  hideFormControls(form, ...controls) {
+  hideControls(form, ...controls) {
     let hiddenElements = /* @__PURE__ */ new Set();
     for (let control of controls) {
+      if (!control) {
+        continue;
+      }
       hiddenElements.add(control);
       let label = control.closest("label");
       if (label && form.contains(label)) {
@@ -1225,51 +1292,266 @@ var FluxDragOrderHandler = class _FluxDragOrderHandler {
       element.hidden = true;
     }
   }
+};
+
+// src/DragOrder/Preview.es6
+var Preview = class {
+  constructor(documentObject = globalThis.document, styleReader = void 0) {
+    this.documentObject = documentObject;
+    this.styleReader = styleReader ?? globalThis.getComputedStyle?.bind(globalThis);
+    this.canReadPseudoElements = Boolean(styleReader) || !this.documentObject.defaultView?.navigator?.userAgent.includes("jsdom");
+  }
+  create(item, rect) {
+    let floatingItem = item.cloneNode(true);
+    this.copyComputedStyles(item, floatingItem);
+    floatingItem.classList.add("flux-drag-order-floating");
+    floatingItem.setAttribute("aria-hidden", "true");
+    floatingItem.style.setProperty("box-sizing", "border-box");
+    floatingItem.style.setProperty("position", "fixed");
+    floatingItem.style.setProperty("z-index", "2147483647");
+    floatingItem.style.setProperty("pointer-events", "none");
+    floatingItem.style.setProperty("opacity", "0.85");
+    floatingItem.style.setProperty("transform-origin", "top left");
+    floatingItem.style.setProperty("width", `${rect.width}px`);
+    floatingItem.style.setProperty("height", `${rect.height}px`);
+    floatingItem.style.setProperty("left", "0");
+    floatingItem.style.setProperty("top", "0");
+    this.documentObject.body.append(floatingItem);
+    return floatingItem;
+  }
+  move(dragState, clientX, clientY) {
+    if (!dragState?.floatingItem || !Number.isFinite(clientX) || !Number.isFinite(clientY)) {
+      return;
+    }
+    let {
+      floatingItem,
+      pointerOffsetX,
+      pointerOffsetY,
+      itemWidth,
+      itemHeight
+    } = dragState;
+    let left = clientX + pointerOffsetX - itemWidth / 2;
+    let top = clientY + pointerOffsetY - itemHeight / 2;
+    floatingItem.style.transform = `translate(${left}px, ${top}px)`;
+  }
+  copyComputedStyles(source, target) {
+    this.copyStyleDeclaration(this.readStyles(source), target);
+    [...source.children].forEach((sourceChild, index) => {
+      let targetChild = target.children[index];
+      if (targetChild) {
+        this.copyComputedStyles(sourceChild, targetChild);
+      }
+    });
+    this.copyPseudoElement(source, target, "::before", "afterbegin");
+    this.copyPseudoElement(source, target, "::after", "beforeend");
+  }
+  copyPseudoElement(source, target, pseudoElement, position) {
+    if (!this.canReadPseudoElements) {
+      return;
+    }
+    let styles = this.readStyles(source, pseudoElement);
+    if (!this.hasPseudoElementContent(styles)) {
+      return;
+    }
+    let pseudoClone = this.documentObject.createElement("span");
+    pseudoClone.setAttribute("aria-hidden", "true");
+    pseudoClone.dataset["fluxPseudo"] = pseudoElement.slice(2);
+    pseudoClone.textContent = this.getPseudoElementText(styles);
+    this.copyStyleDeclaration(styles, pseudoClone);
+    target.insertAdjacentElement(position, pseudoClone);
+  }
+  hasPseudoElementContent(styles) {
+    let content = styles?.getPropertyValue?.("content");
+    return content !== void 0 && content !== "" && content !== "normal" && content !== "none";
+  }
+  getPseudoElementText(styles) {
+    let content = styles.getPropertyValue("content");
+    if (content === '""' || content === "''") {
+      return "";
+    }
+    let match = content.match(/^(['"])(.*)\1$/);
+    return match ? match[2] : "";
+  }
+  copyStyleDeclaration(styles, target) {
+    for (let i = 0; i < styles.length; i++) {
+      let property = styles.item(i);
+      target.style.setProperty(
+        property,
+        styles.getPropertyValue(property),
+        styles.getPropertyPriority(property)
+      );
+    }
+  }
+  readStyles(element, pseudoElement = void 0) {
+    return this.styleReader(element, pseudoElement);
+  }
+};
+
+// src/DragOrder/SortableItems.es6
+var LEGACY_SORTABLE_ITEM_ATTRIBUTE = "data-flux-drag-order-item";
+var SortableItems = class {
+  getSiblings(container) {
+    return [...container.children].filter((child) => this.isSortable(child));
+  }
+  isSortable(child) {
+    return child.dataset["flux"] === "drag-order" || child.hasAttribute(LEGACY_SORTABLE_ITEM_ATTRIBUTE);
+  }
+  isHorizontal(siblings) {
+    if (siblings.length < 2) {
+      return false;
+    }
+    let rects = siblings.map((child) => child.getBoundingClientRect());
+    let lefts = rects.map((rect) => rect.left);
+    let tops = rects.map((rect) => rect.top);
+    return Math.max(...lefts) - Math.min(...lefts) > Math.max(...tops) - Math.min(...tops);
+  }
+  getInsertBeforeElement(container, draggedItem, sortableInsertBefore, sortableSiblings) {
+    if (sortableInsertBefore) {
+      return sortableInsertBefore;
+    }
+    if (!container.hasAttribute("data-flux-drag-parent")) {
+      return null;
+    }
+    let children = [...container.children].filter((child) => child !== draggedItem);
+    let lastSortable = sortableSiblings.at(-1);
+    let startIndex = lastSortable ? children.indexOf(lastSortable) + 1 : 0;
+    return children.slice(startIndex).find((child) => !this.isSortable(child)) ?? null;
+  }
+};
+
+// src/DragOrder/Handler.es6
+var Handler = class _Handler {
+  static LEGACY_SORTABLE_ITEM_ATTRIBUTE = LEGACY_SORTABLE_ITEM_ATTRIBUTE;
+  constructor(formHandler, documentObject = globalThis.document, logger = console, debug = false, formControls = new FormControls(), sortableItems = new SortableItems(), preview = new Preview(documentObject), dropTargetResolver = new DropTargetResolver(documentObject)) {
+    this.formHandler = formHandler;
+    this.documentObject = documentObject;
+    this.logger = logger;
+    this.debug = debug;
+    this.formControls = formControls;
+    this.sortableItems = sortableItems;
+    this.preview = preview;
+    this.dropTargetResolver = dropTargetResolver;
+    this.containerState = /* @__PURE__ */ new WeakSet();
+    this.dragState = null;
+    this.activePointerId = null;
+  }
+  initDragOrder = (dragElement) => {
+    if (!(dragElement instanceof HTMLElement)) {
+      throw new TypeError('data-flux type "drag-order" must be applied to an HTML element.');
+    }
+    if (dragElement.dataset["fluxDragOrderInit"] !== void 0) {
+      return;
+    }
+    let form = this.formControls.getForm(dragElement);
+    let orderInput = this.formControls.getOrderInput(form);
+    let parentInput = this.formControls.getParentInput(form);
+    let submitButton = this.formControls.getSubmitButton(form);
+    let item = this.formControls.getItem(dragElement, form);
+    let container = item.parentElement;
+    let handleTitle = this.getHandleTitle(dragElement, item);
+    dragElement.dataset["fluxDragOrderInit"] = "";
+    if (dragElement instanceof HTMLFormElement) {
+      item.setAttribute(_Handler.LEGACY_SORTABLE_ITEM_ATTRIBUTE, "");
+    }
+    this.formControls.hideControls(form, orderInput, parentInput, submitButton);
+    let handle = this.documentObject.createElement("span");
+    handle.className = "drag-handle";
+    handle.draggable = false;
+    handle.role = "button";
+    handle.tabIndex = 0;
+    handle.ariaLabel = "Drag to reorder";
+    handle.dataset["fluxTitle"] = handleTitle;
+    form.prepend(handle);
+    handle.addEventListener("dragstart", (e) => this.startNativeDrag(e, form, item));
+    handle.addEventListener("dragend", this.endNativeDrag);
+    handle.addEventListener("pointerdown", (e) => this.startPointerDrag(e, form, item));
+    this.initContainer(container);
+    this.initParentContainers();
+    if (this.debug) {
+      this.logger.debug("initDragOrder completed", dragElement);
+    }
+  };
+  getHandleTitle(dragElement, item) {
+    return dragElement.dataset["fluxDragHandle"] ?? dragElement.parentElement?.dataset["fluxDragHandle"] ?? item.parentElement?.dataset["fluxDragHandle"] ?? "Drag";
+  }
+  initContainer(container) {
+    if (this.containerState.has(container)) {
+      return;
+    }
+    this.containerState.add(container);
+    container.addEventListener("dragover", this.dragOver);
+    container.addEventListener("drop", this.drop);
+  }
+  initParentContainers() {
+    this.documentObject.querySelectorAll("[data-flux-drag-parent]").forEach((container) => {
+      this.initContainer(container);
+    });
+  }
   startNativeDrag(e, form, item = null) {
-    this.startDrag(form, e.clientY, item);
+    this.startDrag(form, e.clientY, item, e.clientX);
     if (e.dataTransfer) {
+      if (item) {
+        let rect = item.getBoundingClientRect();
+        e.dataTransfer.setDragImage(
+          item,
+          e.clientX - rect.left,
+          e.clientY - rect.top
+        );
+      }
       e.dataTransfer.effectAllowed = "move";
       e.dataTransfer.setData("text/plain", "");
     }
   }
   startPointerDrag(e, form, item = null) {
-    if (e.pointerType === "mouse" || e.button !== 0) {
+    if (e.button !== 0) {
       return;
     }
     e.preventDefault();
-    this.startDrag(form, e.clientY, item);
-    this.moveItem(e.clientY);
+    this.startDrag(form, e.clientY, item, e.clientX);
+    this.moveItem(e.clientY, void 0, e.clientX);
     this.activePointerId = e.pointerId;
     this.documentObject.addEventListener("pointermove", this.pointerMove, true);
     this.documentObject.addEventListener("pointerup", this.pointerUp, true);
     this.documentObject.addEventListener("pointercancel", this.pointerCancel, true);
   }
-  startDrag(form, clientY = null, item = null) {
+  startDrag(form, clientY = null, item = null, clientX = null) {
     this.endDrag();
-    item ??= this.getItem(form);
+    item ??= this.formControls.getItem(form);
     let rect = item.getBoundingClientRect();
-    let pointerOffsetY = clientY === null ? 0 : rect.top + rect.height / 2 - clientY;
+    let pointerOffsetX = !Number.isFinite(clientX) ? 0 : rect.left + rect.width / 2 - clientX;
+    let pointerOffsetY = !Number.isFinite(clientY) ? 0 : rect.top + rect.height / 2 - clientY;
     item.classList.add("flux-drag-order-dragging");
     this.dragState = {
       form,
       item,
+      floatingItem: this.preview.create(item, rect),
+      initialContainer: item.parentElement,
       container: item.parentElement,
-      pointerOffsetY
+      pointerOffsetX,
+      pointerOffsetY,
+      itemWidth: rect.width,
+      itemHeight: rect.height
     };
+    this.preview.move(this.dragState, clientX, clientY);
   }
   dragOver = (e) => {
     if (!this.dragState) {
       return;
     }
     e.preventDefault();
-    this.moveItem(e.clientY);
+    e.stopPropagation();
+    this.moveItem(
+      e.clientY,
+      this.dropTargetResolver.getCompatibleContainer(e.currentTarget, this.dragState),
+      e.clientX
+    );
   };
   pointerMove = (e) => {
     if (!this.dragState || e.pointerId !== this.activePointerId) {
       return;
     }
     e.preventDefault();
-    this.moveItem(e.clientY);
+    this.moveItem(e.clientY, this.dropTargetResolver.getContainer(e, this.dragState), e.clientX);
   };
   pointerUp = (e) => {
     if (e.pointerId !== this.activePointerId) {
@@ -1291,15 +1573,26 @@ var FluxDragOrderHandler = class _FluxDragOrderHandler {
     this.documentObject.removeEventListener("pointercancel", this.pointerCancel, true);
     this.activePointerId = null;
   }
-  moveItem(clientY) {
-    let { container, item, pointerOffsetY } = this.dragState;
-    let itemCenterY = clientY + pointerOffsetY;
-    let siblings = this.getSortableSiblings(container).filter((child) => child !== item);
+  moveItem(clientY, container = this.dragState.container, clientX = null) {
+    if (!(container instanceof HTMLElement)) {
+      container = this.dragState.container;
+    }
+    let { item, pointerOffsetX, pointerOffsetY } = this.dragState;
+    let sortableItems = this.sortableItems.getSiblings(container);
+    let siblings = sortableItems.filter((child) => child !== item);
+    let horizontal = this.sortableItems.isHorizontal(sortableItems);
+    let itemCenter = horizontal ? (clientX ?? 0) + pointerOffsetX : clientY + pointerOffsetY;
     let insertBefore = siblings.find((child) => {
       let rect = child.getBoundingClientRect();
-      return itemCenterY < rect.top + rect.height / 2;
+      let childCenter = horizontal ? rect.left + rect.width / 2 : rect.top + rect.height / 2;
+      return itemCenter < childCenter;
     });
-    container.insertBefore(item, insertBefore ?? null);
+    this.dragState.container = container;
+    container.insertBefore(
+      item,
+      this.sortableItems.getInsertBeforeElement(container, item, insertBefore, siblings)
+    );
+    this.preview.move(this.dragState, clientX, clientY);
   }
   drop = (e) => {
     if (!this.dragState) {
@@ -1320,34 +1613,47 @@ var FluxDragOrderHandler = class _FluxDragOrderHandler {
     }
     let { form } = this.dragState;
     let order = this.getItemOrder();
+    let container = this.dragState.container;
     this.endDrag();
-    let orderInput = this.getOrderInput(form);
-    let submitButton = this.getSubmitButton(form);
+    let orderInput = this.formControls.getOrderInput(form);
+    let parentInput = this.formControls.getParentInput(form);
+    let submitButton = this.formControls.getSubmitButton(form);
     orderInput.value = String(order);
+    if (parentInput) {
+      parentInput.value = this.formControls.getParentValue(container);
+    }
     this.formHandler.submitForm(form, submitButton);
   }
   getItemOrder() {
-    let { item, container } = this.dragState;
-    return this.getSortableSiblings(container).indexOf(item);
-  }
-  getSortableSiblings(container) {
-    return [...container.children].filter((child) => {
-      return child.dataset["flux"] === "drag-order" || child.hasAttribute(_FluxDragOrderHandler.LEGACY_SORTABLE_ITEM_ATTRIBUTE);
-    });
+    let { item } = this.dragState;
+    let container = item.parentElement ?? this.dragState.container;
+    this.dragState.container = container;
+    return this.sortableItems.getSiblings(container).indexOf(item);
   }
   endDrag = () => {
     if (!this.dragState) {
       return;
     }
+    this.dragState.floatingItem?.remove();
     this.dragState.item.classList.remove("flux-drag-order-dragging");
     this.removePointerListeners();
     this.dragState = null;
   };
 };
 
+// src/RuntimeConfig.es6
+var RuntimeConfig = {
+  debug: false
+};
+
 // src/Flux.es6
 var Flux = class _Flux {
-  static DEBUG = false;
+  static get DEBUG() {
+    return RuntimeConfig.debug;
+  }
+  static set DEBUG(value) {
+    RuntimeConfig.debug = Boolean(value);
+  }
   style;
   elementEventMapper;
   navigationController;
@@ -1367,42 +1673,49 @@ var Flux = class _Flux {
     this.logger = logger ?? console;
     style = style ?? new Style();
     style.addToDocument();
-    this.elementEventMapper = elementEventMapper ?? new ElementEventMapper();
+    this.elementEventMapper = elementEventMapper ?? new ElementEventMapper(this.logger, _Flux.DEBUG);
     this.navigationController = navigationController ?? new NavigationController(
       parser ?? new DOMParser()
     );
     this.updateTargetRegistry = updateTargetRegistry ?? new UpdateTargetRegistry();
     this.focusStateManager = focusStateManager ?? new FocusStateManager();
+    this.domBridge = domBridge ?? new DomBridge(
+      this.elementEventMapper,
+      this.initFluxElementSafely,
+      DomPath,
+      this.logger,
+      _Flux.DEBUG
+    );
     this.documentUpdater = documentUpdater ?? new DocumentUpdater(
       this.updateTargetRegistry,
       this.focusStateManager,
       (oldElement, newElement) => this.domBridge.prepareElementUpdate(oldElement, newElement),
       DomPath,
-      console,
+      this.logger,
       _Flux.DEBUG
     );
-    this.responseHandler = responseHandler ?? new FluxResponseHandler(
+    this.responseHandler = responseHandler ?? new ResponseHandler(
       this.documentUpdater,
-      console,
+      this.logger,
       _Flux.DEBUG
     );
-    this.formHandler = formHandler ?? new FluxFormHandler(
+    this.formHandler = formHandler ?? new FormHandler(
       this.navigationController,
       this.focusStateManager,
       this.responseHandler.handleDocument,
       this.responseHandler.handleLinkDocument,
-      console,
+      this.logger,
       _Flux.DEBUG
     );
-    this.linkHandler = linkHandler ?? new FluxLinkHandler(
+    this.linkHandler = linkHandler ?? new LinkHandler(
       this.navigationController,
       this.responseHandler.handleLinkDocument
     );
-    this.liveHandler = liveHandler ?? new FluxLiveHandler(
+    this.liveHandler = liveHandler ?? new LiveHandler(
       this.navigationController,
       this.updateTargetRegistry,
       this.responseHandler.handleLiveDocument,
-      console,
+      this.logger,
       _Flux.DEBUG,
       globalThis.setTimeout.bind(globalThis),
       globalThis.clearTimeout.bind(globalThis),
@@ -1411,20 +1724,13 @@ var Flux = class _Flux {
       () => Date.now(),
       DomPath
     );
-    this.dragOrderHandler = dragOrderHandler ?? new FluxDragOrderHandler(
+    this.dragOrderHandler = dragOrderHandler ?? new Handler(
       this.formHandler,
       document,
-      console,
-      _Flux.DEBUG
-    );
-    this.domBridge = domBridge ?? new FluxDomBridge(
-      this.elementEventMapper,
-      this.initFluxElementSafely,
-      DomPath,
       this.logger,
       _Flux.DEBUG
     );
-    this.directiveRegistry = directiveRegistry ?? new FluxDirectiveRegistry({
+    this.directiveRegistry = directiveRegistry ?? new DirectiveRegistry({
       autoContainer: this.initAutoContainer,
       autoSave: this.formHandler.initAutoSave,
       updateOuter: this.storeOuterUpdateElement,
@@ -1472,7 +1778,9 @@ var Flux = class _Flux {
    */
   storeUpdateElement = (element, updateType) => {
     this.updateTargetRegistry.add(element, updateType);
-    _Flux.DEBUG && console.debug("storeUpdateElement completed", `Pushing into ${updateType}: `, element);
+    if (_Flux.DEBUG) {
+      this.logger.debug("storeUpdateElement completed", `Pushing into ${updateType}: `, element);
+    }
   };
   storeOuterUpdateElement = (element) => {
     this.storeUpdateElement(element, "outer");
@@ -1520,15 +1828,16 @@ function handleWindowPopState() {
   });
 }
 
-// src/FluxDebug.es6
-var FluxDebug = class {
+// src/Debug.es6
+var Debug = class {
   static {
-    Flux.DEBUG = true;
+    RuntimeConfig.debug = true;
   }
 };
 
 // src/main.es6
 new Flux();
 export {
-  FluxDebug
+  Debug,
+  Debug as FluxDebug
 };

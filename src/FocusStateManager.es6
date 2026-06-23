@@ -1,5 +1,10 @@
 import {DomPath} from "./DomPath.es6";
 
+/**
+ * Preserves the user's focused field while Flux replaces parts of the DOM.
+ * Internally, it records values, selections, checked states, and autofocus
+ * markers, so updates do not interrupt in-progress typing.
+ */
 export class FocusStateManager {
 	constructor(domPath = DomPath) {
 		this.domPath = domPath;
@@ -99,6 +104,57 @@ export class FocusStateManager {
 				elementState.selection[1],
 			);
 		}
+	}
+
+	withoutUnchangedRequestValues(elementState, requestElementState) {
+		if(!elementState || !requestElementState) {
+			return elementState;
+		}
+
+		if(elementState.path !== requestElementState.path) {
+			return elementState;
+		}
+
+		let restoreState = {...elementState};
+
+		if(
+			"value" in restoreState
+			&& "value" in requestElementState
+			&& restoreState.value === requestElementState.value
+		) {
+			delete restoreState.value;
+			delete restoreState.selection;
+		}
+
+		if(
+			"selectedValues" in restoreState
+			&& "selectedValues" in requestElementState
+			&& this.arraysMatch(restoreState.selectedValues, requestElementState.selectedValues)
+		) {
+			delete restoreState.selectedValues;
+		}
+
+		if(
+			"checked" in restoreState
+			&& "checked" in requestElementState
+			&& restoreState.checked === requestElementState.checked
+		) {
+			delete restoreState.checked;
+		}
+
+		return restoreState;
+	}
+
+	arraysMatch(left, right) {
+		if(!Array.isArray(left) || !Array.isArray(right)) {
+			return false;
+		}
+
+		if(left.length !== right.length) {
+			return false;
+		}
+
+		return left.every((value, index) => value === right[index]);
 	}
 
 	restorePendingActiveElement(newActiveElement) {

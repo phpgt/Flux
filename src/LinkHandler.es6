@@ -1,6 +1,11 @@
 import {DomPath} from "./DomPath.es6";
 
-export class FluxLinkHandler {
+/**
+ * Wires data-flux link elements into background navigation.
+ * It captures clicks, applies rate limiting, scrolls the page, and
+ * delegates the fetch work to NavigationController.
+ */
+export class LinkHandler {
 	constructor(
 		navigationController,
 		onDocument,
@@ -18,7 +23,7 @@ export class FluxLinkHandler {
 
 	initAutoLink = (fluxElement) => {
 		if(!(fluxElement instanceof HTMLAnchorElement)) {
-			throw new TypeError("data-type type \"link\" must be applied to an anchor element.");
+			throw new TypeError("data-flux type \"link\" must be applied to an anchor element.");
 		}
 
 		fluxElement.addEventListener("click", this.autoClick);

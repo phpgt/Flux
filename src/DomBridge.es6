@@ -1,6 +1,11 @@
 import {DomPath} from "./DomPath.es6";
 
-export class FluxDomBridge {
+/**
+ * Prepares replacement DOM nodes before they are inserted into the page.
+ * It reattaches event listeners, reinitialises nested Flux elements,
+ * and carries private Flux state across matching old and new nodes.
+ */
+export class DomBridge {
 	constructor(
 		elementEventMapper,
 		initFluxElement,

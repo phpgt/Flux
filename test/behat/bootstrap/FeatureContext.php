@@ -10,6 +10,13 @@ class FeatureContext extends MinkContext {
 	private DateTime $rememberedTime;
 
 	/**
+	 * @Given I have a fresh browser session
+	 */
+	public function iHaveAFreshBrowserSession():void {
+		$this->getSession()->reset();
+	}
+
+	/**
 	 * @When I fill the element :selector with:
 	 */
 	public function iFillTheElementWith(string $selector, PyStringNode $value):void {
@@ -24,7 +31,65 @@ class FeatureContext extends MinkContext {
 	}
 
 	/**
-	 * @Then the element :selector should have value :value
+	 * @When I change the element :selector to :value
+	 */
+	public function iChangeTheElementTo(string $selector, string $value):void {
+		$escapedSelector = json_encode($selector, JSON_THROW_ON_ERROR);
+		$escapedValue = json_encode($value, JSON_THROW_ON_ERROR);
+		$script = <<<JS
+	(() => {
+	  const element = document.querySelector($escapedSelector);
+	  if(!element) {
+	    throw new Error("Could not find element: " + $escapedSelector);
+	  }
+
+	  element.focus();
+	  element.value = $escapedValue;
+	  element.dispatchEvent(new Event("input", {bubbles: true}));
+	  element.dispatchEvent(new Event("change", {bubbles: true}));
+	  element.blur();
+	})()
+	JS;
+
+		$this->getSession()->executeScript($script);
+	}
+
+	/**
+	 * @When I press Enter in the element :selector
+	 */
+	public function iPressEnterInTheElement(string $selector):void {
+		$escapedSelector = json_encode($selector, JSON_THROW_ON_ERROR);
+		$script = <<<JS
+	(() => {
+	  const element = document.querySelector($escapedSelector);
+	  if(!element) {
+	    throw new Error("Could not find element: " + $escapedSelector);
+	  }
+
+	  const form = element.form;
+	  if(!(form instanceof HTMLFormElement)) {
+	    throw new Error("Element does not belong to a form: " + $escapedSelector);
+	  }
+
+	  const eventOptions = {
+	    key: "Enter",
+	    code: "Enter",
+	    bubbles: true,
+	    cancelable: true,
+	  };
+	  const button = form.querySelector("button[type='submit'], button:not([type]), input[type='submit']");
+	  element.focus();
+	  element.dispatchEvent(new KeyboardEvent("keydown", eventOptions));
+	  element.dispatchEvent(new KeyboardEvent("keyup", eventOptions));
+	  form.requestSubmit(button);
+	})()
+	JS;
+
+		$this->getSession()->executeScript($script);
+	}
+
+	/**
+	 * @Then /^the element "([^"]+)" should have value "(.*)"$/
 	 */
 	public function theElementShouldHaveValue(string $selector, string $value):void {
 		$element = $this->findCssElement($selector);
@@ -66,11 +131,24 @@ class FeatureContext extends MinkContext {
 	  const itemRect = item.getBoundingClientRect();
 	  const handleRect = handle.getBoundingClientRect();
 	  const startY = handleRect.top + handleRect.height / 2;
+	  const startX = handleRect.left + handleRect.width / 2;
 	  const pointerOffsetY = itemRect.top + itemRect.height / 2 - startY;
+	  const pointerOffsetX = itemRect.left + itemRect.width / 2 - startX;
 	  const siblings = [...container.children].filter(child => child !== item);
 	  const targetIndex = Math.max(0, Math.min(siblings.length, $encodedPosition - 1));
 	  const before = siblings[targetIndex] ?? null;
 	  const previous = siblings[targetIndex - 1] ?? null;
+	  const rects = siblings.map(child => child.getBoundingClientRect());
+	  const lefts = rects.map(rect => rect.left);
+	  const tops = rects.map(rect => rect.top);
+	  const horizontal = siblings.length > 1
+	    && Math.max(...lefts) - Math.min(...lefts) > Math.max(...tops) - Math.min(...tops);
+	  const beforeX = before
+	    ? before.getBoundingClientRect().left + before.getBoundingClientRect().width / 2
+	    : container.getBoundingClientRect().right;
+	  const previousX = previous
+	    ? previous.getBoundingClientRect().left + previous.getBoundingClientRect().width / 2
+	    : container.getBoundingClientRect().left;
 	  const beforeMid = before
 	    ? before.getBoundingClientRect().top + before.getBoundingClientRect().height / 2
 	    : container.getBoundingClientRect().bottom;
@@ -78,8 +156,11 @@ class FeatureContext extends MinkContext {
 	    ? previous.getBoundingClientRect().top + previous.getBoundingClientRect().height / 2
 	    : container.getBoundingClientRect().top;
 	  const targetItemCenterY = (beforeMid + previousMid) / 2;
+	  const targetItemCenterX = (beforeX + previousX) / 2;
 	  const targetPointerY = targetItemCenterY - pointerOffsetY;
-	  const x = handleRect.left + handleRect.width / 2;
+	  const targetPointerX = horizontal
+	    ? targetItemCenterX - pointerOffsetX
+	    : startX;
 	  const eventOptions = {
 	    bubbles: true,
 	    cancelable: true,
@@ -88,12 +169,107 @@ class FeatureContext extends MinkContext {
 	    isPrimary: true,
 	    button: 0,
 	    buttons: 1,
-	    clientX: x,
 	  };
 
-	  handle.dispatchEvent(new PointerEvent("pointerdown", {...eventOptions, clientY: startY}));
-	  document.dispatchEvent(new PointerEvent("pointermove", {...eventOptions, clientY: targetPointerY}));
-	  document.dispatchEvent(new PointerEvent("pointerup", {...eventOptions, buttons: 0, clientY: targetPointerY}));
+	  handle.dispatchEvent(new PointerEvent("pointerdown", {...eventOptions, clientX: startX, clientY: startY}));
+	  document.dispatchEvent(new PointerEvent("pointermove", {...eventOptions, clientX: targetPointerX, clientY: targetPointerY}));
+	  document.dispatchEvent(new PointerEvent("pointerup", {...eventOptions, buttons: 0, clientX: targetPointerX, clientY: targetPointerY}));
+	})()
+	JS;
+
+		$this->getSession()->executeScript($script);
+	}
+
+	/**
+	 * @When I drag the item with id :id from :sourceSelector to position :position in :targetSelector
+	 */
+	public function iDragTheItemWithIdFromToPositionIn(string $id, string $sourceSelector, int $position, string $targetSelector):void {
+		$escapedSourceSelector = json_encode($sourceSelector, JSON_THROW_ON_ERROR);
+		$escapedTargetSelector = json_encode($targetSelector, JSON_THROW_ON_ERROR);
+		$escapedId = json_encode($id, JSON_THROW_ON_ERROR);
+		$encodedPosition = json_encode($position, JSON_THROW_ON_ERROR);
+		$script = <<<JS
+	(() => {
+	  const id = $escapedId;
+	  const sourceContainer = document.querySelector($escapedSourceSelector);
+	  const targetContainer = document.querySelector($escapedTargetSelector);
+	  if(!sourceContainer) {
+	    throw new Error("Could not find source container: " + $escapedSourceSelector);
+	  }
+	  if(!targetContainer) {
+	    throw new Error("Could not find target container: " + $escapedTargetSelector);
+	  }
+
+	  const item = sourceContainer.querySelector('[data-id="' + CSS.escape(id) + '"]');
+	  if(!item) {
+	    throw new Error("Could not find item with data-id: " + id);
+	  }
+
+	  const handle = item.querySelector(".drag-handle");
+	  if(!handle) {
+	    throw new Error("Could not find drag handle for item: " + id);
+	  }
+
+	  const itemRect = item.getBoundingClientRect();
+	  const handleRect = handle.getBoundingClientRect();
+	  const targetRect = targetContainer.getBoundingClientRect();
+	  const startY = handleRect.top + handleRect.height / 2;
+	  const startX = handleRect.left + handleRect.width / 2;
+	  const pointerOffsetY = itemRect.top + itemRect.height / 2 - startY;
+	  const pointerOffsetX = itemRect.left + itemRect.width / 2 - startX;
+	  const siblings = [...targetContainer.children].filter(child => child !== item);
+	  const targetIndex = Math.max(0, Math.min(siblings.length, $encodedPosition - 1));
+	  const before = siblings[targetIndex] ?? null;
+	  const previous = siblings[targetIndex - 1] ?? null;
+	  const rects = siblings.map(child => child.getBoundingClientRect());
+	  const lefts = rects.map(rect => rect.left);
+	  const tops = rects.map(rect => rect.top);
+	  const horizontal = siblings.length > 1
+	    && Math.max(...lefts) - Math.min(...lefts) > Math.max(...tops) - Math.min(...tops);
+	  const beforeX = before
+	    ? before.getBoundingClientRect().left + before.getBoundingClientRect().width / 2
+	    : targetRect.right;
+	  const previousX = previous
+	    ? previous.getBoundingClientRect().left + previous.getBoundingClientRect().width / 2
+	    : targetRect.left;
+	  const beforeMid = before
+	    ? before.getBoundingClientRect().top + before.getBoundingClientRect().height / 2
+	    : targetRect.bottom;
+	  const previousMid = previous
+	    ? previous.getBoundingClientRect().top + previous.getBoundingClientRect().height / 2
+	    : targetRect.top;
+	  const targetItemCenterY = (beforeMid + previousMid) / 2;
+	  const targetItemCenterX = (beforeX + previousX) / 2;
+	  const targetPointerY = targetItemCenterY - pointerOffsetY;
+	  const targetPointerX = horizontal
+	    ? targetItemCenterX - pointerOffsetX
+	    : targetRect.left + Math.min(20, targetRect.width / 2);
+	  const eventOptions = {
+	    bubbles: true,
+	    cancelable: true,
+	    pointerId: 1,
+	    pointerType: "touch",
+	    isPrimary: true,
+	    button: 0,
+	    buttons: 1,
+	  };
+
+	  handle.dispatchEvent(new PointerEvent("pointerdown", {
+	    ...eventOptions,
+	    clientX: startX,
+	    clientY: startY,
+	  }));
+	  document.dispatchEvent(new PointerEvent("pointermove", {
+	    ...eventOptions,
+	    clientX: targetPointerX,
+	    clientY: targetPointerY,
+	  }));
+	  document.dispatchEvent(new PointerEvent("pointerup", {
+	    ...eventOptions,
+	    buttons: 0,
+	    clientX: targetPointerX,
+	    clientY: targetPointerY,
+	  }));
 	})()
 	JS;
 
@@ -115,6 +291,7 @@ class FeatureContext extends MinkContext {
 
 	  const actualOrder = [...container.children]
 	    .map(child => child.dataset.id)
+	    .filter(id => id !== undefined)
 	    .join(",");
 	  return actualOrder === $escapedExpectedOrder;
 	})()

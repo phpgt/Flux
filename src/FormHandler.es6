@@ -1,6 +1,11 @@
 import {DomPath} from "./DomPath.es6";
 
-export class FluxFormHandler {
+/**
+ * Wires Flux forms and submit buttons into background submission.
+ * It handles autosave, auto-submit, rate limiting, and focused
+ * field state capture before handing requests to NavigationController.
+ */
+export class FormHandler {
 	constructor(
 		navigationController,
 		focusStateManager,
@@ -122,10 +127,11 @@ export class FluxFormHandler {
 			return Promise.resolve(null);
 		}
 
+		let requestElementState = this.focusStateManager.captureElementState(form);
 		let formData = this.getFormDataForButton(form, "autoSave", submitter);
 		let responseHandler = form.hasAttribute("action")
-			? this.onNavigationDocument
-			: this.onDocument;
+			? (newDocument) => this.onNavigationDocument(newDocument, requestElementState)
+			: (newDocument) => this.onDocument(newDocument, requestElementState);
 		return this.navigationController.submitForm(form, formData, responseHandler, submitter);
 	}
 
