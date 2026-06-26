@@ -350,6 +350,12 @@ var NavigationController = class {
     this.documentObject = documentObject;
   }
   submitForm(form, formData, onDocument, submitter = null) {
+    return this.requestForm(form, formData, onDocument, submitter, "submitForm");
+  }
+  fetchForm(form, formData, onDocument, submitter = null) {
+    return this.requestForm(form, formData, onDocument, submitter, null);
+  }
+  requestForm(form, formData, onDocument, submitter = null, historyAction = "submitForm") {
     let method = (form.getAttribute("method") ?? "get").toLowerCase();
     let url = form.action;
     let requestOptions = {
@@ -366,7 +372,7 @@ var NavigationController = class {
       url,
       requestOptions,
       {
-        action: "submitForm",
+        action: historyAction,
         errorPrefix: "Form submission error"
       },
       onDocument,
@@ -646,6 +652,14 @@ var DIRECTIVE_DEFINITIONS = Object.freeze({
   "submit": {
     handler: "autoSubmit",
     description: "Submit the containing form in the background."
+  },
+  "autocomplete": {
+    handler: "autocomplete",
+    description: "Fetch form results in the background as the user types."
+  },
+  "autocomplete-results": {
+    handler: "autocompleteResults",
+    description: "Mark the response element used by autocomplete forms."
   },
   "link": {
     handler: "autoLink",
@@ -1192,6 +1206,194 @@ var LiveHandler = class _LiveHandler {
   }
 };
 
+// src/AutocompleteHandler.es6
+var AutocompleteHandler = class {
+  constructor(navigationController, logger = console, debug = false, scheduler = globalThis.setTimeout.bind(globalThis), clearScheduler = globalThis.clearTimeout.bind(globalThis), delay = 200) {
+    this.navigationController = navigationController;
+    this.logger = logger;
+    this.debug = debug;
+    this.scheduler = scheduler;
+    this.clearScheduler = clearScheduler;
+    this.delay = delay;
+    this.state = /* @__PURE__ */ new WeakMap();
+  }
+  initAutocomplete = (fluxElement) => {
+    if (!(fluxElement instanceof HTMLFormElement)) {
+      throw new TypeError('data-flux type "autocomplete" must be applied to a form element.');
+    }
+    if (this.state.has(fluxElement)) {
+      return;
+    }
+    this.state.set(fluxElement, {
+      timer: null,
+      minLength: this.getMinLength(fluxElement),
+      requestId: 0,
+      resultsElement: null
+    });
+    this.hideSubmitControls(fluxElement);
+    fluxElement.addEventListener("input", this.onInput);
+    fluxElement.addEventListener("keydown", this.onKeyDown);
+  };
+  initAutocompleteResults = () => {
+  };
+  onInput = (e) => {
+    let form = e.currentTarget;
+    let state = this.state.get(form);
+    if (!state) {
+      return;
+    }
+    if (state.timer) {
+      this.clearScheduler(state.timer);
+    }
+    state.timer = this.scheduler(() => {
+      state.timer = null;
+      this.updateResults(form);
+    }, this.delay);
+  };
+  onKeyDown = (e) => {
+    if (e.key !== "ArrowDown" && e.key !== "ArrowUp") {
+      return;
+    }
+    let form = e.currentTarget;
+    let state = this.state.get(form);
+    let focusableElements = this.getFocusableElements(form, state?.resultsElement);
+    if (focusableElements.length === 0) {
+      return;
+    }
+    e.preventDefault();
+    this.moveFocus(focusableElements, e.key === "ArrowDown" ? 1 : -1);
+  };
+  updateResults(form) {
+    let formData = new FormData(form);
+    let state = this.state.get(form);
+    if (!state) {
+      return Promise.resolve(null);
+    }
+    if (!this.hasMinimumValue(formData, state.minLength)) {
+      this.removeResults(form, state);
+      return Promise.resolve(null);
+    }
+    let requestId = ++state.requestId;
+    return this.navigationController.fetchForm(
+      form,
+      formData,
+      (newDocument) => {
+        if (state.requestId !== requestId) {
+          return;
+        }
+        this.applyResults(form, state, newDocument);
+      }
+    );
+  }
+  getMinLength(form) {
+    let minLength = Number.parseInt(form.dataset["fluxMinLength"] ?? "", 10);
+    if (Number.isFinite(minLength) && minLength >= 0) {
+      return minLength;
+    }
+    return 3;
+  }
+  hideSubmitControls(form) {
+    form.querySelectorAll("button, input[type='submit'], input[type='image']").forEach((element) => {
+      if (element instanceof HTMLButtonElement && element.type !== "submit") {
+        return;
+      }
+      element.hidden = true;
+      element.dataset["fluxAutocompleteButton"] = "";
+    });
+  }
+  hasMinimumValue(formData, minLength) {
+    for (let value of formData.values()) {
+      if (typeof value === "string" && value.trim().length >= minLength) {
+        return true;
+      }
+      if (typeof File !== "undefined" && value instanceof File && value.name !== "") {
+        return true;
+      }
+    }
+    return false;
+  }
+  applyResults(form, state, newDocument) {
+    let newResultsElement = newDocument.querySelector('[data-flux="autocomplete-results"]');
+    if (!newResultsElement) {
+      this.removeResults(form, state);
+      if (this.debug) {
+        this.logger.debug("No autocomplete results element found in response", form);
+      }
+      return;
+    }
+    newResultsElement.dataset["fluxAutocompleteMounted"] = "";
+    newResultsElement.addEventListener("keydown", this.onResultsKeyDown);
+    if (state.resultsElement?.isConnected) {
+      state.resultsElement.replaceWith(newResultsElement);
+    } else {
+      form.after(newResultsElement);
+    }
+    state.resultsElement = newResultsElement;
+  }
+  onResultsKeyDown = (e) => {
+    if (e.key !== "ArrowDown" && e.key !== "ArrowUp") {
+      return;
+    }
+    let resultsElement = e.currentTarget;
+    let form = this.findOwningForm(resultsElement);
+    if (!form) {
+      return;
+    }
+    let focusableElements = this.getFocusableElements(form, resultsElement);
+    if (focusableElements.length === 0) {
+      return;
+    }
+    e.preventDefault();
+    this.moveFocus(focusableElements, e.key === "ArrowDown" ? 1 : -1);
+  };
+  findOwningForm(resultsElement) {
+    let previousElement = resultsElement.previousElementSibling;
+    while (previousElement) {
+      if (previousElement instanceof HTMLFormElement && this.state.has(previousElement)) {
+        return previousElement;
+      }
+      previousElement = previousElement.previousElementSibling;
+    }
+    return null;
+  }
+  getFocusableElements(form, resultsElement) {
+    let selectors = [
+      "a[href]",
+      "button:not([disabled])",
+      "input:not([disabled])",
+      "select:not([disabled])",
+      "textarea:not([disabled])",
+      '[tabindex]:not([tabindex="-1"])'
+    ].join(",");
+    let elements = [
+      ...form.querySelectorAll(selectors)
+    ];
+    if (resultsElement?.isConnected) {
+      elements.push(...resultsElement.querySelectorAll(selectors));
+    }
+    return elements.filter((element) => !element.hidden);
+  }
+  moveFocus(focusableElements, direction) {
+    let currentIndex = focusableElements.indexOf(document.activeElement);
+    let nextIndex = currentIndex + direction;
+    if (currentIndex === -1) {
+      nextIndex = direction > 0 ? 0 : focusableElements.length - 1;
+    }
+    nextIndex = Math.max(0, Math.min(focusableElements.length - 1, nextIndex));
+    focusableElements[nextIndex].focus();
+  }
+  removeResults(form, state) {
+    if (state.resultsElement?.isConnected) {
+      state.resultsElement.remove();
+    }
+    state.resultsElement = null;
+    let adjacentResultsElement = form.nextElementSibling;
+    if (adjacentResultsElement?.dataset["fluxAutocompleteMounted"] !== void 0) {
+      adjacentResultsElement.remove();
+    }
+  }
+};
+
 // src/DragOrder/DropTargetResolver.es6
 var DropTargetResolver = class {
   constructor(documentObject = globalThis.document) {
@@ -1666,9 +1868,10 @@ var Flux = class _Flux {
   linkHandler;
   responseHandler;
   liveHandler;
+  autocompleteHandler;
   dragOrderHandler;
   logger;
-  constructor(style = void 0, elementEventMapper = void 0, parser = void 0, navigationController = void 0, updateTargetRegistry = void 0, focusStateManager = void 0, documentUpdater = void 0, directiveRegistry = void 0, domBridge = void 0, formHandler = void 0, linkHandler = void 0, responseHandler = void 0, liveHandler = void 0, logger = void 0, dragOrderHandler = void 0) {
+  constructor(style = void 0, elementEventMapper = void 0, parser = void 0, navigationController = void 0, updateTargetRegistry = void 0, focusStateManager = void 0, documentUpdater = void 0, directiveRegistry = void 0, domBridge = void 0, formHandler = void 0, linkHandler = void 0, responseHandler = void 0, liveHandler = void 0, logger = void 0, dragOrderHandler = void 0, autocompleteHandler = void 0) {
     handleWindowPopState();
     this.logger = logger ?? console;
     style = style ?? new Style();
@@ -1724,6 +1927,11 @@ var Flux = class _Flux {
       () => Date.now(),
       DomPath
     );
+    this.autocompleteHandler = autocompleteHandler ?? new AutocompleteHandler(
+      this.navigationController,
+      this.logger,
+      _Flux.DEBUG
+    );
     this.dragOrderHandler = dragOrderHandler ?? new Handler(
       this.formHandler,
       document,
@@ -1741,6 +1949,8 @@ var Flux = class _Flux {
       liveInner: this.storeLiveInnerUpdateElement,
       updateAttributes: this.storeAttributesUpdateElement,
       autoSubmit: this.formHandler.initAutoSubmit,
+      autocomplete: this.autocompleteHandler.initAutocomplete,
+      autocompleteResults: this.autocompleteHandler.initAutocompleteResults,
       autoLink: this.linkHandler.initAutoLink,
       dragOrder: this.dragOrderHandler.initDragOrder
     });

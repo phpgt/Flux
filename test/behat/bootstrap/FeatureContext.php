@@ -89,6 +89,55 @@ class FeatureContext extends MinkContext {
 	}
 
 	/**
+	 * @When I press the :keyName key in the element :selector
+	 */
+	public function iPressKeyInTheElement(string $keyName, string $selector):void {
+		$escapedSelector = json_encode($selector, JSON_THROW_ON_ERROR);
+		$escapedKeyName = json_encode($keyName, JSON_THROW_ON_ERROR);
+		$script = <<<JS
+	(() => {
+	  const element = document.querySelector($escapedSelector);
+	  if(!element) {
+	    throw new Error("Could not find element: " + $escapedSelector);
+	  }
+
+	  element.focus();
+	  element.dispatchEvent(new KeyboardEvent("keydown", {
+	    key: $escapedKeyName,
+	    code: $escapedKeyName,
+	    bubbles: true,
+	    cancelable: true,
+	  }));
+	})()
+	JS;
+
+		$this->getSession()->executeScript($script);
+	}
+
+	/**
+	 * @When I press the :keyName key in the active element
+	 */
+	public function iPressKeyInTheActiveElement(string $keyName):void {
+		$escapedKeyName = json_encode($keyName, JSON_THROW_ON_ERROR);
+		$script = <<<JS
+	(() => {
+	  if(!document.activeElement) {
+	    throw new Error("There is no active element.");
+	  }
+
+	  document.activeElement.dispatchEvent(new KeyboardEvent("keydown", {
+	    key: $escapedKeyName,
+	    code: $escapedKeyName,
+	    bubbles: true,
+	    cancelable: true,
+	  }));
+	})()
+	JS;
+
+		$this->getSession()->executeScript($script);
+	}
+
+	/**
 	 * @Then /^the element "([^"]+)" should have value "(.*)"$/
 	 */
 	public function theElementShouldHaveValue(string $selector, string $value):void {
@@ -101,6 +150,30 @@ class FeatureContext extends MinkContext {
 				$this->getSession(),
 			);
 		}
+	}
+
+	/**
+	 * @Then the active element should contain :text
+	 */
+	public function theActiveElementShouldContain(string $text):void {
+		$escapedText = json_encode($text, JSON_THROW_ON_ERROR);
+		$condition = <<<JS
+	(() => document.activeElement && document.activeElement.textContent.includes($escapedText))()
+	JS;
+
+		$this->waitForCondition($condition, sprintf('Timed out waiting for the active element to contain "%s".', $text));
+	}
+
+	/**
+	 * @Then the element :selector should be focussed
+	 */
+	public function theElementShouldBeFocussed(string $selector):void {
+		$escapedSelector = json_encode($selector, JSON_THROW_ON_ERROR);
+		$condition = <<<JS
+	(() => document.activeElement === document.querySelector($escapedSelector))()
+	JS;
+
+		$this->waitForCondition($condition, sprintf('Timed out waiting for "%s" to be focussed.', $selector));
 	}
 
 	/**
@@ -354,6 +427,21 @@ class FeatureContext extends MinkContext {
 			'document.getElementById("flux-style") !== null',
 			'Timed out waiting for Flux to initialise on the page.',
 		);
+	}
+
+	/**
+	 * @Then the current URL path should be :expectedPath
+	 */
+	public function theCurrentUrlPathShouldBe(string $expectedPath):void {
+		$currentUrl = $this->getSession()->getCurrentUrl();
+		$actualPath = parse_url($currentUrl, PHP_URL_PATH);
+
+		if($actualPath !== $expectedPath) {
+			throw new ExpectationException(
+				sprintf('Expected current URL path to be "%s", got "%s".', $expectedPath, $actualPath),
+				$this->getSession(),
+			);
+		}
 	}
 
 	/**
