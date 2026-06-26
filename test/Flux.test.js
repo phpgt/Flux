@@ -12,6 +12,7 @@ import {FormHandler} from "../src/FormHandler.es6";
 import {LinkHandler} from "../src/LinkHandler.es6";
 import {ResponseHandler} from "../src/ResponseHandler.es6";
 import {LiveHandler} from "../src/LiveHandler.es6";
+import {AutocompleteHandler} from "../src/AutocompleteHandler.es6";
 import {Handler as DragOrderHandler} from "../src/DragOrder/Handler.es6";
 import {Preview} from "../src/DragOrder/Preview.es6";
 
@@ -649,6 +650,38 @@ describe("NavigationController", () => {
 		expect(pushState).not.toHaveBeenCalled();
 		expect(callback).toHaveBeenCalledWith(expect.any(Document));
 	});
+
+	it("fetches a form document without pushing history state", async () => {
+		document.body.innerHTML = `
+		<form action="/search" method="get">
+			<input name="query" value="London">
+		</form>
+		`;
+
+		let form = document.querySelector("form");
+		let callback = vi.fn();
+		let pushState = vi.fn();
+		let fetcher = vi.fn().mockResolvedValue({
+			ok: true,
+			url: "https://example.com/search?query=London",
+			text: vi.fn().mockResolvedValue("<html><head></head><body><main>Results</main></body></html>"),
+		});
+		let navigationController = new NavigationController(
+			new DOMParser(),
+			fetcher,
+			{pushState},
+			{error: vi.fn()},
+		);
+
+		await navigationController.fetchForm(form, new FormData(form), callback);
+
+		expect(fetcher).toHaveBeenCalledWith("http://localhost:3000/search?query=London", {
+			method: "get",
+			credentials: "same-origin",
+		});
+		expect(pushState).not.toHaveBeenCalled();
+		expect(callback).toHaveBeenCalledWith(expect.any(Document));
+	});
 });
 
 describe("DocumentUpdater", () => {
@@ -1148,6 +1181,8 @@ describe("DirectiveRegistry", () => {
 			"live-inner": expect.objectContaining({handler: "liveInner"}),
 			"update-attributes": expect.objectContaining({handler: "updateAttributes"}),
 			"submit": expect.objectContaining({handler: "autoSubmit"}),
+			"autocomplete": expect.objectContaining({handler: "autocomplete"}),
+			"autocomplete-results": expect.objectContaining({handler: "autocompleteResults"}),
 			"link": expect.objectContaining({handler: "autoLink"}),
 			"drag-order": expect.objectContaining({handler: "dragOrder"}),
 		});
@@ -1475,6 +1510,222 @@ describe("FormHandler", () => {
 		handler.submitForm(document.querySelector("form"), document.querySelector("button"));
 
 		expect(navigationController.submitForm).toHaveBeenCalledTimes(2);
+	});
+});
+
+describe("AutocompleteHandler", () => {
+	it("fetches and mounts marked results after input changes", async () => {
+		vi.useFakeTimers();
+		document.body.innerHTML = `
+		<form action="/search" method="get">
+			<input name="query" value="">
+		</form>
+		`;
+
+		let parser = new DOMParser();
+		let navigationController = {
+			fetchForm: vi.fn((form, formData, onDocument) => {
+				let newDocument = parser.parseFromString(`
+					<html>
+						<body>
+							<section data-flux="autocomplete-results">
+								<p>London result</p>
+							</section>
+						</body>
+					</html>
+				`, "text/html");
+				onDocument(newDocument);
+				return Promise.resolve(newDocument);
+			}),
+		};
+		let handler = new AutocompleteHandler(navigationController);
+		let form = document.querySelector("form");
+		let input = document.querySelector("input");
+
+		handler.initAutocomplete(form);
+		input.value = "London";
+		input.dispatchEvent(new Event("input", {bubbles: true}));
+		await vi.advanceTimersByTimeAsync(200);
+
+		expect(navigationController.fetchForm).toHaveBeenCalledTimes(1);
+		expect(navigationController.fetchForm.mock.calls[0][1].get("query")).toBe("London");
+		expect(form.nextElementSibling.matches('[data-flux="autocomplete-results"]')).toBe(true);
+		expect(form.nextElementSibling.textContent).toContain("London result");
+
+		vi.useRealTimers();
+	});
+
+	it("removes mounted results when the form value is below the minimum length", async () => {
+		document.body.innerHTML = `
+		<form action="/search" method="get">
+			<input name="query" value="London">
+		</form>
+		`;
+
+		let parser = new DOMParser();
+		let navigationController = {
+			fetchForm: vi.fn((form, formData, onDocument) => {
+				let newDocument = parser.parseFromString(`
+					<html>
+						<body>
+							<section data-flux="autocomplete-results">
+								<p>London result</p>
+							</section>
+						</body>
+					</html>
+				`, "text/html");
+				onDocument(newDocument);
+				return Promise.resolve(newDocument);
+			}),
+		};
+		let handler = new AutocompleteHandler(navigationController);
+		let form = document.querySelector("form");
+		let input = document.querySelector("input");
+
+		handler.initAutocomplete(form);
+		await handler.updateResults(form);
+		expect(form.nextElementSibling).not.toBeNull();
+
+		input.value = "Lo";
+		await handler.updateResults(form);
+
+		expect(form.nextElementSibling).toBeNull();
+		expect(navigationController.fetchForm).toHaveBeenCalledTimes(1);
+	});
+
+	it("hides submit controls when autocomplete is initialised", () => {
+		document.body.innerHTML = `
+		<form action="/search" method="get">
+			<input name="query" value="London">
+			<button>Search</button>
+			<button type="button">Help</button>
+			<input type="submit" value="Go">
+		</form>
+		`;
+
+		let handler = new AutocompleteHandler({fetchForm: vi.fn()});
+		let form = document.querySelector("form");
+		let buttons = document.querySelectorAll("button");
+		let submitInput = document.querySelector("input[type='submit']");
+
+		handler.initAutocomplete(form);
+
+		expect(buttons[0].hidden).toBe(true);
+		expect(buttons[0].dataset["fluxAutocompleteButton"]).toBe("");
+		expect(buttons[1].hidden).toBe(false);
+		expect(submitInput.hidden).toBe(true);
+	});
+
+	it("ignores stale autocomplete responses", async () => {
+		document.body.innerHTML = `
+		<form action="/search" method="get">
+			<input name="query" value="Lon">
+		</form>
+		`;
+
+		let parser = new DOMParser();
+		let callbacks = [];
+		let navigationController = {
+			fetchForm: vi.fn((form, formData, onDocument) => {
+				callbacks.push({
+					query: formData.get("query"),
+					onDocument,
+				});
+				return Promise.resolve(null);
+			}),
+		};
+		let handler = new AutocompleteHandler(navigationController);
+		let form = document.querySelector("form");
+		let input = document.querySelector("input");
+
+		handler.initAutocomplete(form);
+		handler.updateResults(form);
+		input.value = "London";
+		handler.updateResults(form);
+
+		callbacks[1].onDocument(parser.parseFromString(`
+			<html><body><section data-flux="autocomplete-results">London</section></body></html>
+		`, "text/html"));
+		callbacks[0].onDocument(parser.parseFromString(`
+			<html><body><section data-flux="autocomplete-results">Lon stale</section></body></html>
+		`, "text/html"));
+
+		expect(callbacks.map(callback => callback.query)).toEqual(["Lon", "London"]);
+		expect(form.nextElementSibling.textContent).toBe("London");
+	});
+
+	it("moves through form controls and mounted result links with arrow keys", async () => {
+		document.body.innerHTML = `
+		<form action="/search" method="get">
+			<input name="query" value="London">
+			<button>Search</button>
+		</form>
+		`;
+
+		let parser = new DOMParser();
+		let navigationController = {
+			fetchForm: vi.fn((form, formData, onDocument) => {
+				let newDocument = parser.parseFromString(`
+					<html>
+						<body>
+							<section data-flux="autocomplete-results">
+								<a href="#one">One</a>
+								<a href="#two">Two</a>
+							</section>
+						</body>
+					</html>
+				`, "text/html");
+				onDocument(newDocument);
+				return Promise.resolve(newDocument);
+			}),
+		};
+		let handler = new AutocompleteHandler(navigationController);
+		let form = document.querySelector("form");
+		let input = document.querySelector("input");
+		let button = document.querySelector("button");
+
+		handler.initAutocomplete(form);
+		await handler.updateResults(form);
+		let links = form.nextElementSibling.querySelectorAll("a");
+		input.focus();
+
+		document.activeElement.dispatchEvent(new KeyboardEvent("keydown", {
+			key: "ArrowDown",
+			bubbles: true,
+			cancelable: true,
+		}));
+		expect(document.activeElement).toBe(links[0]);
+		expect(button.hidden).toBe(true);
+
+		document.activeElement.dispatchEvent(new KeyboardEvent("keydown", {
+			key: "ArrowDown",
+			bubbles: true,
+			cancelable: true,
+		}));
+		expect(document.activeElement).toBe(links[1]);
+
+		document.activeElement.dispatchEvent(new KeyboardEvent("keydown", {
+			key: "ArrowUp",
+			bubbles: true,
+			cancelable: true,
+		}));
+		expect(document.activeElement).toBe(links[0]);
+
+		document.activeElement.dispatchEvent(new KeyboardEvent("keydown", {
+			key: "ArrowUp",
+			bubbles: true,
+			cancelable: true,
+		}));
+		expect(document.activeElement).toBe(input);
+	});
+
+	it("requires autocomplete to be applied to a form", () => {
+		let handler = new AutocompleteHandler({fetchForm: vi.fn()});
+		let element = document.createElement("div");
+
+		expect(() => handler.initAutocomplete(element)).toThrow(
+			'data-flux type "autocomplete" must be applied to a form element.',
+		);
 	});
 });
 

@@ -19,6 +19,14 @@ export class NavigationController {
 	}
 
 	submitForm(form, formData, onDocument, submitter = null) {
+		return this.requestForm(form, formData, onDocument, submitter, "submitForm");
+	}
+
+	fetchForm(form, formData, onDocument, submitter = null) {
+		return this.requestForm(form, formData, onDocument, submitter, null);
+	}
+
+	requestForm(form, formData, onDocument, submitter = null, historyAction = "submitForm") {
 		let method = (form.getAttribute("method") ?? "get").toLowerCase();
 		let url = form.action;
 		let requestOptions = {
@@ -38,7 +46,7 @@ export class NavigationController {
 			url,
 			requestOptions,
 			{
-				action: "submitForm",
+				action: historyAction,
 				errorPrefix: "Form submission error",
 			},
 			onDocument,

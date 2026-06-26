@@ -47,6 +47,14 @@ const DIRECTIVE_DEFINITIONS = Object.freeze({
 		handler: "autoSubmit",
 		description: "Submit the containing form in the background.",
 	},
+	"autocomplete": {
+		handler: "autocomplete",
+		description: "Fetch form results in the background as the user types.",
+	},
+	"autocomplete-results": {
+		handler: "autocompleteResults",
+		description: "Mark the response element used by autocomplete forms.",
+	},
 	"link": {
 		handler: "autoLink",
 		description: "Follow the link in the background.",

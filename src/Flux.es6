@@ -11,6 +11,7 @@ import {FormHandler} from "./FormHandler.es6";
 import {LinkHandler} from "./LinkHandler.es6";
 import {ResponseHandler} from "./ResponseHandler.es6";
 import {LiveHandler} from "./LiveHandler.es6";
+import {AutocompleteHandler} from "./AutocompleteHandler.es6";
 import {Handler as DragOrderHandler} from "./DragOrder/Handler.es6";
 import {RuntimeConfig} from "./RuntimeConfig.es6";
 
@@ -40,6 +41,7 @@ export class Flux {
 	linkHandler;
 	responseHandler;
 	liveHandler;
+	autocompleteHandler;
 	dragOrderHandler;
 	logger;
 
@@ -59,6 +61,7 @@ export class Flux {
 		liveHandler = undefined,
 		logger = undefined,
 		dragOrderHandler = undefined,
+		autocompleteHandler = undefined,
 	) {
 		handleWindowPopState();
 		this.logger = logger ?? console;
@@ -115,6 +118,11 @@ export class Flux {
 			() => Date.now(),
 			DomPath,
 		);
+		this.autocompleteHandler = autocompleteHandler ?? new AutocompleteHandler(
+			this.navigationController,
+			this.logger,
+			Flux.DEBUG,
+		);
 		this.dragOrderHandler = dragOrderHandler ?? new DragOrderHandler(
 			this.formHandler,
 			document,
@@ -132,6 +140,8 @@ export class Flux {
 			liveInner: this.storeLiveInnerUpdateElement,
 			updateAttributes: this.storeAttributesUpdateElement,
 			autoSubmit: this.formHandler.initAutoSubmit,
+			autocomplete: this.autocompleteHandler.initAutocomplete,
+			autocompleteResults: this.autocompleteHandler.initAutocompleteResults,
 			autoLink: this.linkHandler.initAutoLink,
 			dragOrder: this.dragOrderHandler.initDragOrder,
 		});
