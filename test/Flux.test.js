@@ -722,6 +722,42 @@ describe("DocumentUpdater", () => {
 		expect(focusStateManager.focusMarkedAutofocusElements).toHaveBeenCalled();
 	});
 
+	it("runs the completion hook after an outer update element is inserted", () => {
+		document.body.innerHTML = `<main data-flux="update-outer"><span>Old</span></main>`;
+
+		let existingElement = document.querySelector("main");
+		let updateTargetRegistry = new UpdateTargetRegistry();
+		updateTargetRegistry.add(existingElement, "outer");
+		let completeElementUpdate = vi.fn(element => {
+			expect(element.isConnected).toBe(true);
+			expect(document.querySelector("main")).toBe(element);
+		});
+		let documentUpdater = new DocumentUpdater(
+			updateTargetRegistry,
+			{
+				markAutofocus: vi.fn(),
+				capturePendingActiveElement: vi.fn().mockReturnValue(null),
+				captureElementState: vi.fn().mockReturnValue(null),
+				restoreElementState: vi.fn(),
+				restorePendingActiveElement: vi.fn(),
+				focusMarkedAutofocusElements: vi.fn(),
+			},
+			vi.fn(),
+			completeElementUpdate,
+		);
+		let newDocument = new DOMParser().parseFromString(`
+			<html>
+				<body>
+					<main data-flux="update-outer"><script>window.fluxScriptRan = true;</script></main>
+				</body>
+			</html>
+		`, "text/html");
+
+		documentUpdater.apply(newDocument);
+
+		expect(completeElementUpdate).toHaveBeenCalledTimes(1);
+	});
+
 	it("applies inner updates without replacing the tracked element", () => {
 		document.body.innerHTML = `<section data-flux="update-inner"><span>Old</span></section>`;
 
@@ -752,6 +788,43 @@ describe("DocumentUpdater", () => {
 
 		expect(document.querySelector("section")).toBe(existingElement);
 		expect(existingElement.innerHTML).toBe("<strong>New</strong>");
+	});
+
+	it("runs the completion hook after inner update children are inserted", () => {
+		document.body.innerHTML = `<section data-flux="update-inner"><span>Old</span></section>`;
+
+		let existingElement = document.querySelector("section");
+		let updateTargetRegistry = new UpdateTargetRegistry();
+		updateTargetRegistry.add(existingElement, "inner");
+		let completeElementUpdate = vi.fn(element => {
+			expect(element).toBe(existingElement);
+			expect(element.isConnected).toBe(true);
+			expect(element.querySelector("script")).toBeInstanceOf(HTMLScriptElement);
+		});
+		let documentUpdater = new DocumentUpdater(
+			updateTargetRegistry,
+			{
+				markAutofocus: vi.fn(),
+				capturePendingActiveElement: vi.fn().mockReturnValue(null),
+				captureElementState: vi.fn().mockReturnValue(null),
+				restoreElementState: vi.fn(),
+				restorePendingActiveElement: vi.fn(),
+				focusMarkedAutofocusElements: vi.fn(),
+			},
+			vi.fn(),
+			completeElementUpdate,
+		);
+		let newDocument = new DOMParser().parseFromString(`
+			<html>
+				<body>
+					<section data-flux="update-inner"><script>window.fluxScriptRan = true;</script></section>
+				</body>
+			</html>
+		`, "text/html");
+
+		documentUpdater.apply(newDocument);
+
+		expect(completeElementUpdate).toHaveBeenCalledTimes(1);
 	});
 
 	it("prefers id matching over DOM position for outer updates", () => {
@@ -2621,6 +2694,38 @@ describe("DomBridge", () => {
 		expect(initFluxElement).toHaveBeenCalledTimes(1);
 		expect(initFluxElement.mock.calls[0][0]).toBeInstanceOf(HTMLButtonElement);
 		expect(newElement.querySelector("form").fluxObj).toEqual(oldForm.fluxObj);
+	});
+
+	it("recreates scripts in replacement elements so the browser can execute them on insertion", () => {
+		document.body.innerHTML = `<main><span>Old</span></main>`;
+
+		let oldElement = document.querySelector("main");
+		let newDocument = new DOMParser().parseFromString(`
+			<html>
+				<body>
+					<main>
+						<script type="module" nonce="test-nonce">window.fluxScriptRan = true;</script>
+					</main>
+				</body>
+			</html>
+		`, "text/html");
+		let newElement = newDocument.querySelector("main");
+		let inertScript = newElement.querySelector("script");
+		let bridge = new DomBridge(
+			{has: vi.fn().mockReturnValue(false), get: vi.fn()},
+			vi.fn(),
+		);
+
+		oldElement.replaceWith(newElement);
+		bridge.reviveScripts(newElement);
+
+		let freshScript = newElement.querySelector("script");
+		expect(freshScript).not.toBe(inertScript);
+		expect(freshScript.getAttribute("type")).toBe("module");
+		expect(freshScript.getAttribute("nonce")).toBe("test-nonce");
+		expect(freshScript.textContent).toBe("window.fluxScriptRan = true;");
+		expect(document.querySelector("script")).toBe(freshScript);
+		expect(freshScript.ownerDocument).toBe(document);
 	});
 });
 

@@ -491,10 +491,12 @@ var NavigationController = class {
 // src/DocumentUpdater.es6
 var DocumentUpdater = class {
   constructor(updateTargetRegistry, focusStateManager, prepareElementUpdate = () => {
+  }, completeElementUpdate = () => {
   }, domPath = DomPath, logger = console, debug = false) {
     this.updateTargetRegistry = updateTargetRegistry;
     this.focusStateManager = focusStateManager;
     this.prepareElementUpdate = prepareElementUpdate;
+    this.completeElementUpdate = completeElementUpdate;
     this.domPath = domPath;
     this.logger = logger;
     this.debug = debug;
@@ -565,6 +567,7 @@ var DocumentUpdater = class {
     }
     this.prepareElementUpdate(existingElement, newElement);
     existingElement.replaceWith(newElement);
+    this.completeElementUpdate(newElement);
   }
   applyInnerUpdate(existingElement, newElement) {
     this.prepareElementUpdate(existingElement, newElement);
@@ -574,6 +577,7 @@ var DocumentUpdater = class {
     while (newElement && newElement.firstChild) {
       existingElement.appendChild(newElement.firstChild);
     }
+    this.completeElementUpdate(existingElement);
   }
   applyAttributesUpdate(existingElement, newElement) {
     if (!newElement) {
@@ -699,12 +703,13 @@ var DirectiveRegistry = class _DirectiveRegistry {
 
 // src/DomBridge.es6
 var DomBridge = class {
-  constructor(elementEventMapper, initFluxElement, domPath = DomPath, logger = console, debug = false) {
+  constructor(elementEventMapper, initFluxElement, domPath = DomPath, logger = console, debug = false, documentObject = globalThis.document) {
     this.elementEventMapper = elementEventMapper;
     this.initFluxElement = initFluxElement;
     this.domPath = domPath;
     this.logger = logger;
     this.debug = debug;
+    this.documentObject = documentObject;
   }
   prepareElementUpdate = (oldElement, newElement) => {
     if (!newElement) {
@@ -755,6 +760,17 @@ var DomBridge = class {
         newFluxElement.fluxObj = fluxElement.fluxObj;
         newFluxElement.dataset["fluxObj"] = "";
       }
+    });
+  }
+  reviveScripts(newElement) {
+    let scripts = newElement.matches?.("script") ? [newElement, ...newElement.querySelectorAll("script")] : newElement.querySelectorAll("script");
+    scripts.forEach((script) => {
+      let freshScript = this.documentObject.createElement("script");
+      Array.from(script.attributes).forEach((attribute) => {
+        freshScript.setAttribute(attribute.name, attribute.value);
+      });
+      freshScript.textContent = script.textContent;
+      script.replaceWith(freshScript);
     });
   }
 };
@@ -1893,6 +1909,7 @@ var Flux = class _Flux {
       this.updateTargetRegistry,
       this.focusStateManager,
       (oldElement, newElement) => this.domBridge.prepareElementUpdate(oldElement, newElement),
+      (element) => this.domBridge.reviveScripts(element),
       DomPath,
       this.logger,
       _Flux.DEBUG

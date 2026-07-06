@@ -10,6 +10,7 @@ export class DocumentUpdater {
 		updateTargetRegistry,
 		focusStateManager,
 		prepareElementUpdate = () => {},
+		completeElementUpdate = () => {},
 		domPath = DomPath,
 		logger = console,
 		debug = false,
@@ -17,6 +18,7 @@ export class DocumentUpdater {
 		this.updateTargetRegistry = updateTargetRegistry;
 		this.focusStateManager = focusStateManager;
 		this.prepareElementUpdate = prepareElementUpdate;
+		this.completeElementUpdate = completeElementUpdate;
 		this.domPath = domPath;
 		this.logger = logger;
 		this.debug = debug;
@@ -102,6 +104,7 @@ export class DocumentUpdater {
 
 		this.prepareElementUpdate(existingElement, newElement);
 		existingElement.replaceWith(newElement);
+		this.completeElementUpdate(newElement);
 	}
 
 	applyInnerUpdate(existingElement, newElement) {
@@ -113,6 +116,7 @@ export class DocumentUpdater {
 		while(newElement && newElement.firstChild) {
 			existingElement.appendChild(newElement.firstChild);
 		}
+		this.completeElementUpdate(existingElement);
 	}
 
 	applyAttributesUpdate(existingElement, newElement) {

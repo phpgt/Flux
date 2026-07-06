@@ -12,12 +12,14 @@ export class DomBridge {
 		domPath = DomPath,
 		logger = console,
 		debug = false,
+		documentObject = globalThis.document,
 	) {
 		this.elementEventMapper = elementEventMapper;
 		this.initFluxElement = initFluxElement;
 		this.domPath = domPath;
 		this.logger = logger;
 		this.debug = debug;
+		this.documentObject = documentObject;
 	}
 
 	prepareElementUpdate = (oldElement, newElement) => {
@@ -79,6 +81,21 @@ export class DomBridge {
 				newFluxElement.fluxObj = fluxElement.fluxObj;
 				newFluxElement.dataset["fluxObj"] = "";
 			}
+		});
+	}
+
+	reviveScripts(newElement) {
+		let scripts = newElement.matches?.("script")
+			? [newElement, ...newElement.querySelectorAll("script")]
+			: newElement.querySelectorAll("script");
+
+		scripts.forEach(script => {
+			let freshScript = this.documentObject.createElement("script");
+			Array.from(script.attributes).forEach(attribute => {
+				freshScript.setAttribute(attribute.name, attribute.value);
+			});
+			freshScript.textContent = script.textContent;
+			script.replaceWith(freshScript);
 		});
 	}
 }

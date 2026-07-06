@@ -16,6 +16,10 @@ $tone = $_GET["tone"] ?? "plain";
 <textarea class="scratchpad" placeholder="This textarea remains outside the link-only update target."></textarea>
 
 <main class="page-shell" data-flux="update-link">
+	<script>
+		console.log("This script is placed inline, within the page shell. It must trigger every time the page is loaded!");
+	</script>
+
 	<header class="hero">
 		<h1>Page 2: Editorial notes</h1>
 		<p>This page mixes placeholder articles with a few tiny forms. Submit them to update a card; follow the links to swap the whole wrapper.</p>

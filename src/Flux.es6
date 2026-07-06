@@ -84,6 +84,7 @@ export class Flux {
 			this.updateTargetRegistry,
 			this.focusStateManager,
 			(oldElement, newElement) => this.domBridge.prepareElementUpdate(oldElement, newElement),
+			element => this.domBridge.reviveScripts(element),
 			DomPath,
 			this.logger,
 			Flux.DEBUG,
