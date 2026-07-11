@@ -13,6 +13,7 @@ $filter = $_GET["filter"] ?? "recent";
 <link rel="stylesheet" href="/example/style.css" />
 <script type="module" src="/dist/flux.js" defer></script>
 
+<body data-flux-scroll="smooth">
 <textarea class="scratchpad" placeholder="This scratchpad sits outside the update-link container. Follow links and submit the forms below to compare what gets replaced."></textarea>
 
 <main class="page-shell" data-flux="update-link">

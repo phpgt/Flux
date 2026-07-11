@@ -342,12 +342,14 @@ var FocusStateManager = class {
 
 // src/NavigationController.es6
 var NavigationController = class {
-  constructor(parser = new DOMParser(), fetcher = globalThis.fetch.bind(globalThis), historyObject = globalThis.history, logger = console, documentObject = globalThis.document) {
+  constructor(parser = new DOMParser(), fetcher = globalThis.fetch.bind(globalThis), historyObject = globalThis.history, logger = console, documentObject = globalThis.document, windowObject = globalThis.window, domPath = DomPath) {
     this.parser = parser;
     this.fetcher = fetcher;
     this.historyObject = historyObject;
     this.logger = logger;
     this.documentObject = documentObject;
+    this.windowObject = windowObject;
+    this.domPath = domPath;
   }
   submitForm(form, formData, onDocument, submitter = null) {
     return this.requestForm(form, formData, onDocument, submitter, "submitForm");
@@ -389,6 +391,7 @@ var NavigationController = class {
     return urlObject.toString();
   }
   clickLink(link, onDocument) {
+    let scrollState = this.getScrollStateForElement(link);
     return this.navigate(
       link,
       link.href,
@@ -397,7 +400,11 @@ var NavigationController = class {
       },
       {
         action: "clickLink",
-        errorPrefix: "Link fetch error"
+        errorPrefix: "Link fetch error",
+        scrollX: 0,
+        scrollY: 0,
+        scrollBehavior: scrollState.behavior,
+        scrollPath: scrollState.path
       },
       onDocument,
       this.getLinkWaitingTargets(link)
@@ -475,16 +482,90 @@ var NavigationController = class {
       let html = await response.text();
       let document2 = this.parser.parseFromString(html, "text/html");
       if (historyState.action) {
-        this.historyObject.pushState({
-          action: historyState.action
-        }, "", response.url);
+        this.storeScrollPositionForCurrentEntry(historyState);
+        this.historyObject.pushState(
+          this.createHistoryState(historyState),
+          "",
+          response.url
+        );
       }
-      onDocument(document2);
+      if (historyState.action === "clickLink") {
+        onDocument(document2, this.createHistoryState(historyState));
+      } else {
+        onDocument(document2);
+      }
       return document2;
     } catch (error) {
       this.logger.error(error);
       return null;
     }
+  }
+  createHistoryState(historyState) {
+    let state = {
+      action: historyState.action
+    };
+    if (Number.isFinite(historyState.scrollY)) {
+      state.fluxScrollX = Number.isFinite(historyState.scrollX) ? historyState.scrollX : 0;
+      state.fluxScrollY = historyState.scrollY;
+      if (historyState.scrollBehavior) {
+        state.fluxScrollBehavior = historyState.scrollBehavior;
+      }
+      if (historyState.scrollPath) {
+        state.fluxScrollPath = historyState.scrollPath;
+      }
+    }
+    return state;
+  }
+  storeScrollPositionForCurrentEntry(historyState = {}) {
+    if (typeof this.historyObject?.replaceState !== "function") {
+      return;
+    }
+    let currentState = this.historyObject.state;
+    if (!currentState || typeof currentState !== "object") {
+      currentState = {};
+    }
+    this.historyObject.replaceState({
+      ...currentState,
+      ...this.getCurrentScrollStateFromHistoryState(historyState, currentState)
+    }, "");
+  }
+  getCurrentScrollStateFromHistoryState(historyState, currentState) {
+    let scrollPath = historyState.scrollPath ?? currentState.fluxScrollPath;
+    let scrollElement = this.getScrollElementFromPath(scrollPath);
+    let state = this.getScrollStateForElement(scrollElement ?? this.documentObject?.body);
+    return {
+      fluxScrollX: state.x,
+      fluxScrollY: state.y,
+      ...state.behavior ? { fluxScrollBehavior: state.behavior } : {},
+      ...state.path ? { fluxScrollPath: state.path } : {}
+    };
+  }
+  getScrollStateForElement(element) {
+    let scrollElement = element?.closest?.("[data-flux-scroll]");
+    let behavior = scrollElement?.dataset?.fluxScroll;
+    if (behavior !== "smooth" && behavior !== "auto") {
+      behavior = null;
+    }
+    if (scrollElement && scrollElement !== this.documentObject?.body && scrollElement !== this.documentObject?.documentElement) {
+      return {
+        x: scrollElement.scrollLeft,
+        y: scrollElement.scrollTop,
+        behavior,
+        path: this.domPath.getXPathForElement(scrollElement, this.documentObject)
+      };
+    }
+    return {
+      x: this.windowObject?.scrollX ?? 0,
+      y: this.windowObject?.scrollY ?? 0,
+      behavior,
+      path: null
+    };
+  }
+  getScrollElementFromPath(path) {
+    if (!path || !this.documentObject) {
+      return null;
+    }
+    return this.domPath.findInDocument(this.documentObject, path);
   }
 };
 
@@ -926,7 +1007,6 @@ var LinkHandler = class {
   autoClick = (e) => {
     e.preventDefault();
     let link = e.currentTarget;
-    this.scrollToTop();
     setTimeout(() => {
       this.clickLink(link);
     }, 0);
@@ -936,16 +1016,6 @@ var LinkHandler = class {
       return Promise.resolve(null);
     }
     return this.navigationController.clickLink(link, this.onDocument);
-  }
-  scrollToTop() {
-    if (!this.windowObject || typeof this.windowObject.scrollTo !== "function") {
-      return;
-    }
-    this.windowObject.scrollTo({
-      top: 0,
-      left: 0,
-      behavior: "smooth"
-    });
   }
   isRateLimited(link) {
     let rate = Number.parseFloat(link.dataset["fluxRate"] ?? "");
@@ -964,6 +1034,32 @@ var LinkHandler = class {
   getRateLimitKey(link) {
     let path = this.domPath.getXPathForElement(link, document);
     return `link:${path}`;
+  }
+};
+
+// src/RuntimeConfig.es6
+var VALID_SCROLL_BEHAVIOURS = /* @__PURE__ */ new Set(["auto", "smooth"]);
+var RuntimeConfig = {
+  debug: false,
+  scrollToTopBehavior: "auto",
+  restoreScrollBehavior: "auto",
+  configure(config = {}) {
+    if (!config || typeof config !== "object") {
+      return;
+    }
+    if ("debug" in config) {
+      this.debug = Boolean(config.debug);
+    }
+    if (VALID_SCROLL_BEHAVIOURS.has(config.scrollBehavior)) {
+      this.scrollToTopBehavior = config.scrollBehavior;
+      this.restoreScrollBehavior = config.scrollBehavior;
+    }
+    if (VALID_SCROLL_BEHAVIOURS.has(config.scrollToTopBehavior)) {
+      this.scrollToTopBehavior = config.scrollToTopBehavior;
+    }
+    if (VALID_SCROLL_BEHAVIOURS.has(config.restoreScrollBehavior)) {
+      this.restoreScrollBehavior = config.restoreScrollBehavior;
+    }
   }
 };
 
@@ -1010,14 +1106,16 @@ var ResponseHandler = class _ResponseHandler {
     if (!this.isProcessableDocument(newDocument)) {
       return;
     }
+    let scrollState = this.isScrollState(requestElementState) ? requestElementState : null;
+    let elementState = scrollState ? null : requestElementState;
     this.scheduler(() => {
       this.documentUpdater.apply(
         newDocument,
         _ResponseHandler.LINK_UPDATE_TYPES,
         void 0,
-        requestElementState
+        elementState
       );
-      this.scrollToTopAfterPaint();
+      this.scrollToTopAfterPaint(scrollState);
     }, 0);
   };
   handleLiveDocument = (newDocument, allowedTargetKeys = void 0) => {
@@ -1039,26 +1137,55 @@ var ResponseHandler = class _ResponseHandler {
     }
     return true;
   }
-  scrollToTopImmediately() {
+  isScrollState(state) {
+    return !!state && typeof state === "object" && (Number.isFinite(state.fluxScrollY) || state.action === "clickLink");
+  }
+  scrollToTopImmediately(scrollState = null) {
+    let scrollTarget = this.getScrollTarget(scrollState);
+    let behavior = scrollState?.fluxScrollBehavior ?? RuntimeConfig.scrollToTopBehavior;
+    if (scrollTarget?.element) {
+      this.scrollElementTo(scrollTarget.element, 0, 0, behavior);
+      return;
+    }
     if (!this.windowObject || typeof this.windowObject.scrollTo !== "function") {
       return;
     }
     this.windowObject.scrollTo({
       top: 0,
       left: 0,
-      behavior: "auto"
+      behavior
     });
   }
-  scrollToTopAfterPaint() {
+  scrollElementTo(element, top, left, behavior) {
+    if (typeof element.scrollTo === "function") {
+      element.scrollTo({
+        top,
+        left,
+        behavior
+      });
+      return;
+    }
+    element.scrollTop = top;
+    element.scrollLeft = left;
+  }
+  getScrollTarget(scrollState) {
+    if (!scrollState?.fluxScrollPath) {
+      return { element: null };
+    }
+    return {
+      element: DomPath.findInDocument(globalThis.document, scrollState.fluxScrollPath)
+    };
+  }
+  scrollToTopAfterPaint(scrollState = null) {
     if (typeof this.animationFrame !== "function") {
       this.scheduler(() => {
-        this.scrollToTopImmediately();
+        this.scrollToTopImmediately(scrollState);
       }, 0);
       return;
     }
     this.animationFrame(() => {
       this.animationFrame(() => {
-        this.scrollToTopImmediately();
+        this.scrollToTopImmediately(scrollState);
       });
     });
   }
@@ -1859,11 +1986,6 @@ var Handler = class _Handler {
   };
 };
 
-// src/RuntimeConfig.es6
-var RuntimeConfig = {
-  debug: false
-};
-
 // src/Flux.es6
 var Flux = class _Flux {
   static get DEBUG() {
@@ -1888,7 +2010,10 @@ var Flux = class _Flux {
   dragOrderHandler;
   logger;
   constructor(style = void 0, elementEventMapper = void 0, parser = void 0, navigationController = void 0, updateTargetRegistry = void 0, focusStateManager = void 0, documentUpdater = void 0, directiveRegistry = void 0, domBridge = void 0, formHandler = void 0, linkHandler = void 0, responseHandler = void 0, liveHandler = void 0, logger = void 0, dragOrderHandler = void 0, autocompleteHandler = void 0) {
+    configureFromDocumentAttributes();
+    takeControlOfNativeScrollRestoration();
     handleWindowPopState();
+    restoreScrollPositionAfterReload();
     this.logger = logger ?? console;
     style = style ?? new Style();
     style.addToDocument();
@@ -2050,9 +2175,126 @@ var Flux = class _Flux {
   };
 };
 function handleWindowPopState() {
+  if (window.__fluxPopStateHandlerAttached) {
+    return;
+  }
+  window.__fluxPopStateHandlerAttached = true;
   window.addEventListener("popstate", (e) => {
+    storePopStateScrollPosition(e.state);
     location.href = document.location;
   });
+}
+function configureFromDocumentAttributes() {
+  let scrollBehavior = document.body?.dataset?.fluxScroll ?? document.documentElement?.dataset?.fluxScroll;
+  RuntimeConfig.configure({
+    scrollBehavior
+  });
+}
+function takeControlOfNativeScrollRestoration() {
+  if ("scrollRestoration" in history) {
+    history.scrollRestoration = "manual";
+  }
+}
+function storePopStateScrollPosition(state) {
+  let scrollPosition = getScrollPositionFromState(state);
+  if (!scrollPosition) {
+    return;
+  }
+  try {
+    sessionStorage.setItem(getScrollStorageKey(location.href), JSON.stringify(scrollPosition));
+  } catch (error) {
+  }
+}
+function getScrollPositionFromState(state) {
+  if (!state || typeof state !== "object") {
+    return null;
+  }
+  if (Number.isFinite(state.fluxScrollY)) {
+    return {
+      x: Number.isFinite(state.fluxScrollX) ? state.fluxScrollX : 0,
+      y: state.fluxScrollY,
+      behavior: state.fluxScrollBehavior,
+      path: state.fluxScrollPath
+    };
+  }
+  if (state.action === "clickLink") {
+    return {
+      x: 0,
+      y: 0
+    };
+  }
+  return null;
+}
+function restoreScrollPositionAfterReload() {
+  let scrollPosition = readStoredScrollPosition();
+  if (!scrollPosition) {
+    return;
+  }
+  let restore = () => window.scrollTo({
+    top: scrollPosition.y,
+    left: scrollPosition.x,
+    behavior: scrollPosition.behavior ?? RuntimeConfig.restoreScrollBehavior
+  });
+  let scrollTarget = getScrollTarget(scrollPosition);
+  if (scrollTarget) {
+    restore = () => scrollElementTo(
+      scrollTarget,
+      scrollPosition.y,
+      scrollPosition.x,
+      scrollPosition.behavior ?? RuntimeConfig.restoreScrollBehavior
+    );
+  }
+  if (typeof requestAnimationFrame !== "function") {
+    setTimeout(restore, 0);
+    return;
+  }
+  requestAnimationFrame(() => {
+    requestAnimationFrame(restore);
+  });
+  setTimeout(restore, 50);
+}
+function getScrollTarget(scrollPosition) {
+  if (!scrollPosition.path) {
+    return null;
+  }
+  return DomPath.findInDocument(document, scrollPosition.path);
+}
+function scrollElementTo(element, top, left, behavior) {
+  if (typeof element.scrollTo === "function") {
+    element.scrollTo({
+      top,
+      left,
+      behavior
+    });
+    return;
+  }
+  element.scrollTop = top;
+  element.scrollLeft = left;
+}
+function readStoredScrollPosition() {
+  let key = getScrollStorageKey(location.href);
+  try {
+    let value = sessionStorage.getItem(key);
+    sessionStorage.removeItem(key);
+    if (!value) {
+      return null;
+    }
+    let scrollPosition = JSON.parse(value);
+    if (!Number.isFinite(scrollPosition?.y)) {
+      return null;
+    }
+    return {
+      x: Number.isFinite(scrollPosition.x) ? scrollPosition.x : 0,
+      y: scrollPosition.y,
+      behavior: scrollPosition.behavior,
+      path: scrollPosition.path
+    };
+  } catch (error) {
+    return null;
+  }
+}
+function getScrollStorageKey(url) {
+  return `flux-scroll:${url}`;
 }
 
 // src/Debug.es6
@@ -2063,6 +2305,7 @@ var Debug = class {
 };
 
 // src/main.es6
+RuntimeConfig.configure(globalThis.FluxConfig);
 new Flux();
 export {
   Debug,

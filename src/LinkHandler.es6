@@ -2,8 +2,8 @@ import {DomPath} from "./DomPath.es6";
 
 /**
  * Wires data-flux link elements into background navigation.
- * It captures clicks, applies rate limiting, scrolls the page, and
- * delegates the fetch work to NavigationController.
+ * It captures clicks, applies rate limiting, and delegates the fetch work to
+ * NavigationController.
  */
 export class LinkHandler {
 	constructor(
@@ -32,7 +32,6 @@ export class LinkHandler {
 	autoClick = (e) => {
 		e.preventDefault();
 		let link = e.currentTarget;
-		this.scrollToTop();
 
 		setTimeout(() => {
 			this.clickLink(link);
@@ -45,18 +44,6 @@ export class LinkHandler {
 		}
 
 		return this.navigationController.clickLink(link, this.onDocument);
-	}
-
-	scrollToTop() {
-		if(!this.windowObject || typeof this.windowObject.scrollTo !== "function") {
-			return;
-		}
-
-		this.windowObject.scrollTo({
-			top: 0,
-			left: 0,
-			behavior: "smooth",
-		});
 	}
 
 	isRateLimited(link) {

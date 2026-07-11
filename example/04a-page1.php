@@ -13,6 +13,7 @@ $tag = $_GET["tag"] ?? "";
 <link rel="stylesheet" href="/example/style.css" />
 <script type="module" src="/dist/flux.js" defer></script>
 
+<body data-flux-scroll="smooth">
 <textarea class="scratchpad" placeholder="Type here, then move between Page 1 and Page 2 using the Flux links below."></textarea>
 
 <main class="page-shell" data-flux="update-link">

@@ -15,10 +15,18 @@ import {LiveHandler} from "../src/LiveHandler.es6";
 import {AutocompleteHandler} from "../src/AutocompleteHandler.es6";
 import {Handler as DragOrderHandler} from "../src/DragOrder/Handler.es6";
 import {Preview} from "../src/DragOrder/Preview.es6";
+import {RuntimeConfig} from "../src/RuntimeConfig.es6";
 
 beforeEach(() => {
 	document.body.innerHTML = "";
 	document.head.innerHTML = "";
+	document.body.removeAttribute("data-flux-scroll");
+	document.documentElement.removeAttribute("data-flux-scroll");
+	delete window.__fluxPopStateHandlerAttached;
+	sessionStorage.clear();
+	RuntimeConfig.debug = false;
+	RuntimeConfig.scrollToTopBehavior = "auto";
+	RuntimeConfig.restoreScrollBehavior = "auto";
 });
 
 describe("Flux", () => {
@@ -164,6 +172,60 @@ describe("Flux", () => {
 		expect(liveHandler.register).toHaveBeenCalledTimes(2);
 		expect(liveHandler.register).toHaveBeenNthCalledWith(1, "live-outer", document.querySelectorAll("section")[0]);
 		expect(liveHandler.register).toHaveBeenNthCalledWith(2, "live-inner", document.querySelectorAll("section")[1]);
+	});
+
+	it("configures scroll behaviour from data-flux-scroll on the html element", () => {
+		document.documentElement.dataset.fluxScroll = "smooth";
+
+		new Flux();
+
+		expect(RuntimeConfig.scrollToTopBehavior).toBe("smooth");
+		expect(RuntimeConfig.restoreScrollBehavior).toBe("smooth");
+	});
+
+	it("prefers data-flux-scroll on the body element over the html element", () => {
+		document.documentElement.dataset.fluxScroll = "smooth";
+		document.body.dataset.fluxScroll = "auto";
+
+		new Flux();
+
+		expect(RuntimeConfig.scrollToTopBehavior).toBe("auto");
+		expect(RuntimeConfig.restoreScrollBehavior).toBe("auto");
+	});
+});
+
+describe("RuntimeConfig", () => {
+	it("defaults scroll behaviours to auto", () => {
+		expect(RuntimeConfig.scrollToTopBehavior).toBe("auto");
+		expect(RuntimeConfig.restoreScrollBehavior).toBe("auto");
+	});
+
+	it("configures scroll behaviours with a shared shorthand or per-action values", () => {
+		RuntimeConfig.configure({
+			scrollBehavior: "smooth",
+		});
+
+		expect(RuntimeConfig.scrollToTopBehavior).toBe("smooth");
+		expect(RuntimeConfig.restoreScrollBehavior).toBe("smooth");
+
+		RuntimeConfig.configure({
+			scrollToTopBehavior: "auto",
+			restoreScrollBehavior: "smooth",
+		});
+
+		expect(RuntimeConfig.scrollToTopBehavior).toBe("auto");
+		expect(RuntimeConfig.restoreScrollBehavior).toBe("smooth");
+	});
+
+	it("ignores unsupported scroll behaviours", () => {
+		RuntimeConfig.configure({
+			scrollBehavior: "sideways",
+			scrollToTopBehavior: "quickly",
+			restoreScrollBehavior: "eventually",
+		});
+
+		expect(RuntimeConfig.scrollToTopBehavior).toBe("auto");
+		expect(RuntimeConfig.restoreScrollBehavior).toBe("auto");
 	});
 });
 
@@ -456,6 +518,107 @@ describe("NavigationController", () => {
 		expect(form.classList.contains("flux-form-waiting")).toBe(false);
 	});
 
+	it("stores current scroll before pushing a link entry that restores to the top", async () => {
+		document.body.innerHTML = `<a href="/next">Next</a>`;
+
+		let link = document.querySelector("a");
+		let callback = vi.fn();
+		let replaceState = vi.fn();
+		let pushState = vi.fn();
+		let fetcher = vi.fn().mockResolvedValue({
+			ok: true,
+			url: "https://example.com/next",
+			text: vi.fn().mockResolvedValue("<html><head></head><body><main>Next</main></body></html>"),
+		});
+		let navigationController = new NavigationController(
+			new DOMParser(),
+			fetcher,
+			{
+				state: {existing: true},
+				replaceState,
+				pushState,
+			},
+			{error: vi.fn()},
+			document,
+			{
+				scrollX: 12,
+				scrollY: 345,
+			},
+		);
+
+		await navigationController.clickLink(link, callback);
+
+		expect(replaceState).toHaveBeenCalledWith({
+			existing: true,
+			fluxScrollX: 12,
+			fluxScrollY: 345,
+		}, "");
+		expect(pushState).toHaveBeenCalledWith({
+			action: "clickLink",
+			fluxScrollX: 0,
+			fluxScrollY: 0,
+		}, "", "https://example.com/next");
+		expect(replaceState.mock.invocationCallOrder[0]).toBeLessThan(pushState.mock.invocationCallOrder[0]);
+	});
+
+	it("stores scoped scroll positions for links inside a data-flux-scroll element", async () => {
+		document.body.innerHTML = `
+		<section data-flux-scroll="smooth">
+			<a href="/next">Next</a>
+		</section>
+		`;
+
+		let section = document.querySelector("section");
+		Object.defineProperty(section, "scrollLeft", {
+			configurable: true,
+			value: 8,
+		});
+		Object.defineProperty(section, "scrollTop", {
+			configurable: true,
+			value: 123,
+		});
+		let link = document.querySelector("a");
+		let callback = vi.fn();
+		let replaceState = vi.fn();
+		let pushState = vi.fn();
+		let fetcher = vi.fn().mockResolvedValue({
+			ok: true,
+			url: "https://example.com/next",
+			text: vi.fn().mockResolvedValue("<html><head></head><body><main>Next</main></body></html>"),
+		});
+		let navigationController = new NavigationController(
+			new DOMParser(),
+			fetcher,
+			{
+				state: {},
+				replaceState,
+				pushState,
+			},
+			{error: vi.fn()},
+			document,
+			{
+				scrollX: 12,
+				scrollY: 345,
+			},
+		);
+
+		await navigationController.clickLink(link, callback);
+
+		expect(replaceState).toHaveBeenCalledWith({
+			fluxScrollX: 8,
+			fluxScrollY: 123,
+			fluxScrollBehavior: "smooth",
+			fluxScrollPath: "./BODY[1]/./SECTION[1]",
+		}, "");
+		expect(pushState).toHaveBeenCalledWith({
+			action: "clickLink",
+			fluxScrollX: 0,
+			fluxScrollY: 0,
+			fluxScrollBehavior: "smooth",
+			fluxScrollPath: "./BODY[1]/./SECTION[1]",
+		}, "", "https://example.com/next");
+	});
+
 	it("parses and applies HTML error responses for form submissions", async () => {
 		document.body.innerHTML = `
 		<form action="/submit" method="post">
@@ -597,8 +760,15 @@ describe("NavigationController", () => {
 		let result = await navigationController.clickLink(link, callback);
 
 		expect(result).toBeInstanceOf(Document);
-		expect(callback).toHaveBeenCalledWith(expect.any(Document));
-		expect(pushState).toHaveBeenCalledWith({action: "clickLink"}, "", "https://example.com/missing");
+		expect(callback).toHaveBeenCalledWith(expect.any(Document), expect.objectContaining({
+			action: "clickLink",
+			fluxScrollY: 0,
+		}));
+		expect(pushState).toHaveBeenCalledWith({
+			action: "clickLink",
+			fluxScrollX: 0,
+			fluxScrollY: 0,
+		}, "", "https://example.com/missing");
 		expect(logger.error).not.toHaveBeenCalled();
 	});
 
@@ -2841,10 +3011,85 @@ describe("ResponseHandler", () => {
 			behavior: "auto",
 		});
 	});
+
+	it("uses the configured scroll behaviour when moving link updates to the top", () => {
+		RuntimeConfig.configure({
+			scrollToTopBehavior: "smooth",
+		});
+		let apply = vi.fn();
+		let scrollTo = vi.fn();
+		let scheduler = vi.fn((callback) => callback());
+		let animationFrame = vi.fn((callback) => callback());
+		let handler = new ResponseHandler(
+			{apply},
+			{error: vi.fn()},
+			false,
+			scheduler,
+			vi.fn(),
+			vi.fn(),
+			{scrollTo},
+			animationFrame,
+		);
+		let newDocument = new DOMParser().parseFromString(`
+			<html>
+				<head><title>Ok</title></head>
+				<body></body>
+			</html>
+		`, "text/html");
+
+		handler.handleLinkDocument(newDocument);
+
+		expect(scrollTo).toHaveBeenCalledWith({
+			top: 0,
+			left: 0,
+			behavior: "smooth",
+		});
+	});
+
+	it("scrolls the scoped data-flux-scroll element to the top after link updates", () => {
+		document.body.innerHTML = `<section data-flux-scroll="smooth"></section>`;
+		let section = document.querySelector("section");
+		section.scrollTo = vi.fn();
+		let apply = vi.fn();
+		let windowScrollTo = vi.fn();
+		let scheduler = vi.fn((callback) => callback());
+		let animationFrame = vi.fn((callback) => callback());
+		let handler = new ResponseHandler(
+			{apply},
+			{error: vi.fn()},
+			false,
+			scheduler,
+			vi.fn(),
+			vi.fn(),
+			{scrollTo: windowScrollTo},
+			animationFrame,
+		);
+		let newDocument = new DOMParser().parseFromString(`
+			<html>
+				<head><title>Ok</title></head>
+				<body></body>
+			</html>
+		`, "text/html");
+
+		handler.handleLinkDocument(newDocument, {
+			action: "clickLink",
+			fluxScrollBehavior: "smooth",
+			fluxScrollPath: "./BODY[1]/./SECTION[1]",
+			fluxScrollX: 0,
+			fluxScrollY: 0,
+		});
+
+		expect(section.scrollTo).toHaveBeenCalledWith({
+			top: 0,
+			left: 0,
+			behavior: "smooth",
+		});
+		expect(windowScrollTo).not.toHaveBeenCalled();
+	});
 });
 
 describe("LinkHandler", () => {
-	it("scrolls to the top smoothly as soon as a flux link is clicked", () => {
+	it("does not scroll the current history entry before a flux link request starts", () => {
 		let scrollTo = vi.fn();
 		let navigationController = {clickLink: vi.fn()};
 		let handler = new LinkHandler(
@@ -2862,11 +3107,7 @@ describe("LinkHandler", () => {
 		});
 
 		expect(preventDefault).toHaveBeenCalled();
-		expect(scrollTo).toHaveBeenCalledWith({
-			top: 0,
-			left: 0,
-			behavior: "smooth",
-		});
+		expect(scrollTo).not.toHaveBeenCalled();
 		expect(navigationController.clickLink).not.toHaveBeenCalled();
 	});
 

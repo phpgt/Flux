@@ -13,6 +13,7 @@ $tone = $_GET["tone"] ?? "plain";
 <link rel="stylesheet" href="/example/style.css" />
 <script type="module" src="/dist/flux.js" defer></script>
 
+<body data-flux-scroll="smooth">
 <textarea class="scratchpad" placeholder="This textarea remains outside the link-only update target."></textarea>
 
 <main class="page-shell" data-flux="update-link">

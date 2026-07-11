@@ -1,3 +1,5 @@
+import {DomPath} from "./DomPath.es6";
+
 /**
  * Performs the network requests behind Flux forms, links, and live polling.
  * Converts responses into documents, updates browser history where appropriate,
@@ -10,12 +12,16 @@ export class NavigationController {
 		historyObject = globalThis.history,
 		logger = console,
 		documentObject = globalThis.document,
+		windowObject = globalThis.window,
+		domPath = DomPath,
 	) {
 		this.parser = parser;
 		this.fetcher = fetcher;
 		this.historyObject = historyObject;
 		this.logger = logger;
 		this.documentObject = documentObject;
+		this.windowObject = windowObject;
+		this.domPath = domPath;
 	}
 
 	submitForm(form, formData, onDocument, submitter = null) {
@@ -67,6 +73,7 @@ export class NavigationController {
 	}
 
 	clickLink(link, onDocument) {
+		let scrollState = this.getScrollStateForElement(link);
 		return this.navigate(
 			link,
 			link.href,
@@ -76,6 +83,10 @@ export class NavigationController {
 			{
 				action: "clickLink",
 				errorPrefix: "Link fetch error",
+				scrollX: 0,
+				scrollY: 0,
+				scrollBehavior: scrollState.behavior,
+				scrollPath: scrollState.path,
 			},
 			onDocument,
 			this.getLinkWaitingTargets(link),
@@ -167,17 +178,105 @@ export class NavigationController {
 			let html = await response.text();
 			let document = this.parser.parseFromString(html, "text/html");
 			if(historyState.action) {
-				this.historyObject.pushState({
-					action: historyState.action,
-				}, "", response.url);
+				this.storeScrollPositionForCurrentEntry(historyState);
+				this.historyObject.pushState(
+					this.createHistoryState(historyState),
+					"",
+					response.url,
+				);
 			}
 
-			onDocument(document);
+			if(historyState.action === "clickLink") {
+				onDocument(document, this.createHistoryState(historyState));
+			}
+			else {
+				onDocument(document);
+			}
 			return document;
 		}
 		catch(error) {
 			this.logger.error(error);
 			return null;
 		}
+	}
+
+	createHistoryState(historyState) {
+		let state = {
+			action: historyState.action,
+		};
+
+		if(Number.isFinite(historyState.scrollY)) {
+			state.fluxScrollX = Number.isFinite(historyState.scrollX) ? historyState.scrollX : 0;
+			state.fluxScrollY = historyState.scrollY;
+			if(historyState.scrollBehavior) {
+				state.fluxScrollBehavior = historyState.scrollBehavior;
+			}
+			if(historyState.scrollPath) {
+				state.fluxScrollPath = historyState.scrollPath;
+			}
+		}
+
+		return state;
+	}
+
+	storeScrollPositionForCurrentEntry(historyState = {}) {
+		if(typeof this.historyObject?.replaceState !== "function") {
+			return;
+		}
+
+		let currentState = this.historyObject.state;
+		if(!currentState || typeof currentState !== "object") {
+			currentState = {};
+		}
+
+		this.historyObject.replaceState({
+			...currentState,
+			...this.getCurrentScrollStateFromHistoryState(historyState, currentState),
+		}, "");
+	}
+
+	getCurrentScrollStateFromHistoryState(historyState, currentState) {
+		let scrollPath = historyState.scrollPath ?? currentState.fluxScrollPath;
+		let scrollElement = this.getScrollElementFromPath(scrollPath);
+		let state = this.getScrollStateForElement(scrollElement ?? this.documentObject?.body);
+
+		return {
+			fluxScrollX: state.x,
+			fluxScrollY: state.y,
+			...(state.behavior ? {fluxScrollBehavior: state.behavior} : {}),
+			...(state.path ? {fluxScrollPath: state.path} : {}),
+		};
+	}
+
+	getScrollStateForElement(element) {
+		let scrollElement = element?.closest?.("[data-flux-scroll]");
+		let behavior = scrollElement?.dataset?.fluxScroll;
+		if(behavior !== "smooth" && behavior !== "auto") {
+			behavior = null;
+		}
+
+		if(scrollElement && scrollElement !== this.documentObject?.body && scrollElement !== this.documentObject?.documentElement) {
+			return {
+				x: scrollElement.scrollLeft,
+				y: scrollElement.scrollTop,
+				behavior,
+				path: this.domPath.getXPathForElement(scrollElement, this.documentObject),
+			};
+		}
+
+		return {
+			x: this.windowObject?.scrollX ?? 0,
+			y: this.windowObject?.scrollY ?? 0,
+			behavior,
+			path: null,
+		};
+	}
+
+	getScrollElementFromPath(path) {
+		if(!path || !this.documentObject) {
+			return null;
+		}
+
+		return this.domPath.findInDocument(this.documentObject, path);
 	}
 }
