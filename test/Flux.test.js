@@ -71,14 +71,14 @@ describe("Flux", () => {
 
 		let form = document.forms[0];
 		let elementEventMapper = new ElementEventMapper();
-		const spy = vi.spyOn(elementEventMapper, "addToMapType");
-		let flux = new Flux(undefined, elementEventMapper);
-		expect(spy).toHaveBeenCalledTimes(1);
-		expect(spy).toHaveBeenCalledWith(
-			expect.any(HTMLElement),
-			"submit",
-			expect.any(Function),
-		);
+		new Flux(undefined, elementEventMapper);
+		let records = elementEventMapper.get(form);
+		expect(records).toHaveLength(1);
+		expect(records[0]).toMatchObject({
+			type: "submit",
+			listener: expect.any(Function),
+			capture: false,
+		});
 	});
 
 	it("treats data-flux on buttons as shorthand for data-flux=submit", () => {
@@ -2829,6 +2829,48 @@ function createStyleDeclaration(properties) {
 }
 
 describe("DomBridge", () => {
+	it("does not reattach listeners that were removed before replacement", () => {
+		document.body.innerHTML = `<main><div></div></main>`;
+		let oldElement = document.querySelector("main");
+		let oldDiv = oldElement.querySelector("div");
+		let newElement = new DOMParser()
+			.parseFromString(`<main><div></div></main>`, "text/html")
+			.querySelector("main");
+		let newDiv = newElement.querySelector("div");
+		let listener = vi.fn();
+		let elementEventMapper = new ElementEventMapper();
+		let bridge = new DomBridge(elementEventMapper, vi.fn());
+
+		oldDiv.addEventListener("transitionend", listener);
+		oldDiv.removeEventListener("transitionend", listener);
+		bridge.prepareElementUpdate(oldElement, newElement);
+
+		newDiv.dispatchEvent(new Event("transitionend"));
+
+		expect(listener).not.toHaveBeenCalled();
+		expect(elementEventMapper.has(oldDiv)).toBe(false);
+	});
+
+	it("reattaches listeners with their original options", () => {
+		document.body.innerHTML = `<main><button>Save</button></main>`;
+		let oldElement = document.querySelector("main");
+		let oldButton = oldElement.querySelector("button");
+		let newElement = new DOMParser()
+			.parseFromString(`<main><button>Save</button></main>`, "text/html")
+			.querySelector("main");
+		let newButton = newElement.querySelector("button");
+		let listener = vi.fn();
+		let elementEventMapper = new ElementEventMapper();
+		let bridge = new DomBridge(elementEventMapper, vi.fn());
+
+		oldButton.addEventListener("click", listener, {once: true});
+		bridge.prepareElementUpdate(oldElement, newElement);
+		newButton.dispatchEvent(new Event("click"));
+		newButton.dispatchEvent(new Event("click"));
+
+		expect(listener).toHaveBeenCalledTimes(1);
+	});
+
 	it("reinitialises flux elements and transfers fluxObj during element replacement", () => {
 		document.body.innerHTML = `
 		<div>

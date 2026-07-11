@@ -1,51 +1,51 @@
 /**
- * Records event listeners added to DOM elements after Flux starts.
- * It wraps Element.addEventListener so DomBridge can reattach those
+ * Records event listeners added to event targets after Flux starts.
+ * It wraps EventTarget listener methods so DomBridge can reattach those
  * listeners when an updated response replaces existing elements.
  */
 export class ElementEventMapper {
+	static addEventListenerOriginal = EventTarget.prototype.addEventListener;
+	static removeEventListenerOriginal = EventTarget.prototype.removeEventListener;
+	static activeMapper;
+	static installed = false;
+
 	map;
-	addEventListenerOriginal;
 
 	constructor(logger = console, debug = false) {
 // TODO: Is a WeakMap a better choice than Map? WeakMaps will automatically get garbage-collected when DOM nodes are removed, but do not have iteration functions.
 		this.map = new WeakMap();
-		this.addEventListenerOriginal = EventTarget.prototype.addEventListener;
 		this.logger = logger;
 		this.debug = debug;
 
-		const self = this;
-		Element.prototype.addEventListener = function(type, listener, options) {
-			self.addEventListenerFlux(type, listener, options, this);
-		};
+		ElementEventMapper.activeMapper = this;
+		ElementEventMapper.install();
 	}
 
 	has(element) {
-		return this.map.has(element);
+		return this.get(element).length > 0;
 	}
 
 	get(element) {
-		return this.map.get(element);
+		return this.map.get(element) ?? [];
 	}
 
 	/**
-	 * This function overrides the Element.addEventListener function. It is
+	 * This function wraps the EventTarget.addEventListener function. It is
 	 * required because Flux needs to keep track of all events that are
-	 * added to individual elements, so that when it updates the DOM and
-	 * replaces elements in place, it can re-attach any added events to the
-	 * newly replaced elements.
+	 * added to individual targets, so that when it updates the DOM and
+	 * replaces elements in place, it can re-attach current events to the
+	 * newly replaced elements using the original listener options.
 	 *
-	 * The added functionality here stores a record of all "listener"
-	 * functions that are added to elements, within the this.map data
-	 * structure. Once we've kept a record of this, we call the original
-	 * addEventListener function of the browser.
+	 * The added functionality here stores listener records in this.map.
+	 * Once we've kept a record of this, we call the original
+	 * addEventListener function of the browser. Listener identity follows
+	 * the browser's duplicate/removal key: type, listener and capture.
 	 */
 	addEventListenerFlux = (type, listener, options, element) => {
-// TODO: Do we need to store the "options" in here as a tuple?
-		if(!this.mapTypeContains(element, type, listener)) {
-			this.addToMapType(element, type, listener);
+		if(listener) {
+			this.addToMap(element, type, listener, options);
 		}
-		this.addEventListenerOriginal.call(
+		ElementEventMapper.addEventListenerOriginal.call(
 			element,
 			type,
 			listener,
@@ -57,32 +57,93 @@ export class ElementEventMapper {
 		}
 	}
 
-	mapTypeContains = (element, type, listener) => {
-		let mapObj = this.map.get(element);
-
-		if(!mapObj || !mapObj[type]) {
-			return false;
+	removeEventListenerFlux = (type, listener, options, element) => {
+		if(listener) {
+			this.removeFromMap(element, type, listener, options);
 		}
+		ElementEventMapper.removeEventListenerOriginal.call(
+			element,
+			type,
+			listener,
+			options,
+		);
 
-		return mapObj[type].includes(listener);
+		if(this.debug) {
+			this.logger.debug(`Event ${type} removed from element:`, element);
+		}
 	}
 
-	addToMapType = (element, type, listener) => {
-		let mapObj = this.map.get(element);
+	addToMap(element, type, listener, options) {
+		let records = this.get(element);
+		let capture = this.getCapture(options);
 
-		if(!mapObj) {
-			mapObj = {};
-			this.map.set(element, mapObj);
+		if(this.contains(records, type, listener, capture)) {
+			return;
 		}
 
-		if(!mapObj[type]) {
-			mapObj[type] = [];
+		records.push({type, listener, options, capture});
+		this.map.set(element, records);
+	}
+
+	removeFromMap(element, type, listener, options) {
+		let records = this.get(element);
+		let capture = this.getCapture(options);
+
+		records = records.filter(record => {
+			return !this.matches(record, type, listener, capture);
+		});
+
+		if(records.length > 0) {
+			this.map.set(element, records);
+		}
+		else {
+			this.map.delete(element);
+		}
+	}
+
+	contains(records, type, listener, capture) {
+		return records.some(record => this.matches(record, type, listener, capture));
+	}
+
+	matches(record, type, listener, capture) {
+		return record.type === type
+			&& record.listener === listener
+			&& record.capture === capture;
+	}
+
+	getCapture(options) {
+		if(typeof options === "boolean") {
+			return options;
 		}
 
-		if(!mapObj[type].includes(listener)) {
-			mapObj[type].push(listener);
+		return Boolean(options?.capture);
+	}
+
+	static install() {
+		if(ElementEventMapper.installed) {
+			return;
 		}
-// Objects and arrays are passed by reference in ES6, so there's no need to
-// update this.map or mapObj's contents.
+
+		EventTarget.prototype.addEventListener = function(type, listener, options) {
+			let mapper = ElementEventMapper.activeMapper;
+			if(mapper) {
+				mapper.addEventListenerFlux(type, listener, options, this);
+				return;
+			}
+
+			ElementEventMapper.addEventListenerOriginal.call(this, type, listener, options);
+		};
+
+		EventTarget.prototype.removeEventListener = function(type, listener, options) {
+			let mapper = ElementEventMapper.activeMapper;
+			if(mapper) {
+				mapper.removeEventListenerFlux(type, listener, options, this);
+				return;
+			}
+
+			ElementEventMapper.removeEventListenerOriginal.call(this, type, listener, options);
+		};
+
+		ElementEventMapper.installed = true;
 	}
 }

@@ -53,13 +53,10 @@ export class DomBridge {
 			return;
 		}
 
-		let mapObj = this.elementEventMapper.get(oldElement);
-		for(let type of Object.keys(mapObj)) {
-			for(let listener of mapObj[type]) {
-				newElement.addEventListener(type, listener);
-				if(this.debug) {
-					this.logger.debug("Reattached listener to element:", newElement, listener);
-				}
+		for(let record of this.elementEventMapper.get(oldElement)) {
+			newElement.addEventListener(record.type, record.listener, record.options);
+			if(this.debug) {
+				this.logger.debug("Reattached listener to element:", newElement, record.listener);
 			}
 		}
 	}
