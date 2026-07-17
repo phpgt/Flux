@@ -82,21 +82,40 @@ export class LiveHandler {
 
 		this.inFlight = true;
 		try {
+			let targetsRefreshed = false;
 			await this.navigationController.pollDocument(
 				this.locationObject.href,
 				newDocument => {
-					let refreshedAt = this.now();
-					for(let target of dueTargets) {
-						this.lastRefreshMap.set(target.key, refreshedAt);
-					}
-
+					this.markTargetsRefreshed(dueTargets);
+					targetsRefreshed = true;
 					this.onDocument(newDocument, dueTargets.map(target => target.key));
 				},
 			);
+
+			if(!targetsRefreshed) {
+				this.markTargetsRefreshed(dueTargets);
+			}
 		}
 		finally {
 			this.inFlight = false;
 			this.ensureRunning();
+		}
+	}
+
+	markTargetsRefreshed(targets) {
+		let refreshedAt = this.now();
+		for(let target of targets) {
+			this.lastRefreshMap.set(target.key, refreshedAt);
+		}
+	}
+
+	markAllTargetsRefreshed = () => {
+		let refreshedAt = this.now();
+
+		for(let type of LiveHandler.UPDATE_TYPES) {
+			for(let element of this.getConnectedElements(type)) {
+				this.lastRefreshMap.set(this.getTargetKey(type, element), refreshedAt);
+			}
 		}
 	}
 

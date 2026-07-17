@@ -46,6 +46,28 @@ describe("Flux", () => {
 		expect(spy).toHaveBeenCalledWith("submit", expect.any(Function));
 	});
 
+	it("registers form elements marked with data-flux as outer update targets", () => {
+		document.body.innerHTML = `
+		<form method="post" data-flux>
+			<input name="message">
+			<button>Send</button>
+		</form>
+		`;
+
+		let updateTargetRegistry = new UpdateTargetRegistry();
+		let form = document.querySelector("form");
+
+		new Flux(
+			undefined,
+			undefined,
+			undefined,
+			undefined,
+			updateTargetRegistry,
+		);
+
+		expect(updateTargetRegistry.getElements("outer")).toEqual([form]);
+	});
+
 	it("treats data-flux on anchors as shorthand for data-flux=link", () => {
 		document.body.innerHTML = `
 		<h1>This is a test!</h1>
@@ -518,6 +540,51 @@ describe("NavigationController", () => {
 		expect(form.classList.contains("flux-form-waiting")).toBe(false);
 	});
 
+	it("dispatches before-request and uses mutated request details", async () => {
+		document.body.innerHTML = `<a href="/next">Next</a>`;
+
+		let link = document.querySelector("a");
+		let callback = vi.fn();
+		let fetcher = vi.fn().mockResolvedValue({
+			ok: true,
+			url: "https://example.com/mutated",
+			text: vi.fn().mockResolvedValue("<html><head></head><body><main>Next</main></body></html>"),
+		});
+		let listener = vi.fn(event => {
+			event.detail.url = "https://example.com/mutated";
+			event.detail.requestOptions.headers = {
+				"X-Flux-Test": "yes",
+			};
+		});
+		document.addEventListener("flux:before-request", listener);
+		let navigationController = new NavigationController(
+			new DOMParser(),
+			fetcher,
+			{pushState: vi.fn(), replaceState: vi.fn()},
+			{error: vi.fn()},
+			document,
+		);
+
+		await navigationController.clickLink(link, callback);
+
+		expect(listener).toHaveBeenCalledTimes(1);
+		expect(listener.mock.calls[0][0].detail).toMatchObject({
+			method: "get",
+			historyState: expect.objectContaining({
+				action: "clickLink",
+			}),
+		});
+		expect(fetcher).toHaveBeenCalledWith("https://example.com/mutated", {
+			credentials: "same-origin",
+			method: "get",
+			headers: {
+				"X-Flux-Test": "yes",
+			},
+		});
+
+		document.removeEventListener("flux:before-request", listener);
+	});
+
 	it("stores current scroll before pushing a link entry that restores to the top", async () => {
 		document.body.innerHTML = `<a href="/next">Next</a>`;
 
@@ -796,6 +863,36 @@ describe("NavigationController", () => {
 		expect(logger.error).toHaveBeenCalledWith(expect.any(Error));
 	});
 
+	it("treats live polling 304 responses as unchanged documents", async () => {
+		let callback = vi.fn();
+		let logger = {error: vi.fn()};
+		let text = vi.fn();
+		let fetcher = vi.fn().mockResolvedValue({
+			ok: false,
+			status: 304,
+			statusText: "Not Modified",
+			url: "https://example.com/live",
+			text,
+		});
+		let navigationController = new NavigationController(
+			new DOMParser(),
+			fetcher,
+			{pushState: vi.fn()},
+			logger,
+		);
+
+		let result = await navigationController.pollDocument("https://example.com/live", callback);
+
+		expect(result).toBeNull();
+		expect(callback).not.toHaveBeenCalled();
+		expect(fetcher).toHaveBeenCalledWith("https://example.com/live", {
+			credentials: "same-origin",
+			method: "get",
+		});
+		expect(text).not.toHaveBeenCalled();
+		expect(logger.error).not.toHaveBeenCalled();
+	});
+
 	it("polls the current document without pushing history state", async () => {
 		let callback = vi.fn();
 		let pushState = vi.fn();
@@ -958,6 +1055,75 @@ describe("DocumentUpdater", () => {
 
 		expect(document.querySelector("section")).toBe(existingElement);
 		expect(existingElement.innerHTML).toBe("<strong>New</strong>");
+	});
+
+	it("dispatches before-render and after-render events around an update batch", () => {
+		document.body.innerHTML = `
+		<main data-flux="update-outer"><span>Old outer</span></main>
+		<section data-flux="update-inner"><span>Old inner</span></section>
+		`;
+
+		let existingOuter = document.querySelector("main");
+		let existingInner = document.querySelector("section");
+		let updateTargetRegistry = new UpdateTargetRegistry();
+		updateTargetRegistry.add(existingOuter, "outer");
+		updateTargetRegistry.add(existingInner, "inner");
+		let beforeRender = vi.fn(event => {
+			expect(document.querySelector("main")).toBe(existingOuter);
+			expect(existingInner.innerHTML).toBe("<span>Old inner</span>");
+			expect(event.detail.updates).toHaveLength(2);
+			expect(event.detail.updates[0]).toMatchObject({
+				type: "outer",
+				mode: "outer",
+				existingElement: existingOuter,
+				newElement: expect.any(HTMLElement),
+			});
+			expect(event.detail.updates[1]).toMatchObject({
+				type: "inner",
+				mode: "inner",
+				existingElement: existingInner,
+				newElement: expect.any(HTMLElement),
+			});
+			expect(event.detail.updates[0].newElement.textContent).toBe("New outer");
+			expect(event.detail.updates[1].newElement.innerHTML).toBe("<strong>New inner</strong>");
+		});
+		let afterRender = vi.fn(event => {
+			expect(document.querySelector("main").textContent).toBe("New outer");
+			expect(existingInner.innerHTML).toBe("<strong>New inner</strong>");
+			expect(event.detail.updates).toHaveLength(2);
+			expect(event.detail.updates[0].element).toBe(document.querySelector("main"));
+			expect(event.detail.updates[1].element).toBe(existingInner);
+		});
+		document.addEventListener("flux:before-render", beforeRender);
+		document.addEventListener("flux:after-render", afterRender);
+		let documentUpdater = new DocumentUpdater(
+			updateTargetRegistry,
+			{
+				markAutofocus: vi.fn(),
+				capturePendingActiveElement: vi.fn().mockReturnValue(null),
+				captureElementState: vi.fn().mockReturnValue(null),
+				restoreElementState: vi.fn(),
+				restorePendingActiveElement: vi.fn(),
+				focusMarkedAutofocusElements: vi.fn(),
+			},
+			vi.fn(),
+		);
+		let newDocument = new DOMParser().parseFromString(`
+			<html>
+				<body>
+					<main data-flux="update-outer"><span>New outer</span></main>
+					<section data-flux="update-inner"><strong>New inner</strong></section>
+				</body>
+			</html>
+		`, "text/html");
+
+		documentUpdater.apply(newDocument);
+
+		expect(beforeRender).toHaveBeenCalledTimes(1);
+		expect(afterRender).toHaveBeenCalledTimes(1);
+
+		document.removeEventListener("flux:before-render", beforeRender);
+		document.removeEventListener("flux:after-render", afterRender);
 	});
 
 	it("runs the completion hook after inner update children are inserted", () => {
@@ -1200,6 +1366,48 @@ describe("DocumentUpdater", () => {
 
 		documentUpdater.apply(newDocument, ["inner", "link-outer"]);
 
+		expect(updateTargetRegistry.getElements("inner")).toEqual([]);
+		expect(document.querySelector("main").textContent).toContain("New inner");
+	});
+
+	it("drops nested targets even when they were registered before their outer container", () => {
+		document.body.innerHTML = `
+		<main data-flux="update-link">
+			<section data-flux="update-inner"><span>Old inner</span></section>
+		</main>
+		`;
+
+		let existingOuter = document.querySelector("main");
+		let existingInner = document.querySelector("section");
+		let updateTargetRegistry = new UpdateTargetRegistry();
+		updateTargetRegistry.add(existingInner, "inner");
+		updateTargetRegistry.add(existingOuter, "link-outer");
+		let documentUpdater = new DocumentUpdater(
+			updateTargetRegistry,
+			{
+				markAutofocus: vi.fn(),
+				capturePendingActiveElement: vi.fn().mockReturnValue(null),
+				captureElementState: vi.fn().mockReturnValue(null),
+				restoreElementState: vi.fn(),
+				restorePendingActiveElement: vi.fn(),
+				focusMarkedAutofocusElements: vi.fn(),
+			},
+			vi.fn(),
+		);
+		let applyInnerUpdateSpy = vi.spyOn(documentUpdater, "applyInnerUpdate");
+		let newDocument = new DOMParser().parseFromString(`
+			<html>
+				<body>
+					<main data-flux="update-link">
+						<section data-flux="update-inner"><strong>New inner</strong></section>
+					</main>
+				</body>
+			</html>
+		`, "text/html");
+
+		documentUpdater.apply(newDocument, ["inner", "link-outer"]);
+
+		expect(applyInnerUpdateSpy).not.toHaveBeenCalled();
 		expect(updateTargetRegistry.getElements("inner")).toEqual([]);
 		expect(document.querySelector("main").textContent).toContain("New inner");
 	});
@@ -2903,6 +3111,7 @@ describe("ResponseHandler", () => {
 	it("schedules document updates when the response document is valid", () => {
 		let apply = vi.fn();
 		let scheduler = vi.fn((callback) => callback());
+		let onLiveDocumentUsed = vi.fn();
 		let handler = new ResponseHandler(
 			{apply},
 			{error: vi.fn()},
@@ -2910,6 +3119,9 @@ describe("ResponseHandler", () => {
 			scheduler,
 			vi.fn(),
 			vi.fn(),
+			undefined,
+			undefined,
+			onLiveDocumentUsed,
 		);
 		let newDocument = new DOMParser().parseFromString(`
 			<html>
@@ -2921,7 +3133,13 @@ describe("ResponseHandler", () => {
 		handler.handleDocument(newDocument);
 
 		expect(scheduler).toHaveBeenCalledWith(expect.any(Function), 0);
-			expect(apply).toHaveBeenCalledWith(newDocument, ["outer", "inner", "attributes"], undefined, null);
+		expect(apply).toHaveBeenCalledWith(
+			newDocument,
+			["outer", "inner", "attributes", "live-outer", "live-inner"],
+			undefined,
+			null,
+		);
+		expect(onLiveDocumentUsed).toHaveBeenCalledTimes(1);
 	});
 
 	it("routes live refresh documents to the live update types only", () => {
@@ -2998,12 +3216,12 @@ describe("ResponseHandler", () => {
 
 		handler.handleLinkDocument(newDocument);
 
-			expect(apply).toHaveBeenCalledWith(
-				newDocument,
-				["outer", "inner", "attributes", "link-outer", "link-inner"],
-				undefined,
-				null,
-			);
+		expect(apply).toHaveBeenCalledWith(
+			newDocument,
+			["outer", "inner", "attributes", "live-outer", "live-inner", "link-outer", "link-inner"],
+			undefined,
+			null,
+		);
 		expect(animationFrame).toHaveBeenCalledTimes(2);
 		expect(scrollTo).toHaveBeenCalledWith({
 			top: 0,
@@ -3285,6 +3503,74 @@ describe("LiveHandler", () => {
 		expect(onDocument).toHaveBeenCalledWith(expect.any(Document), [mainKey]);
 		expect(handler.lastRefreshMap.get(mainKey)).toBe(1000);
 		expect(handler.lastRefreshMap.get(sectionKey)).toBe(0);
+	});
+
+	it("records a live refresh attempt when the response is not modified", async() => {
+		document.body.innerHTML = `<main data-flux="live" data-flux-rate="10"></main>`;
+
+		let updateTargetRegistry = new UpdateTargetRegistry();
+		let now = 10000;
+		let onDocument = vi.fn();
+		let pollDocument = vi.fn().mockResolvedValue(null);
+		let handler = new LiveHandler(
+			{pollDocument},
+			updateTargetRegistry,
+			onDocument,
+			console,
+			false,
+			vi.fn().mockReturnValue(1),
+			vi.fn(),
+			{href: "https://example.com/live"},
+			1000,
+			() => now,
+			DomPath,
+		);
+		let main = document.querySelector("main");
+		let mainKey = handler.getTargetKey("live-outer", main);
+		updateTargetRegistry.add(main, "live-outer");
+		handler.lastRefreshMap.set(mainKey, 0);
+
+		await handler.pollDocument();
+
+		expect(pollDocument).toHaveBeenCalledWith("https://example.com/live", expect.any(Function));
+		expect(onDocument).not.toHaveBeenCalled();
+		expect(handler.lastRefreshMap.get(mainKey)).toBe(10000);
+	});
+
+	it("can mark all live targets refreshed after another Flux response uses the document", () => {
+		document.body.innerHTML = `
+		<main data-flux="live" data-flux-rate="10"></main>
+		<section data-flux="live-inner" data-flux-rate="20"></section>
+		`;
+
+		let updateTargetRegistry = new UpdateTargetRegistry();
+		let now = 12000;
+		let handler = new LiveHandler(
+			{pollDocument: vi.fn()},
+			updateTargetRegistry,
+			vi.fn(),
+			console,
+			false,
+			vi.fn(),
+			vi.fn(),
+			{href: "https://example.com/live"},
+			1000,
+			() => now,
+			DomPath,
+		);
+		let main = document.querySelector("main");
+		let section = document.querySelector("section");
+		let mainKey = handler.getTargetKey("live-outer", main);
+		let sectionKey = handler.getTargetKey("live-inner", section);
+		updateTargetRegistry.add(main, "live-outer");
+		updateTargetRegistry.add(section, "live-inner");
+		handler.lastRefreshMap.set(mainKey, 0);
+		handler.lastRefreshMap.set(sectionKey, 1000);
+
+		handler.markAllTargetsRefreshed();
+
+		expect(handler.lastRefreshMap.get(mainKey)).toBe(12000);
+		expect(handler.lastRefreshMap.get(sectionKey)).toBe(12000);
 	});
 
 	it("continues polling after a live outer element is replaced", async () => {
