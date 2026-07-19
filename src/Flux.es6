@@ -122,6 +122,7 @@ export class Flux {
 			() => Date.now(),
 			DomPath,
 		);
+		this.responseHandler.onLiveDocumentUsed = this.liveHandler.markAllTargetsRefreshed;
 		this.autocompleteHandler = autocompleteHandler ?? new AutocompleteHandler(
 			this.navigationController,
 			this.logger,
@@ -176,6 +177,7 @@ export class Flux {
 	initAutoContainer = (fluxElement) => {
 		if(fluxElement instanceof HTMLFormElement) {
 			this.formHandler.initAutoContainer(fluxElement);
+			this.storeOuterUpdateElement(fluxElement);
 		}
 		else if(fluxElement instanceof HTMLAnchorElement) {
 			this.linkHandler.initAutoLink(fluxElement);

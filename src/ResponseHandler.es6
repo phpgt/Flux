@@ -11,6 +11,8 @@ export class ResponseHandler {
 		"outer",
 		"inner",
 		"attributes",
+		"live-outer",
+		"live-inner",
 	]);
 
 	static LINK_UPDATE_TYPES = Object.freeze([
@@ -33,6 +35,7 @@ export class ResponseHandler {
 		alerter = globalThis.alert?.bind(globalThis),
 		windowObject = globalThis.window,
 		animationFrame = globalThis.requestAnimationFrame?.bind(globalThis),
+		onLiveDocumentUsed = () => {},
 	) {
 		this.documentUpdater = documentUpdater;
 		this.logger = logger;
@@ -42,6 +45,7 @@ export class ResponseHandler {
 		this.alerter = alerter;
 		this.windowObject = windowObject;
 		this.animationFrame = animationFrame;
+		this.onLiveDocumentUsed = onLiveDocumentUsed;
 	}
 
 	handleDocument = (newDocument, requestElementState = null) => {
@@ -56,6 +60,7 @@ export class ResponseHandler {
 				undefined,
 				requestElementState,
 			);
+			this.onLiveDocumentUsed();
 		}, 0);
 	}
 
@@ -73,6 +78,7 @@ export class ResponseHandler {
 				undefined,
 				elementState,
 			);
+			this.onLiveDocumentUsed();
 			this.scrollToTopAfterPaint(scrollState);
 		}, 0);
 	}

@@ -167,10 +167,24 @@ export class NavigationController {
 		let method = (requestOptions.method ?? "get").toLowerCase();
 		try {
 			let absoluteUrl = new URL(url, globalThis.location?.href).toString();
-			let response = await this.fetcher(absoluteUrl, {
-				...requestOptions,
+			let requestDetail = {
+				url: absoluteUrl,
+				requestOptions: {
+					...requestOptions,
+					method,
+				},
 				method,
+				historyState,
+			};
+			this.dispatchFluxEvent("flux:before-request", requestDetail);
+			let response = await this.fetcher(requestDetail.url, {
+				...requestOptions,
+				...requestDetail.requestOptions,
 			});
+			if(response.status === 304) {
+				return null;
+			}
+
 			if(!response.ok && !allowErrorDocument) {
 				throw new Error(`${historyState.errorPrefix}: ${response.status} ${response.statusText}`);
 			}
@@ -278,5 +292,12 @@ export class NavigationController {
 		}
 
 		return this.domPath.findInDocument(this.documentObject, path);
+	}
+
+	dispatchFluxEvent(name, detail) {
+		this.documentObject?.dispatchEvent?.(new CustomEvent(name, {
+			bubbles: true,
+			detail,
+		}));
 	}
 }

@@ -472,10 +472,23 @@ var NavigationController = class {
     let method = (requestOptions.method ?? "get").toLowerCase();
     try {
       let absoluteUrl = new URL(url, globalThis.location?.href).toString();
-      let response = await this.fetcher(absoluteUrl, {
+      let requestDetail = {
+        url: absoluteUrl,
+        requestOptions: {
+          ...requestOptions,
+          method
+        },
+        method,
+        historyState
+      };
+      this.dispatchFluxEvent("flux:before-request", requestDetail);
+      let response = await this.fetcher(requestDetail.url, {
         ...requestOptions,
-        method
+        ...requestDetail.requestOptions
       });
+      if (response.status === 304) {
+        return null;
+      }
       if (!response.ok && !allowErrorDocument) {
         throw new Error(`${historyState.errorPrefix}: ${response.status} ${response.statusText}`);
       }
@@ -567,6 +580,12 @@ var NavigationController = class {
     }
     return this.domPath.findInDocument(this.documentObject, path);
   }
+  dispatchFluxEvent(name, detail) {
+    this.documentObject?.dispatchEvent?.(new CustomEvent(name, {
+      bubbles: true,
+      detail
+    }));
+  }
 };
 
 // src/DocumentUpdater.es6
@@ -588,6 +607,7 @@ var DocumentUpdater = class {
     let allowedTypeSet = allowedTypes ? new Set(allowedTypes) : null;
     let allowedTargetKeySet = allowedTargetKeys ? new Set(allowedTargetKeys) : null;
     let updateTypeSnapshot = /* @__PURE__ */ new Map();
+    let updates = [];
     for (let type of this.updateTargetRegistry.getTypes()) {
       if (allowedTypeSet && !allowedTypeSet.has(type)) {
         continue;
@@ -602,23 +622,53 @@ var DocumentUpdater = class {
             return;
           }
         }
-        this.applyUpdateTarget(type, existingElement, newDocument, requestElementState);
+        let update = this.createUpdateTarget(type, existingElement, newDocument);
+        if (update) {
+          updates.push(update);
+        }
       });
+    }
+    updates = this.withoutTargetsDisconnectedByOuterUpdates(updates);
+    if (updates.length > 0) {
+      this.dispatchFluxEvent("flux:before-render", { updates });
+      updates.forEach((update) => this.applyUpdate(update, requestElementState));
+      this.dispatchFluxEvent("flux:after-render", { updates });
     }
     this.focusStateManager.restorePendingActiveElement(newActiveElement);
     if (this.debug && newActiveElement) {
       this.logger.debug("Focussed and blurred", newActiveElement);
     }
     this.focusStateManager.focusMarkedAutofocusElements();
+    return updates;
   }
   applyUpdateTarget(type, existingElement, newDocument, requestElementState = null) {
+    let update = this.createUpdateTarget(type, existingElement, newDocument);
+    if (!update) {
+      return null;
+    }
+    this.dispatchFluxEvent("flux:before-render", { updates: [update] });
+    this.applyUpdate(update, requestElementState);
+    this.dispatchFluxEvent("flux:after-render", { updates: [update] });
+    return update;
+  }
+  createUpdateTarget(type, existingElement, newDocument) {
     if (!existingElement) {
-      return;
+      return null;
     }
     if (!existingElement.isConnected) {
       this.updateTargetRegistry.remove(type, existingElement);
-      return;
+      return null;
     }
+    let newElement = this.findMatchingElement(existingElement, newDocument);
+    return {
+      type,
+      mode: this.getUpdateMode(type),
+      existingElement,
+      newElement
+    };
+  }
+  applyUpdate(update, requestElementState = null) {
+    let { type, existingElement, newElement } = update;
     let activeElementState = this.focusStateManager.captureElementState(existingElement);
     if (activeElementState && requestElementState) {
       activeElementState = this.focusStateManager.withoutUnchangedRequestValues(
@@ -626,13 +676,12 @@ var DocumentUpdater = class {
         requestElementState
       );
     }
-    let newElement = this.findMatchingElement(existingElement, newDocument);
     if (type === "outer" || type === "link-outer" || type === "live-outer") {
-      this.applyOuterUpdate(type, existingElement, newElement);
+      update.element = this.applyOuterUpdate(type, existingElement, newElement);
     } else if (type === "inner" || type === "link-inner" || type === "live-inner") {
-      this.applyInnerUpdate(existingElement, newElement);
+      update.element = this.applyInnerUpdate(existingElement, newElement);
     } else if (type === "attributes") {
-      this.applyAttributesUpdate(existingElement, newElement);
+      update.element = this.applyAttributesUpdate(existingElement, newElement);
     }
     if (activeElementState) {
       if (this.debug) {
@@ -644,11 +693,12 @@ var DocumentUpdater = class {
   applyOuterUpdate(type, existingElement, newElement) {
     this.updateTargetRegistry.replace(type, existingElement, newElement);
     if (!newElement) {
-      return;
+      return null;
     }
     this.prepareElementUpdate(existingElement, newElement);
     existingElement.replaceWith(newElement);
     this.completeElementUpdate(newElement);
+    return newElement;
   }
   applyInnerUpdate(existingElement, newElement) {
     this.prepareElementUpdate(existingElement, newElement);
@@ -659,10 +709,11 @@ var DocumentUpdater = class {
       existingElement.appendChild(newElement.firstChild);
     }
     this.completeElementUpdate(existingElement);
+    return existingElement;
   }
   applyAttributesUpdate(existingElement, newElement) {
     if (!newElement) {
-      return;
+      return null;
     }
     Array.from(existingElement.attributes).forEach((attribute) => {
       if (!newElement.hasAttribute(attribute.name)) {
@@ -672,6 +723,7 @@ var DocumentUpdater = class {
     Array.from(newElement.attributes).forEach((attribute) => {
       existingElement.setAttribute(attribute.name, attribute.value);
     });
+    return existingElement;
   }
   findMatchingElement(existingElement, newDocument) {
     if (existingElement.id) {
@@ -685,6 +737,37 @@ var DocumentUpdater = class {
       return `${type}:#${element.id}`;
     }
     return `${type}:${this.domPath.getXPathForElement(element, document)}`;
+  }
+  getUpdateMode(type) {
+    if (type === "outer" || type === "link-outer" || type === "live-outer") {
+      return "outer";
+    }
+    if (type === "inner" || type === "link-inner" || type === "live-inner") {
+      return "inner";
+    }
+    if (type === "attributes") {
+      return "attributes";
+    }
+    return type;
+  }
+  withoutTargetsDisconnectedByOuterUpdates(updates) {
+    let outerUpdates = updates.filter((update) => update.mode === "outer");
+    return updates.filter((update) => {
+      let containingOuterUpdate = outerUpdates.find(
+        (outerUpdate) => outerUpdate.existingElement !== update.existingElement && outerUpdate.existingElement.contains(update.existingElement)
+      );
+      if (containingOuterUpdate) {
+        this.updateTargetRegistry.remove(update.type, update.existingElement);
+        return false;
+      }
+      return true;
+    });
+  }
+  dispatchFluxEvent(name, detail) {
+    globalThis.document?.dispatchEvent?.(new CustomEvent(name, {
+      bubbles: true,
+      detail
+    }));
   }
 };
 
@@ -1068,7 +1151,9 @@ var ResponseHandler = class _ResponseHandler {
   static DEFAULT_UPDATE_TYPES = Object.freeze([
     "outer",
     "inner",
-    "attributes"
+    "attributes",
+    "live-outer",
+    "live-inner"
   ]);
   static LINK_UPDATE_TYPES = Object.freeze([
     ..._ResponseHandler.DEFAULT_UPDATE_TYPES,
@@ -1079,7 +1164,8 @@ var ResponseHandler = class _ResponseHandler {
     "live-outer",
     "live-inner"
   ]);
-  constructor(documentUpdater, logger = console, debug = false, scheduler = globalThis.setTimeout.bind(globalThis), reload = () => location.reload(), alerter = globalThis.alert?.bind(globalThis), windowObject = globalThis.window, animationFrame = globalThis.requestAnimationFrame?.bind(globalThis)) {
+  constructor(documentUpdater, logger = console, debug = false, scheduler = globalThis.setTimeout.bind(globalThis), reload = () => location.reload(), alerter = globalThis.alert?.bind(globalThis), windowObject = globalThis.window, animationFrame = globalThis.requestAnimationFrame?.bind(globalThis), onLiveDocumentUsed = () => {
+  }) {
     this.documentUpdater = documentUpdater;
     this.logger = logger;
     this.debug = debug;
@@ -1088,6 +1174,7 @@ var ResponseHandler = class _ResponseHandler {
     this.alerter = alerter;
     this.windowObject = windowObject;
     this.animationFrame = animationFrame;
+    this.onLiveDocumentUsed = onLiveDocumentUsed;
   }
   handleDocument = (newDocument, requestElementState = null) => {
     if (!this.isProcessableDocument(newDocument)) {
@@ -1100,6 +1187,7 @@ var ResponseHandler = class _ResponseHandler {
         void 0,
         requestElementState
       );
+      this.onLiveDocumentUsed();
     }, 0);
   };
   handleLinkDocument = (newDocument, requestElementState = null) => {
@@ -1115,6 +1203,7 @@ var ResponseHandler = class _ResponseHandler {
         void 0,
         elementState
       );
+      this.onLiveDocumentUsed();
       this.scrollToTopAfterPaint(scrollState);
     }, 0);
   };
@@ -1249,19 +1338,35 @@ var LiveHandler = class _LiveHandler {
     }
     this.inFlight = true;
     try {
+      let targetsRefreshed = false;
       await this.navigationController.pollDocument(
         this.locationObject.href,
         (newDocument) => {
-          let refreshedAt = this.now();
-          for (let target of dueTargets) {
-            this.lastRefreshMap.set(target.key, refreshedAt);
-          }
+          this.markTargetsRefreshed(dueTargets);
+          targetsRefreshed = true;
           this.onDocument(newDocument, dueTargets.map((target) => target.key));
         }
       );
+      if (!targetsRefreshed) {
+        this.markTargetsRefreshed(dueTargets);
+      }
     } finally {
       this.inFlight = false;
       this.ensureRunning();
+    }
+  };
+  markTargetsRefreshed(targets) {
+    let refreshedAt = this.now();
+    for (let target of targets) {
+      this.lastRefreshMap.set(target.key, refreshedAt);
+    }
+  }
+  markAllTargetsRefreshed = () => {
+    let refreshedAt = this.now();
+    for (let type of _LiveHandler.UPDATE_TYPES) {
+      for (let element of this.getConnectedElements(type)) {
+        this.lastRefreshMap.set(this.getTargetKey(type, element), refreshedAt);
+      }
     }
   };
   hasLiveElements() {
@@ -2069,6 +2174,7 @@ var Flux = class _Flux {
       () => Date.now(),
       DomPath
     );
+    this.responseHandler.onLiveDocumentUsed = this.liveHandler.markAllTargetsRefreshed;
     this.autocompleteHandler = autocompleteHandler ?? new AutocompleteHandler(
       this.navigationController,
       this.logger,
@@ -2118,6 +2224,7 @@ var Flux = class _Flux {
   initAutoContainer = (fluxElement) => {
     if (fluxElement instanceof HTMLFormElement) {
       this.formHandler.initAutoContainer(fluxElement);
+      this.storeOuterUpdateElement(fluxElement);
     } else if (fluxElement instanceof HTMLAnchorElement) {
       this.linkHandler.initAutoLink(fluxElement);
     } else {

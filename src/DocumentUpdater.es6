@@ -30,6 +30,7 @@ export class DocumentUpdater {
 		let allowedTypeSet = allowedTypes ? new Set(allowedTypes) : null;
 		let allowedTargetKeySet = allowedTargetKeys ? new Set(allowedTargetKeys) : null;
 		let updateTypeSnapshot = new Map();
+		let updates = [];
 
 		for(let type of this.updateTargetRegistry.getTypes()) {
 			if(allowedTypeSet && !allowedTypeSet.has(type)) {
@@ -48,8 +49,18 @@ export class DocumentUpdater {
 					}
 				}
 
-				this.applyUpdateTarget(type, existingElement, newDocument, requestElementState);
+				let update = this.createUpdateTarget(type, existingElement, newDocument);
+				if(update) {
+					updates.push(update);
+				}
 			});
+		}
+
+		updates = this.withoutTargetsDisconnectedByOuterUpdates(updates);
+		if(updates.length > 0) {
+			this.dispatchFluxEvent("flux:before-render", {updates});
+			updates.forEach(update => this.applyUpdate(update, requestElementState));
+			this.dispatchFluxEvent("flux:after-render", {updates});
 		}
 
 		this.focusStateManager.restorePendingActiveElement(newActiveElement);
@@ -57,18 +68,43 @@ export class DocumentUpdater {
 			this.logger.debug("Focussed and blurred", newActiveElement);
 		}
 		this.focusStateManager.focusMarkedAutofocusElements();
+		return updates;
 	}
 
 	applyUpdateTarget(type, existingElement, newDocument, requestElementState = null) {
+		let update = this.createUpdateTarget(type, existingElement, newDocument);
+		if(!update) {
+			return null;
+		}
+
+		this.dispatchFluxEvent("flux:before-render", {updates: [update]});
+		this.applyUpdate(update, requestElementState);
+		this.dispatchFluxEvent("flux:after-render", {updates: [update]});
+		return update;
+	}
+
+	createUpdateTarget(type, existingElement, newDocument) {
 		if(!existingElement) {
-			return;
+			return null;
 		}
 
 		if(!existingElement.isConnected) {
 			this.updateTargetRegistry.remove(type, existingElement);
-			return;
+			return null;
 		}
 
+		let newElement = this.findMatchingElement(existingElement, newDocument);
+
+		return {
+			type,
+			mode: this.getUpdateMode(type),
+			existingElement,
+			newElement,
+		};
+	}
+
+	applyUpdate(update, requestElementState = null) {
+		let {type, existingElement, newElement} = update;
 		let activeElementState = this.focusStateManager.captureElementState(existingElement);
 		if(activeElementState && requestElementState) {
 			activeElementState = this.focusStateManager.withoutUnchangedRequestValues(
@@ -76,16 +112,15 @@ export class DocumentUpdater {
 				requestElementState,
 			);
 		}
-		let newElement = this.findMatchingElement(existingElement, newDocument);
 
 		if(type === "outer" || type === "link-outer" || type === "live-outer") {
-			this.applyOuterUpdate(type, existingElement, newElement);
+			update.element = this.applyOuterUpdate(type, existingElement, newElement);
 		}
 		else if(type === "inner" || type === "link-inner" || type === "live-inner") {
-			this.applyInnerUpdate(existingElement, newElement);
+			update.element = this.applyInnerUpdate(existingElement, newElement);
 		}
 		else if(type === "attributes") {
-			this.applyAttributesUpdate(existingElement, newElement);
+			update.element = this.applyAttributesUpdate(existingElement, newElement);
 		}
 
 		if(activeElementState) {
@@ -99,12 +134,13 @@ export class DocumentUpdater {
 	applyOuterUpdate(type, existingElement, newElement) {
 		this.updateTargetRegistry.replace(type, existingElement, newElement);
 		if(!newElement) {
-			return;
+			return null;
 		}
 
 		this.prepareElementUpdate(existingElement, newElement);
 		existingElement.replaceWith(newElement);
 		this.completeElementUpdate(newElement);
+		return newElement;
 	}
 
 	applyInnerUpdate(existingElement, newElement) {
@@ -117,11 +153,12 @@ export class DocumentUpdater {
 			existingElement.appendChild(newElement.firstChild);
 		}
 		this.completeElementUpdate(existingElement);
+		return existingElement;
 	}
 
 	applyAttributesUpdate(existingElement, newElement) {
 		if(!newElement) {
-			return;
+			return null;
 		}
 
 		Array.from(existingElement.attributes).forEach(attribute => {
@@ -133,6 +170,7 @@ export class DocumentUpdater {
 		Array.from(newElement.attributes).forEach(attribute => {
 			existingElement.setAttribute(attribute.name, attribute.value);
 		});
+		return existingElement;
 	}
 
 	findMatchingElement(existingElement, newDocument) {
@@ -150,5 +188,46 @@ export class DocumentUpdater {
 		}
 
 		return `${type}:${this.domPath.getXPathForElement(element, document)}`;
+	}
+
+	getUpdateMode(type) {
+		if(type === "outer" || type === "link-outer" || type === "live-outer") {
+			return "outer";
+		}
+
+		if(type === "inner" || type === "link-inner" || type === "live-inner") {
+			return "inner";
+		}
+
+		if(type === "attributes") {
+			return "attributes";
+		}
+
+		return type;
+	}
+
+	withoutTargetsDisconnectedByOuterUpdates(updates) {
+		let outerUpdates = updates.filter(update => update.mode === "outer");
+
+		return updates.filter(update => {
+			let containingOuterUpdate = outerUpdates.find(outerUpdate =>
+				outerUpdate.existingElement !== update.existingElement
+				&& outerUpdate.existingElement.contains(update.existingElement)
+			);
+
+			if(containingOuterUpdate) {
+				this.updateTargetRegistry.remove(update.type, update.existingElement);
+				return false;
+			}
+
+			return true;
+		});
+	}
+
+	dispatchFluxEvent(name, detail) {
+		globalThis.document?.dispatchEvent?.(new CustomEvent(name, {
+			bubbles: true,
+			detail,
+		}));
 	}
 }
