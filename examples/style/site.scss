@@ -22,9 +22,8 @@ body { @extend %d-typography; margin: 0; background: var(--flair-color-surface);
 .page-intro > p:last-child, .lead { font-size: 1.25rem; max-width: 55ch; }
 .eyebrow { font-size: .72rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
 .demo { @extend %o-card; margin-top: 3rem; padding: clamp(1.25rem, 3vw, 2.5rem); scroll-margin-top: 1rem; opacity: calc(.12 + .88 * var(--flux-first-visible, 1)); translate: 0 calc((1 - var(--flux-first-visible, 1)) * 1.5rem); transition: opacity 650ms ease, translate 650ms ease; }
-.split, .demo-grid { @extend %p-grid; --flair-grid-columns: 2; --flair-grid-min: 17rem; align-items: center; }
+.split, .demo-grid { @extend %p-grid; --flair-grid-columns: 2; --flair-grid-min: 17rem; align-items: start; }
 .demo > :first-child { margin-top: 0; }
-.split > .demo-copy { align-self: start; }
 .demo-copy p { max-width: 45ch; }
 .demo h2 { font-size: 1.8rem; line-height: 1.2; }
 .demo h3 { font-size: 1.2rem; }
@@ -65,3 +64,8 @@ pre { @extend %o-code-block; max-height: 30rem; overflow: auto; }
 @media print { .site-nav, .source, .site-header > p { display: none; } .demo { opacity: 1; translate: none; break-inside: avoid; } }
 
 .board-column { min-height: 10rem; border: 1px dashed #aaa; padding: .75rem; }
+
+.city-dialog { @extend %o-dialog; }
+.city-dialog dt { font-weight: 600; }
+.city-dialog dd { margin: 0 0 1rem; }
+.city-results { max-height: 22rem; overflow-y: auto; overscroll-behavior: contain; }

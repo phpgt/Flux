@@ -1,0 +1,4202 @@
+[
+	{
+		"id": "2293538",
+		"name": "Abidjan",
+		"ascii": "Abidjan",
+		"country": "Ivory Coast",
+		"timezone": "Africa/Abidjan"
+	},
+	{
+		"id": "2293521",
+		"name": "Abobo",
+		"ascii": "Abobo",
+		"country": "Ivory Coast",
+		"timezone": "Africa/Abidjan"
+	},
+	{
+		"id": "2395914",
+		"name": "Abomey-Calavi",
+		"ascii": "Abomey-Calavi",
+		"country": "Benin",
+		"timezone": "Africa/Porto-Novo"
+	},
+	{
+		"id": "292968",
+		"name": "Abu Dhabi",
+		"ascii": "Abu Dhabi",
+		"country": "United Arab Emirates",
+		"timezone": "Asia/Dubai"
+	},
+	{
+		"id": "2352778",
+		"name": "Abuja",
+		"ascii": "Abuja",
+		"country": "Nigeria",
+		"timezone": "Africa/Lagos"
+	},
+	{
+		"id": "2306104",
+		"name": "Accra",
+		"ascii": "Accra",
+		"country": "Ghana",
+		"timezone": "Africa/Accra"
+	},
+	{
+		"id": "4030723",
+		"name": "Adamstown",
+		"ascii": "Adamstown",
+		"country": "Pitcairn",
+		"timezone": "Pacific/Pitcairn"
+	},
+	{
+		"id": "325363",
+		"name": "Adana",
+		"ascii": "Adana",
+		"country": "Turkey",
+		"timezone": "Europe/Istanbul"
+	},
+	{
+		"id": "344979",
+		"name": "Addis Ababa",
+		"ascii": "Addis Ababa",
+		"country": "Ethiopia",
+		"timezone": "Africa/Addis_Ababa"
+	},
+	{
+		"id": "415189",
+		"name": "Aden",
+		"ascii": "Aden",
+		"country": "Yemen",
+		"timezone": "Asia/Aden"
+	},
+	{
+		"id": "1279233",
+		"name": "Ahmedabad",
+		"ascii": "Ahmedabad",
+		"country": "India",
+		"timezone": "Asia/Kolkata"
+	},
+	{
+		"id": "285839",
+		"name": "Al Aḩmadī",
+		"ascii": "Al Ahmadi",
+		"country": "Kuwait",
+		"timezone": "Asia/Kuwait"
+	},
+	{
+		"id": "290332",
+		"name": "Al Muharraq",
+		"ascii": "Al Muharraq",
+		"country": "Bahrain",
+		"timezone": "Asia/Bahrain"
+	},
+	{
+		"id": "170063",
+		"name": "Aleppo",
+		"ascii": "Aleppo",
+		"country": "Syria",
+		"timezone": "Asia/Damascus"
+	},
+	{
+		"id": "361058",
+		"name": "Alexandria",
+		"ascii": "Alexandria",
+		"country": "Egypt",
+		"timezone": "Africa/Cairo"
+	},
+	{
+		"id": "2507480",
+		"name": "Algiers",
+		"ascii": "Algiers",
+		"country": "Algeria",
+		"timezone": "Africa/Algiers"
+	},
+	{
+		"id": "1526384",
+		"name": "Almaty",
+		"ascii": "Almaty",
+		"country": "Kazakhstan",
+		"timezone": "Asia/Almaty"
+	},
+	{
+		"id": "4036284",
+		"name": "Alofi",
+		"ascii": "Alofi",
+		"country": "Niue",
+		"timezone": "Pacific/Niue"
+	},
+	{
+		"id": "250441",
+		"name": "Amman",
+		"ascii": "Amman",
+		"country": "Jordan",
+		"timezone": "Asia/Amman"
+	},
+	{
+		"id": "2759794",
+		"name": "Amsterdam",
+		"ascii": "Amsterdam",
+		"country": "The Netherlands",
+		"timezone": "Europe/Amsterdam"
+	},
+	{
+		"id": "1514588",
+		"name": "Andijon",
+		"ascii": "Andijon",
+		"country": "Uzbekistan",
+		"timezone": "Asia/Tashkent"
+	},
+	{
+		"id": "3041563",
+		"name": "Andorra la Vella",
+		"ascii": "Andorra la Vella",
+		"country": "Andorra",
+		"timezone": "Europe/Andorra"
+	},
+	{
+		"id": "323786",
+		"name": "Ankara",
+		"ascii": "Ankara",
+		"country": "Turkey",
+		"timezone": "Europe/Istanbul"
+	},
+	{
+		"id": "2038632",
+		"name": "Anshan",
+		"ascii": "Anshan",
+		"country": "China",
+		"timezone": "Asia/Shanghai"
+	},
+	{
+		"id": "1070940",
+		"name": "Antananarivo",
+		"ascii": "Antananarivo",
+		"country": "Madagascar",
+		"timezone": "Indian/Antananarivo"
+	},
+	{
+		"id": "2803138",
+		"name": "Antwerp",
+		"ascii": "Antwerp",
+		"country": "Belgium",
+		"timezone": "Europe/Brussels"
+	},
+	{
+		"id": "4035413",
+		"name": "Apia",
+		"ascii": "Apia",
+		"country": "Samoa",
+		"timezone": "Pacific/Apia"
+	},
+	{
+		"id": "289888",
+		"name": "Ar Rayyān",
+		"ascii": "Ar Rayyan",
+		"country": "Qatar",
+		"timezone": "Asia/Qatar"
+	},
+	{
+		"id": "2624652",
+		"name": "Århus",
+		"ascii": "Arhus",
+		"country": "Denmark",
+		"timezone": "Europe/Copenhagen"
+	},
+	{
+		"id": "162183",
+		"name": "Ashgabat",
+		"ascii": "Ashgabat",
+		"country": "Turkmenistan",
+		"timezone": "Asia/Ashgabat"
+	},
+	{
+		"id": "343300",
+		"name": "Asmara",
+		"ascii": "Asmara",
+		"country": "Eritrea",
+		"timezone": "Africa/Asmara"
+	},
+	{
+		"id": "1526273",
+		"name": "Astana",
+		"ascii": "Astana",
+		"country": "Kazakhstan",
+		"timezone": "Asia/Almaty"
+	},
+	{
+		"id": "3439389",
+		"name": "Asunción",
+		"ascii": "Asuncion",
+		"country": "Paraguay",
+		"timezone": "America/Asuncion"
+	},
+	{
+		"id": "264371",
+		"name": "Athens",
+		"ascii": "Athens",
+		"country": "Greece",
+		"timezone": "Europe/Athens"
+	},
+	{
+		"id": "2193733",
+		"name": "Auckland",
+		"ascii": "Auckland",
+		"country": "New Zealand",
+		"timezone": "Pacific/Auckland"
+	},
+	{
+		"id": "4035715",
+		"name": "Avarua",
+		"ascii": "Avarua",
+		"country": "Cook Islands",
+		"timezone": "Pacific/Rarotonga"
+	},
+	{
+		"id": "98182",
+		"name": "Baghdad",
+		"ascii": "Baghdad",
+		"country": "Iraq",
+		"timezone": "Asia/Baghdad"
+	},
+	{
+		"id": "3579767",
+		"name": "Baie-Mahault",
+		"ascii": "Baie-Mahault",
+		"country": "Guadeloupe",
+		"timezone": "America/Guadeloupe"
+	},
+	{
+		"id": "587084",
+		"name": "Baku",
+		"ascii": "Baku",
+		"country": "Azerbaijan",
+		"timezone": "Asia/Baku"
+	},
+	{
+		"id": "7648070",
+		"name": "Balbala",
+		"ascii": "Balbala",
+		"country": "Djibouti",
+		"timezone": "Africa/Djibouti"
+	},
+	{
+		"id": "2460596",
+		"name": "Bamako",
+		"ascii": "Bamako",
+		"country": "Mali",
+		"timezone": "Africa/Bamako"
+	},
+	{
+		"id": "1820906",
+		"name": "Bandar Seri Begawan",
+		"ascii": "Bandar Seri Begawan",
+		"country": "Brunei",
+		"timezone": "Asia/Brunei"
+	},
+	{
+		"id": "13308487",
+		"name": "Bandariba",
+		"ascii": "Bandariba",
+		"country": "Curacao",
+		"timezone": "America/Curacao"
+	},
+	{
+		"id": "1650357",
+		"name": "Bandung",
+		"ascii": "Bandung",
+		"country": "Indonesia",
+		"timezone": "Asia/Jakarta"
+	},
+	{
+		"id": "1609350",
+		"name": "Bangkok",
+		"ascii": "Bangkok",
+		"country": "Thailand",
+		"timezone": "Asia/Bangkok"
+	},
+	{
+		"id": "2389853",
+		"name": "Bangui",
+		"ascii": "Bangui",
+		"country": "Central African Republic",
+		"timezone": "Africa/Bangui"
+	},
+	{
+		"id": "3204541",
+		"name": "Banja Luka",
+		"ascii": "Banja Luka",
+		"country": "Bosnia and Herzegovina",
+		"timezone": "Europe/Sarajevo"
+	},
+	{
+		"id": "13308620",
+		"name": "Bao'an",
+		"ascii": "Bao'an",
+		"country": "China",
+		"timezone": "Asia/Shanghai"
+	},
+	{
+		"id": "1816971",
+		"name": "Baoding",
+		"ascii": "Baoding",
+		"country": "China",
+		"timezone": "Asia/Shanghai"
+	},
+	{
+		"id": "1816917",
+		"name": "Baoshan",
+		"ascii": "Baoshan",
+		"country": "China",
+		"timezone": "Asia/Shanghai"
+	},
+	{
+		"id": "2038432",
+		"name": "Baotou",
+		"ascii": "Baotou",
+		"country": "China",
+		"timezone": "Asia/Shanghai"
+	},
+	{
+		"id": "3128760",
+		"name": "Barcelona",
+		"ascii": "Barcelona",
+		"country": "Spain",
+		"timezone": "Europe/Madrid"
+	},
+	{
+		"id": "3575551",
+		"name": "Basseterre",
+		"ascii": "Basseterre",
+		"country": "Saint Kitts and Nevis",
+		"timezone": "America/St_Kitts"
+	},
+	{
+		"id": "2310046",
+		"name": "Bata",
+		"ascii": "Bata",
+		"country": "Equatorial Guinea",
+		"timezone": "Africa/Malabo"
+	},
+	{
+		"id": "615532",
+		"name": "Batumi",
+		"ascii": "Batumi",
+		"country": "Georgia",
+		"timezone": "Asia/Tbilisi"
+	},
+	{
+		"id": "4562831",
+		"name": "Bayamón",
+		"ascii": "Bayamon",
+		"country": "Puerto Rico",
+		"timezone": "America/Puerto_Rico"
+	},
+	{
+		"id": "11838258",
+		"name": "Bayan Nur",
+		"ascii": "Bayan Nur",
+		"country": "China",
+		"timezone": "Asia/Shanghai"
+	},
+	{
+		"id": "11995100",
+		"name": "Bazhong",
+		"ascii": "Bazhong",
+		"country": "China",
+		"timezone": "Asia/Shanghai"
+	},
+	{
+		"id": "1816670",
+		"name": "Beijing",
+		"ascii": "Beijing",
+		"country": "China",
+		"timezone": "Asia/Shanghai"
+	},
+	{
+		"id": "276781",
+		"name": "Beirut",
+		"ascii": "Beirut",
+		"country": "Lebanon",
+		"timezone": "Asia/Beirut"
+	},
+	{
+		"id": "1649378",
+		"name": "Bekasi",
+		"ascii": "Bekasi",
+		"country": "Indonesia",
+		"timezone": "Asia/Jakarta"
+	},
+	{
+		"id": "792680",
+		"name": "Belgrade",
+		"ascii": "Belgrade",
+		"country": "Serbia",
+		"timezone": "Europe/Belgrade"
+	},
+	{
+		"id": "3582677",
+		"name": "Belize City",
+		"ascii": "Belize City",
+		"country": "Belize",
+		"timezone": "America/Belize"
+	},
+	{
+		"id": "3470127",
+		"name": "Belo Horizonte",
+		"ascii": "Belo Horizonte",
+		"country": "Brazil",
+		"timezone": "America/Sao_Paulo"
+	},
+	{
+		"id": "1277333",
+		"name": "Bengaluru",
+		"ascii": "Bengaluru",
+		"country": "India",
+		"timezone": "Asia/Kolkata"
+	},
+	{
+		"id": "88319",
+		"name": "Benghazi",
+		"ascii": "Benghazi",
+		"country": "Libya",
+		"timezone": "Africa/Tripoli"
+	},
+	{
+		"id": "2347283",
+		"name": "Benin City",
+		"ascii": "Benin City",
+		"country": "Nigeria",
+		"timezone": "Africa/Lagos"
+	},
+	{
+		"id": "3161732",
+		"name": "Bergen",
+		"ascii": "Bergen",
+		"country": "Norway",
+		"timezone": "Europe/Oslo"
+	},
+	{
+		"id": "2950159",
+		"name": "Berlin",
+		"ascii": "Berlin",
+		"country": "Germany",
+		"timezone": "Europe/Berlin"
+	},
+	{
+		"id": "1275841",
+		"name": "Bhopal",
+		"ascii": "Bhopal",
+		"country": "India",
+		"timezone": "Asia/Kolkata"
+	},
+	{
+		"id": "2388873",
+		"name": "Bimbo",
+		"ascii": "Bimbo",
+		"country": "Central African Republic",
+		"timezone": "Africa/Bangui"
+	},
+	{
+		"id": "2563191",
+		"name": "Birkirkara",
+		"ascii": "Birkirkara",
+		"country": "Malta",
+		"timezone": "Europe/Malta"
+	},
+	{
+		"id": "2655603",
+		"name": "Birmingham",
+		"ascii": "Birmingham",
+		"country": "United Kingdom",
+		"timezone": "Europe/London"
+	},
+	{
+		"id": "1528675",
+		"name": "Bishkek",
+		"ascii": "Bishkek",
+		"country": "Kyrgyzstan",
+		"timezone": "Asia/Bishkek"
+	},
+	{
+		"id": "2374775",
+		"name": "Bissau",
+		"ascii": "Bissau",
+		"country": "Guinea-Bissau",
+		"timezone": "Africa/Bissau"
+	},
+	{
+		"id": "931755",
+		"name": "Blantyre",
+		"ascii": "Blantyre",
+		"country": "Malawi",
+		"timezone": "Africa/Blantyre"
+	},
+	{
+		"id": "2362344",
+		"name": "Bobo-Dioulasso",
+		"ascii": "Bobo-Dioulasso",
+		"country": "Burkina Faso",
+		"timezone": "Africa/Ouagadougou"
+	},
+	{
+		"id": "3688689",
+		"name": "Bogotá",
+		"ascii": "Bogota",
+		"country": "Colombia",
+		"timezone": "America/Bogota"
+	},
+	{
+		"id": "64021",
+		"name": "Borama",
+		"ascii": "Borama",
+		"country": "Somalia",
+		"timezone": "Africa/Mogadishu"
+	},
+	{
+		"id": "3469058",
+		"name": "Brasília",
+		"ascii": "Brasilia",
+		"country": "Brazil",
+		"timezone": "America/Sao_Paulo"
+	},
+	{
+		"id": "3060972",
+		"name": "Bratislava",
+		"ascii": "Bratislava",
+		"country": "Slovakia",
+		"timezone": "Europe/Bratislava"
+	},
+	{
+		"id": "2260535",
+		"name": "Brazzaville",
+		"ascii": "Brazzaville",
+		"country": "Republic of the Congo",
+		"timezone": "Africa/Brazzaville"
+	},
+	{
+		"id": "3374036",
+		"name": "Bridgetown",
+		"ascii": "Bridgetown",
+		"country": "Barbados",
+		"timezone": "America/Barbados"
+	},
+	{
+		"id": "2413753",
+		"name": "Brikama",
+		"ascii": "Brikama",
+		"country": "Gambia",
+		"timezone": "Africa/Banjul"
+	},
+	{
+		"id": "2174003",
+		"name": "Brisbane",
+		"ascii": "Brisbane",
+		"country": "Australia",
+		"timezone": "Australia/Brisbane"
+	},
+	{
+		"id": "3078610",
+		"name": "Brno",
+		"ascii": "Brno",
+		"country": "Czechia",
+		"timezone": "Europe/Prague"
+	},
+	{
+		"id": "5110302",
+		"name": "Brooklyn",
+		"ascii": "Brooklyn",
+		"country": "United States",
+		"timezone": "America/New_York"
+	},
+	{
+		"id": "2800866",
+		"name": "Brussels",
+		"ascii": "Brussels",
+		"country": "Belgium",
+		"timezone": "Europe/Brussels"
+	},
+	{
+		"id": "683506",
+		"name": "Bucharest",
+		"ascii": "Bucharest",
+		"country": "Romania",
+		"timezone": "Europe/Bucharest"
+	},
+	{
+		"id": "3054643",
+		"name": "Budapest",
+		"ascii": "Budapest",
+		"country": "Hungary",
+		"timezone": "Europe/Budapest"
+	},
+	{
+		"id": "3435910",
+		"name": "Buenos Aires",
+		"ascii": "Buenos Aires",
+		"country": "Argentina",
+		"timezone": "America/Argentina/Buenos_Aires"
+	},
+	{
+		"id": "425378",
+		"name": "Bujumbura",
+		"ascii": "Bujumbura",
+		"country": "Burundi",
+		"timezone": "Africa/Bujumbura"
+	},
+	{
+		"id": "894701",
+		"name": "Bulawayo",
+		"ascii": "Bulawayo",
+		"country": "Zimbabwe",
+		"timezone": "Africa/Harare"
+	},
+	{
+		"id": "750269",
+		"name": "Bursa",
+		"ascii": "Bursa",
+		"country": "Turkey",
+		"timezone": "Europe/Istanbul"
+	},
+	{
+		"id": "1838524",
+		"name": "Busan",
+		"ascii": "Busan",
+		"country": "South Korea",
+		"timezone": "Asia/Seoul"
+	},
+	{
+		"id": "360630",
+		"name": "Cairo",
+		"ascii": "Cairo",
+		"country": "Egypt",
+		"timezone": "Africa/Cairo"
+	},
+	{
+		"id": "3687925",
+		"name": "Cali",
+		"ascii": "Cali",
+		"country": "Colombia",
+		"timezone": "America/Bogota"
+	},
+	{
+		"id": "3946083",
+		"name": "Callao",
+		"ascii": "Callao",
+		"country": "Peru",
+		"timezone": "America/Lima"
+	},
+	{
+		"id": "3748746",
+		"name": "Calliaqua",
+		"ascii": "Calliaqua",
+		"country": "Saint Vincent and the Grenadines",
+		"timezone": "America/St_Vincent"
+	},
+	{
+		"id": "1720151",
+		"name": "Caloocan",
+		"ascii": "Caloocan",
+		"country": "Philippines",
+		"timezone": "Asia/Manila"
+	},
+	{
+		"id": "2422488",
+		"name": "Camayenne",
+		"ascii": "Camayenne",
+		"country": "Guinea",
+		"timezone": "Africa/Conakry"
+	},
+	{
+		"id": "3369157",
+		"name": "Cape Town",
+		"ascii": "Cape Town",
+		"country": "South Africa",
+		"timezone": "Africa/Johannesburg"
+	},
+	{
+		"id": "3646738",
+		"name": "Caracas",
+		"ascii": "Caracas",
+		"country": "Venezuela",
+		"timezone": "America/Caracas"
+	},
+	{
+		"id": "6201369",
+		"name": "Carrefour",
+		"ascii": "Carrefour",
+		"country": "Haiti",
+		"timezone": "America/Port-au-Prince"
+	},
+	{
+		"id": "2553604",
+		"name": "Casablanca",
+		"ascii": "Casablanca",
+		"country": "Morocco",
+		"timezone": "Africa/Casablanca"
+	},
+	{
+		"id": "3576812",
+		"name": "Castries",
+		"ascii": "Castries",
+		"country": "Saint Lucia",
+		"timezone": "America/St_Lucia"
+	},
+	{
+		"id": "3382160",
+		"name": "Cayenne",
+		"ascii": "Cayenne",
+		"country": "French Guiana",
+		"timezone": "America/Cayenne"
+	},
+	{
+		"id": "3574810",
+		"name": "Chaguanas",
+		"ascii": "Chaguanas",
+		"country": "Trinidad and Tobago",
+		"timezone": "America/Port_of_Spain"
+	},
+	{
+		"id": "2038180",
+		"name": "Changchun",
+		"ascii": "Changchun",
+		"country": "China",
+		"timezone": "Asia/Shanghai"
+	},
+	{
+		"id": "1815577",
+		"name": "Changsha",
+		"ascii": "Changsha",
+		"country": "China",
+		"timezone": "Asia/Shanghai"
+	},
+	{
+		"id": "1815456",
+		"name": "Changzhou",
+		"ascii": "Changzhou",
+		"country": "China",
+		"timezone": "Asia/Shanghai"
+	},
+	{
+		"id": "1815395",
+		"name": "Chaozhou",
+		"ascii": "Chaozhou",
+		"country": "China",
+		"timezone": "Asia/Shanghai"
+	},
+	{
+		"id": "4795467",
+		"name": "Charlotte Amalie",
+		"ascii": "Charlotte Amalie",
+		"country": "U.S. Virgin Islands",
+		"timezone": "America/St_Thomas"
+	},
+	{
+		"id": "1205733",
+		"name": "Chattogram",
+		"ascii": "Chattogram",
+		"country": "Bangladesh",
+		"timezone": "Asia/Dhaka"
+	},
+	{
+		"id": "1815286",
+		"name": "Chengdu",
+		"ascii": "Chengdu",
+		"country": "China",
+		"timezone": "Asia/Shanghai"
+	},
+	{
+		"id": "1793036",
+		"name": "Chengtangcun",
+		"ascii": "Chengtangcun",
+		"country": "China",
+		"timezone": "Asia/Shanghai"
+	},
+	{
+		"id": "1264527",
+		"name": "Chennai",
+		"ascii": "Chennai",
+		"country": "India",
+		"timezone": "Asia/Kolkata"
+	},
+	{
+		"id": "4887398",
+		"name": "Chicago",
+		"ascii": "Chicago",
+		"country": "United States",
+		"timezone": "America/Chicago"
+	},
+	{
+		"id": "618426",
+		"name": "Chisinau",
+		"ascii": "Chisinau",
+		"country": "Moldova",
+		"timezone": "Europe/Chisinau"
+	},
+	{
+		"id": "1814906",
+		"name": "Chongqing",
+		"ascii": "Chongqing",
+		"country": "China",
+		"timezone": "Asia/Shanghai"
+	},
+	{
+		"id": "2192362",
+		"name": "Christchurch",
+		"ascii": "Christchurch",
+		"country": "New Zealand",
+		"timezone": "Pacific/Auckland"
+	},
+	{
+		"id": "3439101",
+		"name": "Ciudad del Este",
+		"ascii": "Ciudad del Este",
+		"country": "Paraguay",
+		"timezone": "America/Asuncion"
+	},
+	{
+		"id": "3919968",
+		"name": "Cochabamba",
+		"ascii": "Cochabamba",
+		"country": "Bolivia",
+		"timezone": "America/La_Paz"
+	},
+	{
+		"id": "3576994",
+		"name": "Cockburn Town",
+		"ascii": "Cockburn Town",
+		"country": "Turks and Caicos Islands",
+		"timezone": "America/Grand_Turk"
+	},
+	{
+		"id": "1273865",
+		"name": "Coimbatore",
+		"ascii": "Coimbatore",
+		"country": "India",
+		"timezone": "Asia/Kolkata"
+	},
+	{
+		"id": "1248991",
+		"name": "Colombo",
+		"ascii": "Colombo",
+		"country": "Sri Lanka",
+		"timezone": "Asia/Colombo"
+	},
+	{
+		"id": "2422465",
+		"name": "Conakry",
+		"ascii": "Conakry",
+		"country": "Guinea",
+		"timezone": "Africa/Conakry"
+	},
+	{
+		"id": "2618425",
+		"name": "Copenhagen",
+		"ascii": "Copenhagen",
+		"country": "Denmark",
+		"timezone": "Europe/Copenhagen"
+	},
+	{
+		"id": "3860259",
+		"name": "Córdoba",
+		"ascii": "Cordoba",
+		"country": "Argentina",
+		"timezone": "America/Argentina/Cordoba"
+	},
+	{
+		"id": "2965140",
+		"name": "Cork",
+		"ascii": "Cork",
+		"country": "Ireland",
+		"timezone": "Europe/Dublin"
+	},
+	{
+		"id": "3464975",
+		"name": "Curitiba",
+		"ascii": "Curitiba",
+		"country": "Brazil",
+		"timezone": "America/Sao_Paulo"
+	},
+	{
+		"id": "1835329",
+		"name": "Daegu",
+		"ascii": "Daegu",
+		"country": "South Korea",
+		"timezone": "Asia/Seoul"
+	},
+	{
+		"id": "2253354",
+		"name": "Dakar",
+		"ascii": "Dakar",
+		"country": "Senegal",
+		"timezone": "Africa/Dakar"
+	},
+	{
+		"id": "2463447",
+		"name": "Dakhla",
+		"ascii": "Dakhla",
+		"country": "Western Sahara",
+		"timezone": "Africa/El_Aaiun"
+	},
+	{
+		"id": "8347657",
+		"name": "Dalap-Uliga-Dorrit",
+		"ascii": "Dalap-Uliga-Dorrit",
+		"country": "Marshall Islands",
+		"timezone": "Pacific/Majuro"
+	},
+	{
+		"id": "1814087",
+		"name": "Dalian",
+		"ascii": "Dalian",
+		"country": "China",
+		"timezone": "Asia/Shanghai"
+	},
+	{
+		"id": "170654",
+		"name": "Damascus",
+		"ascii": "Damascus",
+		"country": "Syria",
+		"timezone": "Asia/Damascus"
+	},
+	{
+		"id": "160263",
+		"name": "Dar es Salaam",
+		"ascii": "Dar es Salaam",
+		"country": "Tanzania",
+		"timezone": "Africa/Dar_es_Salaam"
+	},
+	{
+		"id": "2037799",
+		"name": "Datong",
+		"ascii": "Datong",
+		"country": "China",
+		"timezone": "Asia/Shanghai"
+	},
+	{
+		"id": "460413",
+		"name": "Daugavpils",
+		"ascii": "Daugavpils",
+		"country": "Latvia",
+		"timezone": "Europe/Riga"
+	},
+	{
+		"id": "1715348",
+		"name": "Davao",
+		"ascii": "Davao",
+		"country": "Philippines",
+		"timezone": "Asia/Manila"
+	},
+	{
+		"id": "721472",
+		"name": "Debrecen",
+		"ascii": "Debrecen",
+		"country": "Hungary",
+		"timezone": "Europe/Budapest"
+	},
+	{
+		"id": "4043909",
+		"name": "Dededo Village",
+		"ascii": "Dededo Village",
+		"country": "Guam",
+		"timezone": "Pacific/Guam"
+	},
+	{
+		"id": "1234569",
+		"name": "Dehiwala-Mount Lavinia",
+		"ascii": "Dehiwala-Mount Lavinia",
+		"country": "Sri Lanka",
+		"timezone": "Asia/Colombo"
+	},
+	{
+		"id": "1273294",
+		"name": "Delhi",
+		"ascii": "Delhi",
+		"country": "India",
+		"timezone": "Asia/Kolkata"
+	},
+	{
+		"id": "1645524",
+		"name": "Depok",
+		"ascii": "Depok",
+		"country": "Indonesia",
+		"timezone": "Asia/Jakarta"
+	},
+	{
+		"id": "1185241",
+		"name": "Dhaka",
+		"ascii": "Dhaka",
+		"country": "Bangladesh",
+		"timezone": "Asia/Dhaka"
+	},
+	{
+		"id": "1645457",
+		"name": "Dili",
+		"ascii": "Dili",
+		"country": "Timor Leste",
+		"timezone": "Asia/Dili"
+	},
+	{
+		"id": "316541",
+		"name": "Diyarbakır",
+		"ascii": "Diyarbakir",
+		"country": "Turkey",
+		"timezone": "Europe/Istanbul"
+	},
+	{
+		"id": "223817",
+		"name": "Djibouti",
+		"ascii": "Djibouti",
+		"country": "Djibouti",
+		"timezone": "Africa/Djibouti"
+	},
+	{
+		"id": "290030",
+		"name": "Doha",
+		"ascii": "Doha",
+		"country": "Qatar",
+		"timezone": "Asia/Qatar"
+	},
+	{
+		"id": "1812545",
+		"name": "Dongguan",
+		"ascii": "Dongguan",
+		"country": "China",
+		"timezone": "Asia/Shanghai"
+	},
+	{
+		"id": "2232593",
+		"name": "Douala",
+		"ascii": "Douala",
+		"country": "Cameroon",
+		"timezone": "Africa/Douala"
+	},
+	{
+		"id": "3042237",
+		"name": "Douglas",
+		"ascii": "Douglas",
+		"country": "Isle of Man",
+		"timezone": "Europe/Isle_of_Man"
+	},
+	{
+		"id": "292223",
+		"name": "Dubai",
+		"ascii": "Dubai",
+		"country": "United Arab Emirates",
+		"timezone": "Asia/Dubai"
+	},
+	{
+		"id": "2964574",
+		"name": "Dublin",
+		"ascii": "Dublin",
+		"country": "Ireland",
+		"timezone": "Europe/Dublin"
+	},
+	{
+		"id": "1007311",
+		"name": "Durban",
+		"ascii": "Durban",
+		"country": "South Africa",
+		"timezone": "Africa/Johannesburg"
+	},
+	{
+		"id": "3185728",
+		"name": "Durrës",
+		"ascii": "Durres",
+		"country": "Albania",
+		"timezone": "Europe/Tirane"
+	},
+	{
+		"id": "1221874",
+		"name": "Dushanbe",
+		"ascii": "Dushanbe",
+		"country": "Tajikistan",
+		"timezone": "Asia/Dushanbe"
+	},
+	{
+		"id": "2031405",
+		"name": "Erdenet",
+		"ascii": "Erdenet",
+		"country": "Mongolia",
+		"timezone": "Asia/Ulaanbaatar"
+	},
+	{
+		"id": "2960596",
+		"name": "Esch-sur-Alzette",
+		"ascii": "Esch-sur-Alzette",
+		"country": "Luxembourg",
+		"timezone": "Europe/Luxembourg"
+	},
+	{
+		"id": "660158",
+		"name": "Espoo",
+		"ascii": "Espoo",
+		"country": "Finland",
+		"timezone": "Europe/Helsinki"
+	},
+	{
+		"id": "4034561",
+		"name": "Faaa",
+		"ascii": "Faaa",
+		"country": "French Polynesia",
+		"timezone": "Pacific/Tahiti"
+	},
+	{
+		"id": "1179400",
+		"name": "Faisalabad",
+		"ascii": "Faisalabad",
+		"country": "Pakistan",
+		"timezone": "Asia/Karachi"
+	},
+	{
+		"id": "2078127",
+		"name": "Flying Fish Cove",
+		"ascii": "Flying Fish Cove",
+		"country": "Christmas Island",
+		"timezone": "Indian/Christmas"
+	},
+	{
+		"id": "3570675",
+		"name": "Fort-de-France",
+		"ascii": "Fort-de-France",
+		"country": "Martinique",
+		"timezone": "America/Martinique"
+	},
+	{
+		"id": "3399415",
+		"name": "Fortaleza",
+		"ascii": "Fortaleza",
+		"country": "Brazil",
+		"timezone": "America/Fortaleza"
+	},
+	{
+		"id": "1811103",
+		"name": "Foshan",
+		"ascii": "Foshan",
+		"country": "China",
+		"timezone": "Asia/Shanghai"
+	},
+	{
+		"id": "933778",
+		"name": "Francistown",
+		"ascii": "Francistown",
+		"country": "Botswana",
+		"timezone": "Africa/Gaborone"
+	},
+	{
+		"id": "2409306",
+		"name": "Freetown",
+		"ascii": "Freetown",
+		"country": "Sierra Leone",
+		"timezone": "Africa/Freetown"
+	},
+	{
+		"id": "2110394",
+		"name": "Funafuti",
+		"ascii": "Funafuti",
+		"country": "Tuvalu",
+		"timezone": "Pacific/Funafuti"
+	},
+	{
+		"id": "1810845",
+		"name": "Fuyang",
+		"ascii": "Fuyang",
+		"country": "China",
+		"timezone": "Asia/Shanghai"
+	},
+	{
+		"id": "1810821",
+		"name": "Fuzhou",
+		"ascii": "Fuzhou",
+		"country": "China",
+		"timezone": "Asia/Shanghai"
+	},
+	{
+		"id": "933773",
+		"name": "Gaborone",
+		"ascii": "Gaborone",
+		"country": "Botswana",
+		"timezone": "Africa/Gaborone"
+	},
+	{
+		"id": "2372532",
+		"name": "Gabú",
+		"ascii": "Gabu",
+		"country": "Guinea-Bissau",
+		"timezone": "Africa/Bissau"
+	},
+	{
+		"id": "1810638",
+		"name": "Ganzhou",
+		"ascii": "Ganzhou",
+		"country": "China",
+		"timezone": "Asia/Shanghai"
+	},
+	{
+		"id": "281133",
+		"name": "Gaza",
+		"ascii": "Gaza",
+		"country": "Palestinian Territory",
+		"timezone": "Asia/Gaza"
+	},
+	{
+		"id": "314830",
+		"name": "Gaziantep",
+		"ascii": "Gaziantep",
+		"country": "Turkey",
+		"timezone": "Europe/Istanbul"
+	},
+	{
+		"id": "1200109",
+		"name": "Gazipur",
+		"ascii": "Gazipur",
+		"country": "Bangladesh",
+		"timezone": "Asia/Dhaka"
+	},
+	{
+		"id": "2277060",
+		"name": "Gbarnga",
+		"ascii": "Gbarnga",
+		"country": "Liberia",
+		"timezone": "Africa/Monrovia"
+	},
+	{
+		"id": "2660646",
+		"name": "Geneva",
+		"ascii": "Geneva",
+		"country": "Switzerland",
+		"timezone": "Europe/Zurich"
+	},
+	{
+		"id": "3580661",
+		"name": "George Town",
+		"ascii": "George Town",
+		"country": "Cayman Islands",
+		"timezone": "America/Cayman"
+	},
+	{
+		"id": "3378644",
+		"name": "Georgetown",
+		"ascii": "Georgetown",
+		"country": "Guyana",
+		"timezone": "America/Guyana"
+	},
+	{
+		"id": "2411585",
+		"name": "Gibraltar",
+		"ascii": "Gibraltar",
+		"country": "Gibraltar",
+		"timezone": "Europe/Gibraltar"
+	},
+	{
+		"id": "202905",
+		"name": "Gisenyi",
+		"ascii": "Gisenyi",
+		"country": "Rwanda",
+		"timezone": "Africa/Kigali"
+	},
+	{
+		"id": "426272",
+		"name": "Gitega",
+		"ascii": "Gitega",
+		"country": "Burundi",
+		"timezone": "Africa/Bujumbura"
+	},
+	{
+		"id": "360995",
+		"name": "Giza",
+		"ascii": "Giza",
+		"country": "Egypt",
+		"timezone": "Africa/Cairo"
+	},
+	{
+		"id": "2711537",
+		"name": "Gothenburg",
+		"ascii": "Gothenburg",
+		"country": "Sweden",
+		"timezone": "Europe/Stockholm"
+	},
+	{
+		"id": "2778067",
+		"name": "Graz",
+		"ascii": "Graz",
+		"country": "Austria",
+		"timezone": "Europe/Vienna"
+	},
+	{
+		"id": "3576686",
+		"name": "Gros Islet",
+		"ascii": "Gros Islet",
+		"country": "Saint Lucia",
+		"timezone": "America/St_Lucia"
+	},
+	{
+		"id": "3426466",
+		"name": "Grytviken",
+		"ascii": "Grytviken",
+		"country": "South Georgia and the South Sandwich Islands",
+		"timezone": "Atlantic/South_Georgia"
+	},
+	{
+		"id": "1809858",
+		"name": "Guangzhou",
+		"ascii": "Guangzhou",
+		"country": "China",
+		"timezone": "Asia/Shanghai"
+	},
+	{
+		"id": "3598132",
+		"name": "Guatemala City",
+		"ascii": "Guatemala City",
+		"country": "Guatemala",
+		"timezone": "America/Guatemala"
+	},
+	{
+		"id": "3657509",
+		"name": "Guayaquil",
+		"ascii": "Guayaquil",
+		"country": "Ecuador",
+		"timezone": "America/Guayaquil"
+	},
+	{
+		"id": "1809461",
+		"name": "Guiyang",
+		"ascii": "Guiyang",
+		"country": "China",
+		"timezone": "Asia/Shanghai"
+	},
+	{
+		"id": "1177662",
+		"name": "Gujranwala",
+		"ascii": "Gujranwala",
+		"country": "Pakistan",
+		"timezone": "Asia/Karachi"
+	},
+	{
+		"id": "3579132",
+		"name": "Gustavia",
+		"ascii": "Gustavia",
+		"country": "Saint Barthelemy",
+		"timezone": "America/St_Barthelemy"
+	},
+	{
+		"id": "616635",
+		"name": "Gyumri",
+		"ascii": "Gyumri",
+		"country": "Armenia",
+		"timezone": "Asia/Yerevan"
+	},
+	{
+		"id": "1809078",
+		"name": "Haikou",
+		"ascii": "Haikou",
+		"country": "China",
+		"timezone": "Asia/Shanghai"
+	},
+	{
+		"id": "1581298",
+		"name": "Haiphong",
+		"ascii": "Haiphong",
+		"country": "Vietnam",
+		"timezone": "Asia/Bangkok"
+	},
+	{
+		"id": "2911298",
+		"name": "Hamburg",
+		"ascii": "Hamburg",
+		"country": "Germany",
+		"timezone": "Europe/Berlin"
+	},
+	{
+		"id": "1877449",
+		"name": "Hamhŭng",
+		"ascii": "Hamhung",
+		"country": "North Korea",
+		"timezone": "Asia/Pyongyang"
+	},
+	{
+		"id": "3573197",
+		"name": "Hamilton",
+		"ascii": "Hamilton",
+		"country": "Bermuda",
+		"timezone": "Atlantic/Bermuda"
+	},
+	{
+		"id": "1808926",
+		"name": "Hangzhou",
+		"ascii": "Hangzhou",
+		"country": "China",
+		"timezone": "Asia/Shanghai"
+	},
+	{
+		"id": "1581130",
+		"name": "Hanoi",
+		"ascii": "Hanoi",
+		"country": "Vietnam",
+		"timezone": "Asia/Bangkok"
+	},
+	{
+		"id": "890299",
+		"name": "Harare",
+		"ascii": "Harare",
+		"country": "Zimbabwe",
+		"timezone": "Africa/Harare"
+	},
+	{
+		"id": "2037013",
+		"name": "Harbin",
+		"ascii": "Harbin",
+		"country": "China",
+		"timezone": "Asia/Shanghai"
+	},
+	{
+		"id": "3553478",
+		"name": "Havana",
+		"ascii": "Havana",
+		"country": "Cuba",
+		"timezone": "America/Havana"
+	},
+	{
+		"id": "285629",
+		"name": "Ḩawallī",
+		"ascii": "Hawalli",
+		"country": "Kuwait",
+		"timezone": "Asia/Kuwait"
+	},
+	{
+		"id": "1808722",
+		"name": "Hefei",
+		"ascii": "Hefei",
+		"country": "China",
+		"timezone": "Asia/Shanghai"
+	},
+	{
+		"id": "658225",
+		"name": "Helsinki",
+		"ascii": "Helsinki",
+		"country": "Finland",
+		"timezone": "Europe/Helsinki"
+	},
+	{
+		"id": "1140026",
+		"name": "Herāt",
+		"ascii": "Herat",
+		"country": "Afghanistan",
+		"timezone": "Asia/Kabul"
+	},
+	{
+		"id": "1566083",
+		"name": "Ho Chi Minh City",
+		"ascii": "Ho Chi Minh City",
+		"country": "Vietnam",
+		"timezone": "Asia/Ho_Chi_Minh"
+	},
+	{
+		"id": "2036892",
+		"name": "Hohhot",
+		"ascii": "Hohhot",
+		"country": "China",
+		"timezone": "Asia/Shanghai"
+	},
+	{
+		"id": "627907",
+		"name": "Homyel'",
+		"ascii": "Homyel'",
+		"country": "Belarus",
+		"timezone": "Europe/Minsk"
+	},
+	{
+		"id": "1819729",
+		"name": "Hong Kong",
+		"ascii": "Hong Kong",
+		"country": "Hong Kong",
+		"timezone": "Asia/Hong_Kong"
+	},
+	{
+		"id": "2108502",
+		"name": "Honiara",
+		"ascii": "Honiara",
+		"country": "Solomon Islands",
+		"timezone": "Pacific/Guadalcanal"
+	},
+	{
+		"id": "4699066",
+		"name": "Houston",
+		"ascii": "Houston",
+		"country": "United States",
+		"timezone": "America/Chicago"
+	},
+	{
+		"id": "1797873",
+		"name": "Huai'an",
+		"ascii": "Huai'an",
+		"country": "China",
+		"timezone": "Asia/Shanghai"
+	},
+	{
+		"id": "1807681",
+		"name": "Huainan",
+		"ascii": "Huainan",
+		"country": "China",
+		"timezone": "Asia/Shanghai"
+	},
+	{
+		"id": "1806776",
+		"name": "Huizhou",
+		"ascii": "Huizhou",
+		"country": "China",
+		"timezone": "Asia/Shanghai"
+	},
+	{
+		"id": "1269843",
+		"name": "Hyderabad",
+		"ascii": "Hyderabad",
+		"country": "India",
+		"timezone": "Asia/Kolkata"
+	},
+	{
+		"id": "1176734",
+		"name": "Hyderabad",
+		"ascii": "Hyderabad",
+		"country": "Pakistan",
+		"timezone": "Asia/Karachi"
+	},
+	{
+		"id": "675810",
+		"name": "Iaşi",
+		"ascii": "Iasi",
+		"country": "Romania",
+		"timezone": "Europe/Bucharest"
+	},
+	{
+		"id": "2339354",
+		"name": "Ibadan",
+		"ascii": "Ibadan",
+		"country": "Nigeria",
+		"timezone": "Africa/Lagos"
+	},
+	{
+		"id": "1843564",
+		"name": "Incheon",
+		"ascii": "Incheon",
+		"country": "South Korea",
+		"timezone": "Asia/Seoul"
+	},
+	{
+		"id": "1269743",
+		"name": "Indore",
+		"ascii": "Indore",
+		"country": "India",
+		"timezone": "Asia/Kolkata"
+	},
+	{
+		"id": "1514896",
+		"name": "Isfara",
+		"ascii": "Isfara",
+		"country": "Tajikistan",
+		"timezone": "Asia/Dushanbe"
+	},
+	{
+		"id": "745044",
+		"name": "Istanbul",
+		"ascii": "Istanbul",
+		"country": "Turkey",
+		"timezone": "Europe/Istanbul"
+	},
+	{
+		"id": "311046",
+		"name": "İzmir",
+		"ascii": "Izmir",
+		"country": "Turkey",
+		"timezone": "Europe/Istanbul"
+	},
+	{
+		"id": "3526683",
+		"name": "Iztapalapa",
+		"ascii": "Iztapalapa",
+		"country": "Mexico",
+		"timezone": "America/Mexico_City"
+	},
+	{
+		"id": "1269515",
+		"name": "Jaipur",
+		"ascii": "Jaipur",
+		"country": "India",
+		"timezone": "Asia/Kolkata"
+	},
+	{
+		"id": "1642911",
+		"name": "Jakarta",
+		"ascii": "Jakarta",
+		"country": "Indonesia",
+		"timezone": "Asia/Jakarta"
+	},
+	{
+		"id": "3370903",
+		"name": "Jamestown",
+		"ascii": "Jamestown",
+		"country": "Saint Helena",
+		"timezone": "Atlantic/St_Helena"
+	},
+	{
+		"id": "105343",
+		"name": "Jeddah",
+		"ascii": "Jeddah",
+		"country": "Saudi Arabia",
+		"timezone": "Asia/Riyadh"
+	},
+	{
+		"id": "281184",
+		"name": "Jerusalem",
+		"ascii": "Jerusalem",
+		"country": "Israel",
+		"timezone": "Asia/Jerusalem"
+	},
+	{
+		"id": "1806508",
+		"name": "Jiading",
+		"ascii": "Jiading",
+		"country": "China",
+		"timezone": "Asia/Shanghai"
+	},
+	{
+		"id": "1806299",
+		"name": "Jiangmen",
+		"ascii": "Jiangmen",
+		"country": "China",
+		"timezone": "Asia/Shanghai"
+	},
+	{
+		"id": "1815251",
+		"name": "Jiangyin",
+		"ascii": "Jiangyin",
+		"country": "China",
+		"timezone": "Asia/Shanghai"
+	},
+	{
+		"id": "1797121",
+		"name": "Jieyang",
+		"ascii": "Jieyang",
+		"country": "China",
+		"timezone": "Asia/Shanghai"
+	},
+	{
+		"id": "333795",
+		"name": "Jijiga",
+		"ascii": "Jijiga",
+		"country": "Ethiopia",
+		"timezone": "Africa/Addis_Ababa"
+	},
+	{
+		"id": "2036502",
+		"name": "Jilin",
+		"ascii": "Jilin",
+		"country": "China",
+		"timezone": "Asia/Shanghai"
+	},
+	{
+		"id": "1805753",
+		"name": "Jinan",
+		"ascii": "Jinan",
+		"country": "China",
+		"timezone": "Asia/Shanghai"
+	},
+	{
+		"id": "993800",
+		"name": "Johannesburg",
+		"ascii": "Johannesburg",
+		"country": "South Africa",
+		"timezone": "Africa/Johannesburg"
+	},
+	{
+		"id": "1732752",
+		"name": "Johor Bahru",
+		"ascii": "Johor Bahru",
+		"country": "Malaysia",
+		"timezone": "Asia/Kuala_Lumpur"
+	},
+	{
+		"id": "373303",
+		"name": "Juba",
+		"ascii": "Juba",
+		"country": "South Sudan",
+		"timezone": "Africa/Juba"
+	},
+	{
+		"id": "1138958",
+		"name": "Kabul",
+		"ascii": "Kabul",
+		"country": "Afghanistan",
+		"timezone": "Asia/Kabul"
+	},
+	{
+		"id": "2335727",
+		"name": "Kaduna",
+		"ascii": "Kaduna",
+		"country": "Nigeria",
+		"timezone": "Africa/Lagos"
+	},
+	{
+		"id": "195272",
+		"name": "Kakamega",
+		"ascii": "Kakamega",
+		"country": "Kenya",
+		"timezone": "Africa/Nairobi"
+	},
+	{
+		"id": "232422",
+		"name": "Kampala",
+		"ascii": "Kampala",
+		"country": "Uganda",
+		"timezone": "Africa/Kampala"
+	},
+	{
+		"id": "2335204",
+		"name": "Kano",
+		"ascii": "Kano",
+		"country": "Nigeria",
+		"timezone": "Africa/Lagos"
+	},
+	{
+		"id": "1267995",
+		"name": "Kanpur",
+		"ascii": "Kanpur",
+		"country": "India",
+		"timezone": "Asia/Kolkata"
+	},
+	{
+		"id": "1673820",
+		"name": "Kaohsiung",
+		"ascii": "Kaohsiung",
+		"country": "Taiwan",
+		"timezone": "Asia/Taipei"
+	},
+	{
+		"id": "1174872",
+		"name": "Karachi",
+		"ascii": "Karachi",
+		"country": "Pakistan",
+		"timezone": "Asia/Karachi"
+	},
+	{
+		"id": "1283240",
+		"name": "Kathmandu",
+		"ascii": "Kathmandu",
+		"country": "Nepal",
+		"timezone": "Asia/Kathmandu"
+	},
+	{
+		"id": "598316",
+		"name": "Kaunas",
+		"ascii": "Kaunas",
+		"country": "Lithuania",
+		"timezone": "Europe/Vilnius"
+	},
+	{
+		"id": "2407790",
+		"name": "Kenema",
+		"ascii": "Kenema",
+		"country": "Sierra Leone",
+		"timezone": "Africa/Freetown"
+	},
+	{
+		"id": "333287",
+		"name": "Keren",
+		"ascii": "Keren",
+		"country": "Eritrea",
+		"timezone": "Africa/Asmara"
+	},
+	{
+		"id": "281124",
+		"name": "Khān Yūnis",
+		"ascii": "Khan Yunis",
+		"country": "Palestinian Territory",
+		"timezone": "Asia/Gaza"
+	},
+	{
+		"id": "706483",
+		"name": "Kharkiv",
+		"ascii": "Kharkiv",
+		"country": "Ukraine",
+		"timezone": "Europe/Kyiv"
+	},
+	{
+		"id": "379252",
+		"name": "Khartoum",
+		"ascii": "Khartoum",
+		"country": "Sudan",
+		"timezone": "Africa/Khartoum"
+	},
+	{
+		"id": "202061",
+		"name": "Kigali",
+		"ascii": "Kigali",
+		"country": "Rwanda",
+		"timezone": "Africa/Kigali"
+	},
+	{
+		"id": "3489854",
+		"name": "Kingston",
+		"ascii": "Kingston",
+		"country": "Jamaica",
+		"timezone": "America/Jamaica"
+	},
+	{
+		"id": "2161314",
+		"name": "Kingston",
+		"ascii": "Kingston",
+		"country": "Norfolk Island",
+		"timezone": "Pacific/Norfolk"
+	},
+	{
+		"id": "3577887",
+		"name": "Kingstown",
+		"ascii": "Kingstown",
+		"country": "Saint Vincent and the Grenadines",
+		"timezone": "America/St_Vincent"
+	},
+	{
+		"id": "2314302",
+		"name": "Kinshasa",
+		"ascii": "Kinshasa",
+		"country": "Democratic Republic of the Congo",
+		"timezone": "Africa/Kinshasa"
+	},
+	{
+		"id": "911148",
+		"name": "Kitwe",
+		"ascii": "Kitwe",
+		"country": "Zambia",
+		"timezone": "Africa/Lusaka"
+	},
+	{
+		"id": "1275004",
+		"name": "Kolkata",
+		"ascii": "Kolkata",
+		"country": "India",
+		"timezone": "Asia/Kolkata"
+	},
+	{
+		"id": "3415212",
+		"name": "Kópavogur",
+		"ascii": "Kopavogur",
+		"country": "Iceland",
+		"timezone": "Atlantic/Reykjavik"
+	},
+	{
+		"id": "724443",
+		"name": "Košice",
+		"ascii": "Kosice",
+		"country": "Slovakia",
+		"timezone": "Europe/Bratislava"
+	},
+	{
+		"id": "1090225",
+		"name": "Koungou",
+		"ascii": "Koungou",
+		"country": "Mayotte",
+		"timezone": "Indian/Mayotte"
+	},
+	{
+		"id": "3094802",
+		"name": "Kraków",
+		"ascii": "Krakow",
+		"country": "Poland",
+		"timezone": "Europe/Warsaw"
+	},
+	{
+		"id": "3513563",
+		"name": "Kralendijk",
+		"ascii": "Kralendijk",
+		"country": "Bonaire, Saint Eustatius and Saba ",
+		"timezone": "America/Kralendijk"
+	},
+	{
+		"id": "1735161",
+		"name": "Kuala Lumpur",
+		"ascii": "Kuala Lumpur",
+		"country": "Malaysia",
+		"timezone": "Asia/Kuala_Lumpur"
+	},
+	{
+		"id": "788886",
+		"name": "Kumanovo",
+		"ascii": "Kumanovo",
+		"country": "North Macedonia",
+		"timezone": "Europe/Skopje"
+	},
+	{
+		"id": "2298890",
+		"name": "Kumasi",
+		"ascii": "Kumasi",
+		"country": "Ghana",
+		"timezone": "Africa/Accra"
+	},
+	{
+		"id": "1804651",
+		"name": "Kunming",
+		"ascii": "Kunming",
+		"country": "China",
+		"timezone": "Asia/Shanghai"
+	},
+	{
+		"id": "1785623",
+		"name": "Kunshan",
+		"ascii": "Kunshan",
+		"country": "China",
+		"timezone": "Asia/Shanghai"
+	},
+	{
+		"id": "703448",
+		"name": "Kyiv",
+		"ascii": "Kyiv",
+		"country": "Ukraine",
+		"timezone": "Europe/Kyiv"
+	},
+	{
+		"id": "2462881",
+		"name": "Laayoune",
+		"ascii": "Laayoune",
+		"country": "Western Sahara",
+		"timezone": "Africa/El_Aaiun"
+	},
+	{
+		"id": "2092740",
+		"name": "Lae",
+		"ascii": "Lae",
+		"country": "Papua New Guinea",
+		"timezone": "Pacific/Port_Moresby"
+	},
+	{
+		"id": "2332459",
+		"name": "Lagos",
+		"ascii": "Lagos",
+		"country": "Nigeria",
+		"timezone": "Africa/Lagos"
+	},
+	{
+		"id": "1172451",
+		"name": "Lahore",
+		"ascii": "Lahore",
+		"country": "Pakistan",
+		"timezone": "Asia/Karachi"
+	},
+	{
+		"id": "1804430",
+		"name": "Lanzhou",
+		"ascii": "Lanzhou",
+		"country": "China",
+		"timezone": "Asia/Shanghai"
+	},
+	{
+		"id": "3570428",
+		"name": "Le Lamentin",
+		"ascii": "Le Lamentin",
+		"country": "Martinique",
+		"timezone": "America/Martinique"
+	},
+	{
+		"id": "3383714",
+		"name": "Lelydorp",
+		"ascii": "Lelydorp",
+		"country": "Suriname",
+		"timezone": "America/Paramaribo"
+	},
+	{
+		"id": "3618030",
+		"name": "León",
+		"ascii": "Leon",
+		"country": "Nicaragua",
+		"timezone": "America/Managua"
+	},
+	{
+		"id": "3578959",
+		"name": "Les Abymes",
+		"ascii": "Les Abymes",
+		"country": "Guadeloupe",
+		"timezone": "America/Guadeloupe"
+	},
+	{
+		"id": "3040051",
+		"name": "les Escaldes",
+		"ascii": "les Escaldes",
+		"country": "Andorra",
+		"timezone": "Europe/Andorra"
+	},
+	{
+		"id": "10859300",
+		"name": "Lianyungang",
+		"ascii": "Lianyungang",
+		"country": "China",
+		"timezone": "Asia/Shanghai"
+	},
+	{
+		"id": "2399697",
+		"name": "Libreville",
+		"ascii": "Libreville",
+		"country": "Gabon",
+		"timezone": "Africa/Libreville"
+	},
+	{
+		"id": "927967",
+		"name": "Lilongwe",
+		"ascii": "Lilongwe",
+		"country": "Malawi",
+		"timezone": "Africa/Blantyre"
+	},
+	{
+		"id": "3936456",
+		"name": "Lima",
+		"ascii": "Lima",
+		"country": "Peru",
+		"timezone": "America/Lima"
+	},
+	{
+		"id": "146384",
+		"name": "Limassol",
+		"ascii": "Limassol",
+		"country": "Cyprus",
+		"timezone": "Asia/Nicosia"
+	},
+	{
+		"id": "3622247",
+		"name": "Limón",
+		"ascii": "Limon",
+		"country": "Costa Rica",
+		"timezone": "America/Costa_Rica"
+	},
+	{
+		"id": "3377408",
+		"name": "Linden",
+		"ascii": "Linden",
+		"country": "Guyana",
+		"timezone": "America/Guyana"
+	},
+	{
+		"id": "1803318",
+		"name": "Linyi",
+		"ascii": "Linyi",
+		"country": "China",
+		"timezone": "Asia/Shanghai"
+	},
+	{
+		"id": "2267057",
+		"name": "Lisbon",
+		"ascii": "Lisbon",
+		"country": "Portugal",
+		"timezone": "Europe/Lisbon"
+	},
+	{
+		"id": "3196359",
+		"name": "Ljubljana",
+		"ascii": "Ljubljana",
+		"country": "Slovenia",
+		"timezone": "Europe/Ljubljana"
+	},
+	{
+		"id": "2365267",
+		"name": "Lomé",
+		"ascii": "Lome",
+		"country": "Togo",
+		"timezone": "Africa/Lome"
+	},
+	{
+		"id": "2643743",
+		"name": "London",
+		"ascii": "London",
+		"country": "United Kingdom",
+		"timezone": "Europe/London"
+	},
+	{
+		"id": "2729907",
+		"name": "Longyearbyen",
+		"ascii": "Longyearbyen",
+		"country": "Svalbard and Jan Mayen",
+		"timezone": "Arctic/Longyearbyen"
+	},
+	{
+		"id": "5368361",
+		"name": "Los Angeles",
+		"ascii": "Los Angeles",
+		"country": "United States",
+		"timezone": "America/Los_Angeles"
+	},
+	{
+		"id": "2240449",
+		"name": "Luanda",
+		"ascii": "Luanda",
+		"country": "Angola",
+		"timezone": "Africa/Luanda"
+	},
+	{
+		"id": "922704",
+		"name": "Lubumbashi",
+		"ascii": "Lubumbashi",
+		"country": "Democratic Republic of the Congo",
+		"timezone": "Africa/Lubumbashi"
+	},
+	{
+		"id": "3571971",
+		"name": "Lucaya",
+		"ascii": "Lucaya",
+		"country": "Bahamas",
+		"timezone": "America/Nassau"
+	},
+	{
+		"id": "1264733",
+		"name": "Lucknow",
+		"ascii": "Lucknow",
+		"country": "India",
+		"timezone": "Asia/Kolkata"
+	},
+	{
+		"id": "13512505",
+		"name": "Lüliang",
+		"ascii": "Lueliang",
+		"country": "China",
+		"timezone": "Asia/Shanghai"
+	},
+	{
+		"id": "909137",
+		"name": "Lusaka",
+		"ascii": "Lusaka",
+		"country": "Zambia",
+		"timezone": "Africa/Lusaka"
+	},
+	{
+		"id": "2960316",
+		"name": "Luxembourg",
+		"ascii": "Luxembourg",
+		"country": "Luxembourg",
+		"timezone": "Europe/Luxembourg"
+	},
+	{
+		"id": "1821274",
+		"name": "Macau",
+		"ascii": "Macau",
+		"country": "Macao",
+		"timezone": "Asia/Macau"
+	},
+	{
+		"id": "3117735",
+		"name": "Madrid",
+		"ascii": "Madrid",
+		"country": "Spain",
+		"timezone": "Europe/Madrid"
+	},
+	{
+		"id": "2113779",
+		"name": "Majuro",
+		"ascii": "Majuro",
+		"country": "Marshall Islands",
+		"timezone": "Pacific/Majuro"
+	},
+	{
+		"id": "2309527",
+		"name": "Malabo",
+		"ascii": "Malabo",
+		"country": "Equatorial Guinea",
+		"timezone": "Africa/Malabo"
+	},
+	{
+		"id": "1282027",
+		"name": "Male",
+		"ascii": "Male",
+		"country": "Maldives",
+		"timezone": "Indian/Maldives"
+	},
+	{
+		"id": "1636670",
+		"name": "Maliana",
+		"ascii": "Maliana",
+		"country": "Timor Leste",
+		"timezone": "Asia/Dili"
+	},
+	{
+		"id": "921815",
+		"name": "Mamoudzou",
+		"ascii": "Mamoudzou",
+		"country": "Mayotte",
+		"timezone": "Indian/Mayotte"
+	},
+	{
+		"id": "3617763",
+		"name": "Managua",
+		"ascii": "Managua",
+		"country": "Nicaragua",
+		"timezone": "America/Managua"
+	},
+	{
+		"id": "290340",
+		"name": "Manama",
+		"ascii": "Manama",
+		"country": "Bahrain",
+		"timezone": "Asia/Bahrain"
+	},
+	{
+		"id": "3663517",
+		"name": "Manaus",
+		"ascii": "Manaus",
+		"country": "Brazil",
+		"timezone": "America/Manaus"
+	},
+	{
+		"id": "1311874",
+		"name": "Mandalay",
+		"ascii": "Mandalay",
+		"country": "Myanmar",
+		"timezone": "Asia/Yangon"
+	},
+	{
+		"id": "934995",
+		"name": "Manzini",
+		"ascii": "Manzini",
+		"country": "Eswatini",
+		"timezone": "Africa/Mbabane"
+	},
+	{
+		"id": "1040652",
+		"name": "Maputo",
+		"ascii": "Maputo",
+		"country": "Mozambique",
+		"timezone": "Africa/Maputo"
+	},
+	{
+		"id": "932521",
+		"name": "Maputsoe",
+		"ascii": "Maputsoe",
+		"country": "Lesotho",
+		"timezone": "Africa/Maseru"
+	},
+	{
+		"id": "3633009",
+		"name": "Maracaibo",
+		"ascii": "Maracaibo",
+		"country": "Venezuela",
+		"timezone": "America/Caracas"
+	},
+	{
+		"id": "2441291",
+		"name": "Maradi",
+		"ascii": "Maradi",
+		"country": "Niger",
+		"timezone": "Africa/Niamey"
+	},
+	{
+		"id": "3195506",
+		"name": "Maribor",
+		"ascii": "Maribor",
+		"country": "Slovenia",
+		"timezone": "Europe/Ljubljana"
+	},
+	{
+		"id": "3041732",
+		"name": "Mariehamn",
+		"ascii": "Mariehamn",
+		"country": "Aland Islands",
+		"timezone": "Europe/Mariehamn"
+	},
+	{
+		"id": "3578851",
+		"name": "Marigot",
+		"ascii": "Marigot",
+		"country": "Saint Martin",
+		"timezone": "America/Marigot"
+	},
+	{
+		"id": "2995469",
+		"name": "Marseille",
+		"ascii": "Marseille",
+		"country": "France",
+		"timezone": "Europe/Paris"
+	},
+	{
+		"id": "932505",
+		"name": "Maseru",
+		"ascii": "Maseru",
+		"country": "Lesotho",
+		"timezone": "Africa/Maseru"
+	},
+	{
+		"id": "124665",
+		"name": "Mashhad",
+		"ascii": "Mashhad",
+		"country": "Iran",
+		"timezone": "Asia/Tehran"
+	},
+	{
+		"id": "4034821",
+		"name": "Mata-Utu",
+		"ascii": "Mata-Utu",
+		"country": "Wallis and Futuna",
+		"timezone": "Pacific/Wallis"
+	},
+	{
+		"id": "1039854",
+		"name": "Matola",
+		"ascii": "Matola",
+		"country": "Mozambique",
+		"timezone": "Africa/Maputo"
+	},
+	{
+		"id": "3380965",
+		"name": "Matoury",
+		"ascii": "Matoury",
+		"country": "French Guiana",
+		"timezone": "America/Cayenne"
+	},
+	{
+		"id": "934985",
+		"name": "Mbabane",
+		"ascii": "Mbabane",
+		"country": "Eswatini",
+		"timezone": "Africa/Mbabane"
+	},
+	{
+		"id": "209228",
+		"name": "Mbuji-Mayi",
+		"ascii": "Mbuji-Mayi",
+		"country": "Democratic Republic of the Congo",
+		"timezone": "Africa/Lubumbashi"
+	},
+	{
+		"id": "1214520",
+		"name": "Medan",
+		"ascii": "Medan",
+		"country": "Indonesia",
+		"timezone": "Asia/Jakarta"
+	},
+	{
+		"id": "3674962",
+		"name": "Medellín",
+		"ascii": "Medellin",
+		"country": "Colombia",
+		"timezone": "America/Bogota"
+	},
+	{
+		"id": "2158177",
+		"name": "Melbourne",
+		"ascii": "Melbourne",
+		"country": "Australia",
+		"timezone": "Australia/Melbourne"
+	},
+	{
+		"id": "3530597",
+		"name": "Mexico City",
+		"ascii": "Mexico City",
+		"country": "Mexico",
+		"timezone": "America/Mexico_City"
+	},
+	{
+		"id": "3173435",
+		"name": "Milan",
+		"ascii": "Milan",
+		"country": "Italy",
+		"timezone": "Europe/Rome"
+	},
+	{
+		"id": "3374462",
+		"name": "Mindelo",
+		"ascii": "Mindelo",
+		"country": "Cabo Verde",
+		"timezone": "Atlantic/Cape_Verde"
+	},
+	{
+		"id": "1800480",
+		"name": "Minhang",
+		"ascii": "Minhang",
+		"country": "China",
+		"timezone": "Asia/Shanghai"
+	},
+	{
+		"id": "625144",
+		"name": "Minsk",
+		"ascii": "Minsk",
+		"country": "Belarus",
+		"timezone": "Europe/Minsk"
+	},
+	{
+		"id": "53654",
+		"name": "Mogadishu",
+		"ascii": "Mogadishu",
+		"country": "Somalia",
+		"timezone": "Africa/Mogadishu"
+	},
+	{
+		"id": "3574116",
+		"name": "Mon Repos",
+		"ascii": "Mon Repos",
+		"country": "Trinidad and Tobago",
+		"timezone": "America/Port_of_Spain"
+	},
+	{
+		"id": "2993458",
+		"name": "Monaco",
+		"ascii": "Monaco",
+		"country": "Monaco",
+		"timezone": "Europe/Monaco"
+	},
+	{
+		"id": "2274895",
+		"name": "Monrovia",
+		"ascii": "Monrovia",
+		"country": "Liberia",
+		"timezone": "Africa/Monrovia"
+	},
+	{
+		"id": "2140066",
+		"name": "Mont-Dore",
+		"ascii": "Mont-Dore",
+		"country": "New Caledonia",
+		"timezone": "Pacific/Noumea"
+	},
+	{
+		"id": "3441575",
+		"name": "Montevideo",
+		"ascii": "Montevideo",
+		"country": "Uruguay",
+		"timezone": "America/Montevideo"
+	},
+	{
+		"id": "6077243",
+		"name": "Montréal",
+		"ascii": "Montreal",
+		"country": "Canada",
+		"timezone": "America/Toronto"
+	},
+	{
+		"id": "921772",
+		"name": "Moroni",
+		"ascii": "Moroni",
+		"country": "Comoros",
+		"timezone": "Indian/Comoro"
+	},
+	{
+		"id": "524901",
+		"name": "Moscow",
+		"ascii": "Moscow",
+		"country": "Russia",
+		"timezone": "Europe/Moscow"
+	},
+	{
+		"id": "99072",
+		"name": "Mosul",
+		"ascii": "Mosul",
+		"country": "Iraq",
+		"timezone": "Asia/Baghdad"
+	},
+	{
+		"id": "2427455",
+		"name": "Moundou",
+		"ascii": "Moundou",
+		"country": "Chad",
+		"timezone": "Africa/Ndjamena"
+	},
+	{
+		"id": "921753",
+		"name": "Moutsamoudou",
+		"ascii": "Moutsamoudou",
+		"country": "Comoros",
+		"timezone": "Indian/Comoro"
+	},
+	{
+		"id": "8307074",
+		"name": "Mulenvos",
+		"ascii": "Mulenvos",
+		"country": "Angola",
+		"timezone": "Africa/Luanda"
+	},
+	{
+		"id": "1169825",
+		"name": "Multan",
+		"ascii": "Multan",
+		"country": "Pakistan",
+		"timezone": "Asia/Karachi"
+	},
+	{
+		"id": "1275339",
+		"name": "Mumbai",
+		"ascii": "Mumbai",
+		"country": "India",
+		"timezone": "Asia/Kolkata"
+	},
+	{
+		"id": "287286",
+		"name": "Muscat",
+		"ascii": "Muscat",
+		"country": "Oman",
+		"timezone": "Asia/Muscat"
+	},
+	{
+		"id": "152224",
+		"name": "Mwanza",
+		"ascii": "Mwanza",
+		"country": "Tanzania",
+		"timezone": "Africa/Dar_es_Salaam"
+	},
+	{
+		"id": "2427123",
+		"name": "N'Djamena",
+		"ascii": "N'Djamena",
+		"country": "Chad",
+		"timezone": "Africa/Ndjamena"
+	},
+	{
+		"id": "1856057",
+		"name": "Nagoya",
+		"ascii": "Nagoya",
+		"country": "Japan",
+		"timezone": "Asia/Tokyo"
+	},
+	{
+		"id": "1262180",
+		"name": "Nagpur",
+		"ascii": "Nagpur",
+		"country": "India",
+		"timezone": "Asia/Kolkata"
+	},
+	{
+		"id": "184745",
+		"name": "Nairobi",
+		"ascii": "Nairobi",
+		"country": "Kenya",
+		"timezone": "Africa/Nairobi"
+	},
+	{
+		"id": "1800163",
+		"name": "Nanchang",
+		"ascii": "Nanchang",
+		"country": "China",
+		"timezone": "Asia/Shanghai"
+	},
+	{
+		"id": "1800146",
+		"name": "Nanchong",
+		"ascii": "Nanchong",
+		"country": "China",
+		"timezone": "Asia/Shanghai"
+	},
+	{
+		"id": "1799962",
+		"name": "Nanjing",
+		"ascii": "Nanjing",
+		"country": "China",
+		"timezone": "Asia/Shanghai"
+	},
+	{
+		"id": "1799869",
+		"name": "Nanning",
+		"ascii": "Nanning",
+		"country": "China",
+		"timezone": "Asia/Shanghai"
+	},
+	{
+		"id": "10943053",
+		"name": "Nansana",
+		"ascii": "Nansana",
+		"country": "Uganda",
+		"timezone": "Africa/Kampala"
+	},
+	{
+		"id": "1799722",
+		"name": "Nantong",
+		"ascii": "Nantong",
+		"country": "China",
+		"timezone": "Asia/Shanghai"
+	},
+	{
+		"id": "1799629",
+		"name": "Nanyang",
+		"ascii": "Nanyang",
+		"country": "China",
+		"timezone": "Asia/Shanghai"
+	},
+	{
+		"id": "8740209",
+		"name": "Nasinu",
+		"ascii": "Nasinu",
+		"country": "Fiji",
+		"timezone": "Pacific/Fiji"
+	},
+	{
+		"id": "3571824",
+		"name": "Nassau",
+		"ascii": "Nassau",
+		"country": "Bahamas",
+		"timezone": "America/Nassau"
+	},
+	{
+		"id": "12908892",
+		"name": "New Taipei City",
+		"ascii": "New Taipei City",
+		"country": "Taiwan",
+		"timezone": "Asia/Taipei"
+	},
+	{
+		"id": "5128581",
+		"name": "New York City",
+		"ascii": "New York City",
+		"country": "United States",
+		"timezone": "America/New_York"
+	},
+	{
+		"id": "8063361",
+		"name": "Ngerulmud",
+		"ascii": "Ngerulmud",
+		"country": "Palau",
+		"timezone": "Pacific/Palau"
+	},
+	{
+		"id": "2440485",
+		"name": "Niamey",
+		"ascii": "Niamey",
+		"country": "Niger",
+		"timezone": "Africa/Niamey"
+	},
+	{
+		"id": "146268",
+		"name": "Nicosia",
+		"ascii": "Nicosia",
+		"country": "Cyprus",
+		"timezone": "Asia/Nicosia"
+	},
+	{
+		"id": "3194494",
+		"name": "Nikšić",
+		"ascii": "Niksic",
+		"country": "Montenegro",
+		"timezone": "Europe/Podgorica"
+	},
+	{
+		"id": "1799397",
+		"name": "Ningbo",
+		"ascii": "Ningbo",
+		"country": "China",
+		"timezone": "Asia/Shanghai"
+	},
+	{
+		"id": "787657",
+		"name": "Niš",
+		"ascii": "Nis",
+		"country": "Serbia",
+		"timezone": "Europe/Belgrade"
+	},
+	{
+		"id": "3577159",
+		"name": "Noord",
+		"ascii": "Noord",
+		"country": "Aruba",
+		"timezone": "America/Aruba"
+	},
+	{
+		"id": "2377457",
+		"name": "Nouadhibou",
+		"ascii": "Nouadhibou",
+		"country": "Mauritania",
+		"timezone": "Africa/Nouakchott"
+	},
+	{
+		"id": "2377450",
+		"name": "Nouakchott",
+		"ascii": "Nouakchott",
+		"country": "Mauritania",
+		"timezone": "Africa/Nouakchott"
+	},
+	{
+		"id": "2139521",
+		"name": "Nouméa",
+		"ascii": "Noumea",
+		"country": "New Caledonia",
+		"timezone": "Pacific/Noumea"
+	},
+	{
+		"id": "4032402",
+		"name": "Nuku‘alofa",
+		"ascii": "Nuku'alofa",
+		"country": "Tonga",
+		"timezone": "Pacific/Tongatapu"
+	},
+	{
+		"id": "3421319",
+		"name": "Nuuk",
+		"ascii": "Nuuk",
+		"country": "Greenland",
+		"timezone": "America/Nuuk"
+	},
+	{
+		"id": "365137",
+		"name": "Omdurman",
+		"ascii": "Omdurman",
+		"country": "Sudan",
+		"timezone": "Africa/Khartoum"
+	},
+	{
+		"id": "2485926",
+		"name": "Oran",
+		"ascii": "Oran",
+		"country": "Algeria",
+		"timezone": "Africa/Algiers"
+	},
+	{
+		"id": "3577154",
+		"name": "Oranjestad",
+		"ascii": "Oranjestad",
+		"country": "Aruba",
+		"timezone": "America/Aruba"
+	},
+	{
+		"id": "8347664",
+		"name": "Ordos",
+		"ascii": "Ordos",
+		"country": "China",
+		"timezone": "Asia/Shanghai"
+	},
+	{
+		"id": "1853909",
+		"name": "Osaka",
+		"ascii": "Osaka",
+		"country": "Japan",
+		"timezone": "Asia/Tokyo"
+	},
+	{
+		"id": "1527534",
+		"name": "Osh",
+		"ascii": "Osh",
+		"country": "Kyrgyzstan",
+		"timezone": "Asia/Bishkek"
+	},
+	{
+		"id": "3143244",
+		"name": "Oslo",
+		"ascii": "Oslo",
+		"country": "Norway",
+		"timezone": "Europe/Oslo"
+	},
+	{
+		"id": "2357048",
+		"name": "Ouagadougou",
+		"ascii": "Ouagadougou",
+		"country": "Burkina Faso",
+		"timezone": "Africa/Ouagadougou"
+	},
+	{
+		"id": "5881576",
+		"name": "Pago Pago",
+		"ascii": "Pago Pago",
+		"country": "American Samoa",
+		"timezone": "Pacific/Pago_Pago"
+	},
+	{
+		"id": "1633070",
+		"name": "Palembang",
+		"ascii": "Palembang",
+		"country": "Indonesia",
+		"timezone": "Asia/Jakarta"
+	},
+	{
+		"id": "2081986",
+		"name": "Palikir",
+		"ascii": "Palikir",
+		"country": "Micronesia",
+		"timezone": "Pacific/Pohnpei"
+	},
+	{
+		"id": "3703443",
+		"name": "Panama City",
+		"ascii": "Panama City",
+		"country": "Panama",
+		"timezone": "America/Panama"
+	},
+	{
+		"id": "4033936",
+		"name": "Papeete",
+		"ascii": "Papeete",
+		"country": "French Polynesia",
+		"timezone": "Pacific/Tahiti"
+	},
+	{
+		"id": "3383330",
+		"name": "Paramaribo",
+		"ascii": "Paramaribo",
+		"country": "Suriname",
+		"timezone": "America/Paramaribo"
+	},
+	{
+		"id": "2988507",
+		"name": "Paris",
+		"ascii": "Paris",
+		"country": "France",
+		"timezone": "Europe/Paris"
+	},
+	{
+		"id": "2063523",
+		"name": "Perth",
+		"ascii": "Perth",
+		"country": "Australia",
+		"timezone": "Australia/Perth"
+	},
+	{
+		"id": "1168197",
+		"name": "Peshawar",
+		"ascii": "Peshawar",
+		"country": "Pakistan",
+		"timezone": "Asia/Karachi"
+	},
+	{
+		"id": "3513392",
+		"name": "Philipsburg",
+		"ascii": "Philipsburg",
+		"country": "Sint Maarten",
+		"timezone": "America/Lower_Princes"
+	},
+	{
+		"id": "1821306",
+		"name": "Phnom Penh",
+		"ascii": "Phnom Penh",
+		"country": "Cambodia",
+		"timezone": "Asia/Phnom_Penh"
+	},
+	{
+		"id": "1252484",
+		"name": "Phuntsholing",
+		"ascii": "Phuntsholing",
+		"country": "Bhutan",
+		"timezone": "Asia/Thimphu"
+	},
+	{
+		"id": "2246678",
+		"name": "Pikine",
+		"ascii": "Pikine",
+		"country": "Senegal",
+		"timezone": "Africa/Dakar"
+	},
+	{
+		"id": "7626690",
+		"name": "Pimpri-Chinchwad",
+		"ascii": "Pimpri-Chinchwad",
+		"country": "India",
+		"timezone": "Asia/Kolkata"
+	},
+	{
+		"id": "728193",
+		"name": "Plovdiv",
+		"ascii": "Plovdiv",
+		"country": "Bulgaria",
+		"timezone": "Europe/Sofia"
+	},
+	{
+		"id": "3578069",
+		"name": "Plymouth",
+		"ascii": "Plymouth",
+		"country": "Montserrat",
+		"timezone": "America/Montserrat"
+	},
+	{
+		"id": "3193044",
+		"name": "Podgorica",
+		"ascii": "Podgorica",
+		"country": "Montenegro",
+		"timezone": "Europe/Podgorica"
+	},
+	{
+		"id": "2255414",
+		"name": "Pointe-Noire",
+		"ascii": "Pointe-Noire",
+		"country": "Republic of the Congo",
+		"timezone": "Africa/Brazzaville"
+	},
+	{
+		"id": "1282898",
+		"name": "Pokhara",
+		"ascii": "Pokhara",
+		"country": "Nepal",
+		"timezone": "Asia/Kathmandu"
+	},
+	{
+		"id": "2324774",
+		"name": "Port Harcourt",
+		"ascii": "Port Harcourt",
+		"country": "Nigeria",
+		"timezone": "Africa/Lagos"
+	},
+	{
+		"id": "934154",
+		"name": "Port Louis",
+		"ascii": "Port Louis",
+		"country": "Mauritius",
+		"timezone": "Indian/Mauritius"
+	},
+	{
+		"id": "2088122",
+		"name": "Port Moresby",
+		"ascii": "Port Moresby",
+		"country": "Papua New Guinea",
+		"timezone": "Pacific/Port_Moresby"
+	},
+	{
+		"id": "3718426",
+		"name": "Port-au-Prince",
+		"ascii": "Port-au-Prince",
+		"country": "Haiti",
+		"timezone": "America/Port-au-Prince"
+	},
+	{
+		"id": "1546102",
+		"name": "Port-aux-Français",
+		"ascii": "Port-aux-Francais",
+		"country": "French Southern Territories",
+		"timezone": "Indian/Kerguelen"
+	},
+	{
+		"id": "2396518",
+		"name": "Port-Gentil",
+		"ascii": "Port-Gentil",
+		"country": "Gabon",
+		"timezone": "Africa/Libreville"
+	},
+	{
+		"id": "2135171",
+		"name": "Port-Vila",
+		"ascii": "Port-Vila",
+		"country": "Vanuatu",
+		"timezone": "Pacific/Efate"
+	},
+	{
+		"id": "2735943",
+		"name": "Porto",
+		"ascii": "Porto",
+		"country": "Portugal",
+		"timezone": "Europe/Lisbon"
+	},
+	{
+		"id": "2392087",
+		"name": "Porto-Novo",
+		"ascii": "Porto-Novo",
+		"country": "Benin",
+		"timezone": "Africa/Porto-Novo"
+	},
+	{
+		"id": "3067696",
+		"name": "Prague",
+		"ascii": "Prague",
+		"country": "Czechia",
+		"timezone": "Europe/Prague"
+	},
+	{
+		"id": "3374333",
+		"name": "Praia",
+		"ascii": "Praia",
+		"country": "Cabo Verde",
+		"timezone": "Atlantic/Cape_Verde"
+	},
+	{
+		"id": "964137",
+		"name": "Pretoria",
+		"ascii": "Pretoria",
+		"country": "South Africa",
+		"timezone": "Africa/Johannesburg"
+	},
+	{
+		"id": "786714",
+		"name": "Pristina",
+		"ascii": "Pristina",
+		"country": "Kosovo",
+		"timezone": "Europe/Belgrade"
+	},
+	{
+		"id": "786712",
+		"name": "Prizren",
+		"ascii": "Prizren",
+		"country": "Kosovo",
+		"timezone": "Europe/Belgrade"
+	},
+	{
+		"id": "11703857",
+		"name": "Providenciales",
+		"ascii": "Providenciales",
+		"country": "Turks and Caicos Islands",
+		"timezone": "America/Grand_Turk"
+	},
+	{
+		"id": "1798524",
+		"name": "Pudong",
+		"ascii": "Pudong",
+		"country": "China",
+		"timezone": "Asia/Shanghai"
+	},
+	{
+		"id": "3875024",
+		"name": "Puente Alto",
+		"ascii": "Puente Alto",
+		"country": "Chile",
+		"timezone": "America/Santiago"
+	},
+	{
+		"id": "1259229",
+		"name": "Pune",
+		"ascii": "Pune",
+		"country": "India",
+		"timezone": "Asia/Kolkata"
+	},
+	{
+		"id": "1802940",
+		"name": "Puning",
+		"ascii": "Puning",
+		"country": "China",
+		"timezone": "Asia/Shanghai"
+	},
+	{
+		"id": "1798425",
+		"name": "Puyang",
+		"ascii": "Puyang",
+		"country": "China",
+		"timezone": "Asia/Shanghai"
+	},
+	{
+		"id": "1871859",
+		"name": "Pyongyang",
+		"ascii": "Pyongyang",
+		"country": "North Korea",
+		"timezone": "Asia/Pyongyang"
+	},
+	{
+		"id": "1797929",
+		"name": "Qingdao",
+		"ascii": "Qingdao",
+		"country": "China",
+		"timezone": "Asia/Shanghai"
+	},
+	{
+		"id": "12359313",
+		"name": "Qingyang",
+		"ascii": "Qingyang",
+		"country": "China",
+		"timezone": "Asia/Shanghai"
+	},
+	{
+		"id": "1797945",
+		"name": "Qingyuan",
+		"ascii": "Qingyuan",
+		"country": "China",
+		"timezone": "Asia/Shanghai"
+	},
+	{
+		"id": "5133273",
+		"name": "Queens",
+		"ascii": "Queens",
+		"country": "United States",
+		"timezone": "America/New_York"
+	},
+	{
+		"id": "1692192",
+		"name": "Quezon City",
+		"ascii": "Quezon City",
+		"country": "Philippines",
+		"timezone": "Asia/Manila"
+	},
+	{
+		"id": "3652462",
+		"name": "Quito",
+		"ascii": "Quito",
+		"country": "Ecuador",
+		"timezone": "America/Guayaquil"
+	},
+	{
+		"id": "2538475",
+		"name": "Rabat",
+		"ascii": "Rabat",
+		"country": "Morocco",
+		"timezone": "Africa/Casablanca"
+	},
+	{
+		"id": "1258393",
+		"name": "Rasapūdipalem",
+		"ascii": "Rasapudipalem",
+		"country": "India",
+		"timezone": "Asia/Kolkata"
+	},
+	{
+		"id": "1166993",
+		"name": "Rawalpindi",
+		"ascii": "Rawalpindi",
+		"country": "Pakistan",
+		"timezone": "Asia/Karachi"
+	},
+	{
+		"id": "3413829",
+		"name": "Reykjavík",
+		"ascii": "Reykjavik",
+		"country": "Iceland",
+		"timezone": "Atlantic/Reykjavik"
+	},
+	{
+		"id": "456172",
+		"name": "Riga",
+		"ascii": "Riga",
+		"country": "Latvia",
+		"timezone": "Europe/Riga"
+	},
+	{
+		"id": "3451190",
+		"name": "Rio de Janeiro",
+		"ascii": "Rio de Janeiro",
+		"country": "Brazil",
+		"timezone": "America/Sao_Paulo"
+	},
+	{
+		"id": "108410",
+		"name": "Riyadh",
+		"ascii": "Riyadh",
+		"country": "Saudi Arabia",
+		"timezone": "Asia/Riyadh"
+	},
+	{
+		"id": "3577430",
+		"name": "Road Town",
+		"ascii": "Road Town",
+		"country": "British Virgin Islands",
+		"timezone": "America/Tortola"
+	},
+	{
+		"id": "3169070",
+		"name": "Rome",
+		"ascii": "Rome",
+		"country": "Italy",
+		"timezone": "Europe/Rome"
+	},
+	{
+		"id": "3575635",
+		"name": "Roseau",
+		"ascii": "Roseau",
+		"country": "Dominica",
+		"timezone": "America/Dominica"
+	},
+	{
+		"id": "2747891",
+		"name": "Rotterdam",
+		"ascii": "Rotterdam",
+		"country": "The Netherlands",
+		"timezone": "Europe/Amsterdam"
+	},
+	{
+		"id": "3353383",
+		"name": "Rundu",
+		"ascii": "Rundu",
+		"country": "Namibia",
+		"timezone": "Africa/Windhoek"
+	},
+	{
+		"id": "4796512",
+		"name": "Saint Croix",
+		"ascii": "Saint Croix",
+		"country": "U.S. Virgin Islands",
+		"timezone": "America/St_Thomas"
+	},
+	{
+		"id": "3579925",
+		"name": "Saint George's",
+		"ascii": "Saint George's",
+		"country": "Grenada",
+		"timezone": "America/Grenada"
+	},
+	{
+		"id": "3042091",
+		"name": "Saint Helier",
+		"ascii": "Saint Helier",
+		"country": "Jersey",
+		"timezone": "Europe/Jersey"
+	},
+	{
+		"id": "3576022",
+		"name": "Saint John’s",
+		"ascii": "Saint John's",
+		"country": "Antigua and Barbuda",
+		"timezone": "America/Antigua"
+	},
+	{
+		"id": "3042287",
+		"name": "Saint Peter Port",
+		"ascii": "Saint Peter Port",
+		"country": "Guernsey",
+		"timezone": "Europe/Guernsey"
+	},
+	{
+		"id": "498817",
+		"name": "Saint Petersburg",
+		"ascii": "Saint Petersburg",
+		"country": "Russia",
+		"timezone": "Europe/Moscow"
+	},
+	{
+		"id": "935264",
+		"name": "Saint-Denis",
+		"ascii": "Saint-Denis",
+		"country": "Reunion",
+		"timezone": "Indian/Reunion"
+	},
+	{
+		"id": "935221",
+		"name": "Saint-Paul",
+		"ascii": "Saint-Paul",
+		"country": "Reunion",
+		"timezone": "Indian/Reunion"
+	},
+	{
+		"id": "3424934",
+		"name": "Saint-Pierre",
+		"ascii": "Saint-Pierre",
+		"country": "Saint Pierre and Miquelon",
+		"timezone": "America/Miquelon"
+	},
+	{
+		"id": "7828758",
+		"name": "Saipan",
+		"ascii": "Saipan",
+		"country": "Northern Mariana Islands",
+		"timezone": "Pacific/Saipan"
+	},
+	{
+		"id": "3440714",
+		"name": "Salto",
+		"ascii": "Salto",
+		"country": "Uruguay",
+		"timezone": "America/Montevideo"
+	},
+	{
+		"id": "3450554",
+		"name": "Salvador",
+		"ascii": "Salvador",
+		"country": "Brazil",
+		"timezone": "America/Bahia"
+	},
+	{
+		"id": "1606590",
+		"name": "Samut Prakan",
+		"ascii": "Samut Prakan",
+		"country": "Thailand",
+		"timezone": "Asia/Bangkok"
+	},
+	{
+		"id": "3581194",
+		"name": "San Ignacio",
+		"ascii": "San Ignacio",
+		"country": "Belize",
+		"timezone": "America/Belize"
+	},
+	{
+		"id": "3621849",
+		"name": "San José",
+		"ascii": "San Jose",
+		"country": "Costa Rica",
+		"timezone": "America/Costa_Rica"
+	},
+	{
+		"id": "4568127",
+		"name": "San Juan",
+		"ascii": "San Juan",
+		"country": "Puerto Rico",
+		"timezone": "America/Puerto_Rico"
+	},
+	{
+		"id": "3168070",
+		"name": "San Marino",
+		"ascii": "San Marino",
+		"country": "San Marino",
+		"timezone": "Europe/San_Marino"
+	},
+	{
+		"id": "3701329",
+		"name": "San Miguelito",
+		"ascii": "San Miguelito",
+		"country": "Panama",
+		"timezone": "America/Panama"
+	},
+	{
+		"id": "2562541",
+		"name": "San Pawl il-Baħar",
+		"ascii": "San Pawl il-Bahar",
+		"country": "Malta",
+		"timezone": "Europe/Malta"
+	},
+	{
+		"id": "3601782",
+		"name": "San Pedro Sula",
+		"ascii": "San Pedro Sula",
+		"country": "Honduras",
+		"timezone": "America/Tegucigalpa"
+	},
+	{
+		"id": "3583361",
+		"name": "San Salvador",
+		"ascii": "San Salvador",
+		"country": "El Salvador",
+		"timezone": "America/El_Salvador"
+	},
+	{
+		"id": "71137",
+		"name": "Sanaa",
+		"ascii": "Sanaa",
+		"country": "Yemen",
+		"timezone": "Asia/Aden"
+	},
+	{
+		"id": "3904906",
+		"name": "Santa Cruz de la Sierra",
+		"ascii": "Santa Cruz de la Sierra",
+		"country": "Bolivia",
+		"timezone": "America/La_Paz"
+	},
+	{
+		"id": "3871336",
+		"name": "Santiago",
+		"ascii": "Santiago",
+		"country": "Chile",
+		"timezone": "America/Santiago"
+	},
+	{
+		"id": "3536729",
+		"name": "Santiago de Cuba",
+		"ascii": "Santiago de Cuba",
+		"country": "Cuba",
+		"timezone": "America/Havana"
+	},
+	{
+		"id": "3492914",
+		"name": "Santiago de los Caballeros",
+		"ascii": "Santiago de los Caballeros",
+		"country": "Dominican Republic",
+		"timezone": "America/Santo_Domingo"
+	},
+	{
+		"id": "3492908",
+		"name": "Santo Domingo",
+		"ascii": "Santo Domingo",
+		"country": "Dominican Republic",
+		"timezone": "America/Santo_Domingo"
+	},
+	{
+		"id": "3448439",
+		"name": "São Paulo",
+		"ascii": "Sao Paulo",
+		"country": "Brazil",
+		"timezone": "America/Sao_Paulo"
+	},
+	{
+		"id": "2410763",
+		"name": "São Tomé",
+		"ascii": "Sao Tome",
+		"country": "Sao Tome and Principe",
+		"timezone": "Africa/Sao_Tome"
+	},
+	{
+		"id": "2128295",
+		"name": "Sapporo",
+		"ascii": "Sapporo",
+		"country": "Japan",
+		"timezone": "Asia/Tokyo"
+	},
+	{
+		"id": "3191281",
+		"name": "Sarajevo",
+		"ascii": "Sarajevo",
+		"country": "Bosnia and Herzegovina",
+		"timezone": "Europe/Sarajevo"
+	},
+	{
+		"id": "1653316",
+		"name": "Savannakhet",
+		"ascii": "Savannakhet",
+		"country": "Laos",
+		"timezone": "Asia/Vientiane"
+	},
+	{
+		"id": "288967",
+		"name": "Seeb",
+		"ascii": "Seeb",
+		"country": "Oman",
+		"timezone": "Asia/Muscat"
+	},
+	{
+		"id": "1627896",
+		"name": "Semarang",
+		"ascii": "Semarang",
+		"country": "Indonesia",
+		"timezone": "Asia/Jakarta"
+	},
+	{
+		"id": "1820575",
+		"name": "Sengkurong",
+		"ascii": "Sengkurong",
+		"country": "Brunei",
+		"timezone": "Asia/Brunei"
+	},
+	{
+		"id": "1835848",
+		"name": "Seoul",
+		"ascii": "Seoul",
+		"country": "South Korea",
+		"timezone": "Asia/Seoul"
+	},
+	{
+		"id": "2411989",
+		"name": "Serekunda",
+		"ascii": "Serekunda",
+		"country": "Gambia",
+		"timezone": "Africa/Banjul"
+	},
+	{
+		"id": "2467454",
+		"name": "Sfax",
+		"ascii": "Sfax",
+		"country": "Tunisia",
+		"timezone": "Africa/Tunis"
+	},
+	{
+		"id": "1796236",
+		"name": "Shanghai",
+		"ascii": "Shanghai",
+		"country": "China",
+		"timezone": "Asia/Shanghai"
+	},
+	{
+		"id": "1796134",
+		"name": "Shangqiu",
+		"ascii": "Shangqiu",
+		"country": "China",
+		"timezone": "Asia/Shanghai"
+	},
+	{
+		"id": "1795940",
+		"name": "Shantou",
+		"ascii": "Shantou",
+		"country": "China",
+		"timezone": "Asia/Shanghai"
+	},
+	{
+		"id": "1795855",
+		"name": "Shaoxing",
+		"ascii": "Shaoxing",
+		"country": "China",
+		"timezone": "Asia/Shanghai"
+	},
+	{
+		"id": "292672",
+		"name": "Sharjah",
+		"ascii": "Sharjah",
+		"country": "United Arab Emirates",
+		"timezone": "Asia/Dubai"
+	},
+	{
+		"id": "2034937",
+		"name": "Shenyang",
+		"ascii": "Shenyang",
+		"country": "China",
+		"timezone": "Asia/Shanghai"
+	},
+	{
+		"id": "1795565",
+		"name": "Shenzhen",
+		"ascii": "Shenzhen",
+		"country": "China",
+		"timezone": "Asia/Shanghai"
+	},
+	{
+		"id": "1795270",
+		"name": "Shijiazhuang",
+		"ascii": "Shijiazhuang",
+		"country": "China",
+		"timezone": "Asia/Shanghai"
+	},
+	{
+		"id": "1794903",
+		"name": "Shiyan",
+		"ascii": "Shiyan",
+		"country": "China",
+		"timezone": "Asia/Shanghai"
+	},
+	{
+		"id": "2451185",
+		"name": "Sikasso",
+		"ascii": "Sikasso",
+		"country": "Mali",
+		"timezone": "Africa/Bamako"
+	},
+	{
+		"id": "1880252",
+		"name": "Singapore",
+		"ascii": "Singapore",
+		"country": "Singapore",
+		"timezone": "Asia/Singapore"
+	},
+	{
+		"id": "785842",
+		"name": "Skopje",
+		"ascii": "Skopje",
+		"country": "North Macedonia",
+		"timezone": "Europe/Skopje"
+	},
+	{
+		"id": "727011",
+		"name": "Sofia",
+		"ascii": "Sofia",
+		"country": "Bulgaria",
+		"timezone": "Europe/Sofia"
+	},
+	{
+		"id": "2364104",
+		"name": "Sokodé",
+		"ascii": "Sokode",
+		"country": "Togo",
+		"timezone": "Africa/Lome"
+	},
+	{
+		"id": "1794035",
+		"name": "Songjiang",
+		"ascii": "Songjiang",
+		"country": "China",
+		"timezone": "Asia/Shanghai"
+	},
+	{
+		"id": "953781",
+		"name": "Soweto",
+		"ascii": "Soweto",
+		"country": "South Africa",
+		"timezone": "Africa/Johannesburg"
+	},
+	{
+		"id": "3583096",
+		"name": "Soyapango",
+		"ascii": "Soyapango",
+		"country": "El Salvador",
+		"timezone": "America/El_Salvador"
+	},
+	{
+		"id": "3488465",
+		"name": "Spanish Town",
+		"ascii": "Spanish Town",
+		"country": "Jamaica",
+		"timezone": "America/Jamaica"
+	},
+	{
+		"id": "3190261",
+		"name": "Split",
+		"ascii": "Split",
+		"country": "Croatia",
+		"timezone": "Europe/Zagreb"
+	},
+	{
+		"id": "3426691",
+		"name": "Stanley",
+		"ascii": "Stanley",
+		"country": "Falkland Islands",
+		"timezone": "Atlantic/Stanley"
+	},
+	{
+		"id": "2673730",
+		"name": "Stockholm",
+		"ascii": "Stockholm",
+		"country": "Sweden",
+		"timezone": "Europe/Stockholm"
+	},
+	{
+		"id": "584923",
+		"name": "Sumgayit",
+		"ascii": "Sumgayit",
+		"country": "Azerbaijan",
+		"timezone": "Asia/Baku"
+	},
+	{
+		"id": "1625822",
+		"name": "Surabaya",
+		"ascii": "Surabaya",
+		"country": "Indonesia",
+		"timezone": "Asia/Jakarta"
+	},
+	{
+		"id": "1255364",
+		"name": "Surat",
+		"ascii": "Surat",
+		"country": "India",
+		"timezone": "Asia/Kolkata"
+	},
+	{
+		"id": "2198148",
+		"name": "Suva",
+		"ascii": "Suva",
+		"country": "Fiji",
+		"timezone": "Pacific/Fiji"
+	},
+	{
+		"id": "1886760",
+		"name": "Suzhou",
+		"ascii": "Suzhou",
+		"country": "China",
+		"timezone": "Asia/Shanghai"
+	},
+	{
+		"id": "2147714",
+		"name": "Sydney",
+		"ascii": "Sydney",
+		"country": "Australia",
+		"timezone": "Australia/Sydney"
+	},
+	{
+		"id": "1793724",
+		"name": "Tai’an",
+		"ascii": "Tai'an",
+		"country": "China",
+		"timezone": "Asia/Shanghai"
+	},
+	{
+		"id": "1668399",
+		"name": "Taichung",
+		"ascii": "Taichung",
+		"country": "Taiwan",
+		"timezone": "Asia/Taipei"
+	},
+	{
+		"id": "1668355",
+		"name": "Tainan",
+		"ascii": "Tainan",
+		"country": "Taiwan",
+		"timezone": "Asia/Taipei"
+	},
+	{
+		"id": "1821263",
+		"name": "Taipa",
+		"ascii": "Taipa",
+		"country": "Macao",
+		"timezone": "Asia/Macau"
+	},
+	{
+		"id": "1668341",
+		"name": "Taipei",
+		"ascii": "Taipei",
+		"country": "Taiwan",
+		"timezone": "Asia/Taipei"
+	},
+	{
+		"id": "1793511",
+		"name": "Taiyuan",
+		"ascii": "Taiyuan",
+		"country": "China",
+		"timezone": "Asia/Shanghai"
+	},
+	{
+		"id": "1821940",
+		"name": "Takeo",
+		"ascii": "Takeo",
+		"country": "Cambodia",
+		"timezone": "Asia/Phnom_Penh"
+	},
+	{
+		"id": "588409",
+		"name": "Tallinn",
+		"ascii": "Tallinn",
+		"country": "Estonia",
+		"timezone": "Europe/Tallinn"
+	},
+	{
+		"id": "13527002",
+		"name": "Tandai",
+		"ascii": "Tandai",
+		"country": "Solomon Islands",
+		"timezone": "Pacific/Guadalcanal"
+	},
+	{
+		"id": "1625084",
+		"name": "Tangerang",
+		"ascii": "Tangerang",
+		"country": "Indonesia",
+		"timezone": "Asia/Jakarta"
+	},
+	{
+		"id": "1793346",
+		"name": "Tangshan",
+		"ascii": "Tangshan",
+		"country": "China",
+		"timezone": "Asia/Shanghai"
+	},
+	{
+		"id": "2110257",
+		"name": "Tarawa",
+		"ascii": "Tarawa",
+		"country": "Kiribati",
+		"timezone": "Pacific/Tarawa"
+	},
+	{
+		"id": "588335",
+		"name": "Tartu",
+		"ascii": "Tartu",
+		"country": "Estonia",
+		"timezone": "Europe/Tallinn"
+	},
+	{
+		"id": "1512569",
+		"name": "Tashkent",
+		"ascii": "Tashkent",
+		"country": "Uzbekistan",
+		"timezone": "Asia/Tashkent"
+	},
+	{
+		"id": "611717",
+		"name": "Tbilisi",
+		"ascii": "Tbilisi",
+		"country": "Georgia",
+		"timezone": "Asia/Tbilisi"
+	},
+	{
+		"id": "3600949",
+		"name": "Tegucigalpa",
+		"ascii": "Tegucigalpa",
+		"country": "Honduras",
+		"timezone": "America/Tegucigalpa"
+	},
+	{
+		"id": "112931",
+		"name": "Tehran",
+		"ascii": "Tehran",
+		"country": "Iran",
+		"timezone": "Asia/Tehran"
+	},
+	{
+		"id": "293397",
+		"name": "Tel Aviv",
+		"ascii": "Tel Aviv",
+		"country": "Israel",
+		"timezone": "Asia/Jerusalem"
+	},
+	{
+		"id": "1254661",
+		"name": "Thāne",
+		"ascii": "Thane",
+		"country": "India",
+		"timezone": "Asia/Kolkata"
+	},
+	{
+		"id": "3573374",
+		"name": "The Valley",
+		"ascii": "The Valley",
+		"country": "Anguilla",
+		"timezone": "America/Anguilla"
+	},
+	{
+		"id": "734077",
+		"name": "Thessaloníki",
+		"ascii": "Thessaloniki",
+		"country": "Greece",
+		"timezone": "Europe/Athens"
+	},
+	{
+		"id": "1252416",
+		"name": "Thimphu",
+		"ascii": "Thimphu",
+		"country": "Bhutan",
+		"timezone": "Asia/Thimphu"
+	},
+	{
+		"id": "1792947",
+		"name": "Tianjin",
+		"ascii": "Tianjin",
+		"country": "China",
+		"timezone": "Asia/Shanghai"
+	},
+	{
+		"id": "3981609",
+		"name": "Tijuana",
+		"ascii": "Tijuana",
+		"country": "Mexico",
+		"timezone": "America/Tijuana"
+	},
+	{
+		"id": "3183875",
+		"name": "Tirana",
+		"ascii": "Tirana",
+		"country": "Albania",
+		"timezone": "Europe/Tirane"
+	},
+	{
+		"id": "617239",
+		"name": "Tiraspol",
+		"ascii": "Tiraspol",
+		"country": "Moldova",
+		"timezone": "Europe/Chisinau"
+	},
+	{
+		"id": "1053384",
+		"name": "Toamasina",
+		"ascii": "Toamasina",
+		"country": "Madagascar",
+		"timezone": "Indian/Antananarivo"
+	},
+	{
+		"id": "1850147",
+		"name": "Tokyo",
+		"ascii": "Tokyo",
+		"country": "Japan",
+		"timezone": "Asia/Tokyo"
+	},
+	{
+		"id": "6167865",
+		"name": "Toronto",
+		"ascii": "Toronto",
+		"country": "Canada",
+		"timezone": "America/Toronto"
+	},
+	{
+		"id": "2611396",
+		"name": "Tórshavn",
+		"ascii": "Torshavn",
+		"country": "Faroe Islands",
+		"timezone": "Atlantic/Faroe"
+	},
+	{
+		"id": "266826",
+		"name": "Tripoli",
+		"ascii": "Tripoli",
+		"country": "Lebanon",
+		"timezone": "Asia/Beirut"
+	},
+	{
+		"id": "2210247",
+		"name": "Tripoli",
+		"ascii": "Tripoli",
+		"country": "Libya",
+		"timezone": "Africa/Tripoli"
+	},
+	{
+		"id": "1219649",
+		"name": "Türkmenabat",
+		"ascii": "Tuerkmenabat",
+		"country": "Turkmenistan",
+		"timezone": "Asia/Ashgabat"
+	},
+	{
+		"id": "2464470",
+		"name": "Tunis",
+		"ascii": "Tunis",
+		"country": "Tunisia",
+		"timezone": "Africa/Tunis"
+	},
+	{
+		"id": "1529102",
+		"name": "Ürümqi",
+		"ascii": "UEruemqi",
+		"country": "China",
+		"timezone": "Asia/Urumqi"
+	},
+	{
+		"id": "2028462",
+		"name": "Ulan Bator",
+		"ascii": "Ulan Bator",
+		"country": "Mongolia",
+		"timezone": "Asia/Ulaanbaatar"
+	},
+	{
+		"id": "1880159",
+		"name": "Ulu Bedok",
+		"ascii": "Ulu Bedok",
+		"country": "Singapore",
+		"timezone": "Asia/Singapore"
+	},
+	{
+		"id": "933945",
+		"name": "Vacoas",
+		"ascii": "Vacoas",
+		"country": "Mauritius",
+		"timezone": "Indian/Mauritius"
+	},
+	{
+		"id": "1253573",
+		"name": "Vadodara",
+		"ascii": "Vadodara",
+		"country": "India",
+		"timezone": "Asia/Kolkata"
+	},
+	{
+		"id": "3042030",
+		"name": "Vaduz",
+		"ascii": "Vaduz",
+		"country": "Liechtenstein",
+		"timezone": "Europe/Vaduz"
+	},
+	{
+		"id": "6691831",
+		"name": "Vatican City",
+		"ascii": "Vatican City",
+		"country": "Vatican",
+		"timezone": "Europe/Vatican"
+	},
+	{
+		"id": "1931681",
+		"name": "Victoria",
+		"ascii": "Victoria",
+		"country": "Hong Kong",
+		"timezone": "Asia/Hong_Kong"
+	},
+	{
+		"id": "241131",
+		"name": "Victoria",
+		"ascii": "Victoria",
+		"country": "Seychelles",
+		"timezone": "Indian/Mahe"
+	},
+	{
+		"id": "2761369",
+		"name": "Vienna",
+		"ascii": "Vienna",
+		"country": "Austria",
+		"timezone": "Europe/Vienna"
+	},
+	{
+		"id": "1651944",
+		"name": "Vientiane",
+		"ascii": "Vientiane",
+		"country": "Laos",
+		"timezone": "Asia/Vientiane"
+	},
+	{
+		"id": "3587902",
+		"name": "Villa Nueva",
+		"ascii": "Villa Nueva",
+		"country": "Guatemala",
+		"timezone": "America/Guatemala"
+	},
+	{
+		"id": "593116",
+		"name": "Vilnius",
+		"ascii": "Vilnius",
+		"country": "Lithuania",
+		"timezone": "Europe/Vilnius"
+	},
+	{
+		"id": "756135",
+		"name": "Warsaw",
+		"ascii": "Warsaw",
+		"country": "Poland",
+		"timezone": "Europe/Warsaw"
+	},
+	{
+		"id": "1791681",
+		"name": "Weifang",
+		"ascii": "Weifang",
+		"country": "China",
+		"timezone": "Asia/Shanghai"
+	},
+	{
+		"id": "1791388",
+		"name": "Wenzhou",
+		"ascii": "Wenzhou",
+		"country": "China",
+		"timezone": "Asia/Shanghai"
+	},
+	{
+		"id": "3580477",
+		"name": "West Bay",
+		"ascii": "West Bay",
+		"country": "Cayman Islands",
+		"timezone": "America/Cayman"
+	},
+	{
+		"id": "7304591",
+		"name": "West Island",
+		"ascii": "West Island",
+		"country": "Cocos Islands",
+		"timezone": "Indian/Cocos"
+	},
+	{
+		"id": "3513090",
+		"name": "Willemstad",
+		"ascii": "Willemstad",
+		"country": "Curacao",
+		"timezone": "America/Curacao"
+	},
+	{
+		"id": "3352136",
+		"name": "Windhoek",
+		"ascii": "Windhoek",
+		"country": "Namibia",
+		"timezone": "Africa/Windhoek"
+	},
+	{
+		"id": "363807",
+		"name": "Winejok",
+		"ascii": "Winejok",
+		"country": "South Sudan",
+		"timezone": "Africa/Juba"
+	},
+	{
+		"id": "1791247",
+		"name": "Wuhan",
+		"ascii": "Wuhan",
+		"country": "China",
+		"timezone": "Asia/Shanghai"
+	},
+	{
+		"id": "1790923",
+		"name": "Wuxi",
+		"ascii": "Wuxi",
+		"country": "China",
+		"timezone": "Asia/Shanghai"
+	},
+	{
+		"id": "1790842",
+		"name": "Wuzhong",
+		"ascii": "Wuzhong",
+		"country": "China",
+		"timezone": "Asia/Shanghai"
+	},
+	{
+		"id": "1790630",
+		"name": "Xi’an",
+		"ascii": "Xi'an",
+		"country": "China",
+		"timezone": "Asia/Shanghai"
+	},
+	{
+		"id": "1790645",
+		"name": "Xiamen",
+		"ascii": "Xiamen",
+		"country": "China",
+		"timezone": "Asia/Shanghai"
+	},
+	{
+		"id": "1788852",
+		"name": "Xining",
+		"ascii": "Xining",
+		"country": "China",
+		"timezone": "Asia/Shanghai"
+	},
+	{
+		"id": "1298824",
+		"name": "Yangon",
+		"ascii": "Yangon",
+		"country": "Myanmar",
+		"timezone": "Asia/Yangon"
+	},
+	{
+		"id": "1787227",
+		"name": "Yangzhou",
+		"ascii": "Yangzhou",
+		"country": "China",
+		"timezone": "Asia/Shanghai"
+	},
+	{
+		"id": "1787093",
+		"name": "Yantai",
+		"ascii": "Yantai",
+		"country": "China",
+		"timezone": "Asia/Shanghai"
+	},
+	{
+		"id": "2220957",
+		"name": "Yaoundé",
+		"ascii": "Yaounde",
+		"country": "Cameroon",
+		"timezone": "Africa/Douala"
+	},
+	{
+		"id": "7626461",
+		"name": "Yaren",
+		"ascii": "Yaren",
+		"country": "Nauru",
+		"timezone": "Pacific/Nauru"
+	},
+	{
+		"id": "616052",
+		"name": "Yerevan",
+		"ascii": "Yerevan",
+		"country": "Armenia",
+		"timezone": "Asia/Yerevan"
+	},
+	{
+		"id": "4038794",
+		"name": "Yigo Village",
+		"ascii": "Yigo Village",
+		"country": "Guam",
+		"timezone": "Pacific/Guam"
+	},
+	{
+		"id": "1786657",
+		"name": "Yinchuan",
+		"ascii": "Yinchuan",
+		"country": "China",
+		"timezone": "Asia/Shanghai"
+	},
+	{
+		"id": "1848354",
+		"name": "Yokohama",
+		"ascii": "Yokohama",
+		"country": "Japan",
+		"timezone": "Asia/Tokyo"
+	},
+	{
+		"id": "1785725",
+		"name": "Yunfu",
+		"ascii": "Yunfu",
+		"country": "China",
+		"timezone": "Asia/Shanghai"
+	},
+	{
+		"id": "3186886",
+		"name": "Zagreb",
+		"ascii": "Zagreb",
+		"country": "Croatia",
+		"timezone": "Europe/Zagreb"
+	},
+	{
+		"id": "1785453",
+		"name": "Zaozhuang",
+		"ascii": "Zaozhuang",
+		"country": "China",
+		"timezone": "Asia/Shanghai"
+	},
+	{
+		"id": "250090",
+		"name": "Zarqa",
+		"ascii": "Zarqa",
+		"country": "Jordan",
+		"timezone": "Asia/Amman"
+	},
+	{
+		"id": "1784658",
+		"name": "Zhengzhou",
+		"ascii": "Zhengzhou",
+		"country": "China",
+		"timezone": "Asia/Shanghai"
+	},
+	{
+		"id": "6986104",
+		"name": "Zhongshan",
+		"ascii": "Zhongshan",
+		"country": "China",
+		"timezone": "Asia/Shanghai"
+	},
+	{
+		"id": "1790437",
+		"name": "Zhuhai",
+		"ascii": "Zhuhai",
+		"country": "China",
+		"timezone": "Asia/Shanghai"
+	},
+	{
+		"id": "1785286",
+		"name": "Zibo",
+		"ascii": "Zibo",
+		"country": "China",
+		"timezone": "Asia/Shanghai"
+	},
+	{
+		"id": "2657896",
+		"name": "Zürich",
+		"ascii": "Zuerich",
+		"country": "Switzerland",
+		"timezone": "Europe/Zurich"
+	},
+	{
+		"id": "1783621",
+		"name": "Zunyi",
+		"ascii": "Zunyi",
+		"country": "China",
+		"timezone": "Asia/Shanghai"
+	}
+]

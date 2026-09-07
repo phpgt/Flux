@@ -6,6 +6,7 @@
 		'submit; empty data-flux on buttons' => ['forms', 'todo-demo', 'Session-backed to-do list'],
 		'autocomplete; autocomplete-results; data-flux-min-length' => ['forms', 'search-demo', 'Search previews and normal GET results'],
 		'data-flux-drag-parent; data-flux-drag-handle' => ['forms', 'board-demo', 'Move cards between lists'],
+		'modal' => ['search', 'search-results-demo', 'Server-rendered city selection'],
 		'autosave' => ['forms', 'autosave-demo', 'A note saved on change'],
 		'drag-order' => ['forms', 'shopping-demo', 'Shopping order, with keyboard controls'],
 		'link; empty data-flux on links' => ['navigation', 'navigation-demo', 'Chapter navigation and browser history'],

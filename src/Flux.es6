@@ -1,3 +1,4 @@
+import {DialogHandler} from "./DialogHandler.es6";
 import {CssPropertyRuntime} from "./CssProperties/Runtime.es6";
 import {Style} from "./Style.es6";
 import {ElementEventMapper} from "./ElementEventMapper.es6";
@@ -131,7 +132,7 @@ export class Flux {
 			undefined,
 			undefined,
 			undefined,
-			this.initCssPropertiesInTree,
+			this.initAutocompleteResultElements,
 		);
 		this.dragOrderHandler = dragOrderHandler ?? new DragOrderHandler(
 			this.formHandler,
@@ -139,6 +140,7 @@ export class Flux {
 			this.logger,
 			Flux.DEBUG,
 		);
+		this.dialogHandler = new DialogHandler();
 		this.directiveRegistry = directiveRegistry ?? new DirectiveRegistry({
 			autoContainer: this.initAutoContainer,
 			cssProperties: this.initCssProperties,
@@ -155,6 +157,7 @@ export class Flux {
 			autocompleteResults: this.autocompleteHandler.initAutocompleteResults,
 			autoLink: this.linkHandler.initAutoLink,
 			dragOrder: this.dragOrderHandler.initDragOrder,
+			modal: this.dialogHandler.initModal,
 		});
 
 		document.querySelectorAll("[data-flux]").forEach(this.initFluxElementSafely);
@@ -179,6 +182,11 @@ export class Flux {
 				error,
 			);
 		}
+	}
+
+	initAutocompleteResultElements = element => {
+		if(element.matches("[data-flux]")) this.initFluxElementSafely(element);
+		element.querySelectorAll("[data-flux]").forEach(this.initFluxElementSafely);
 	}
 
 	initRenderedCssProperties = event => {

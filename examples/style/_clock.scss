@@ -1,11 +1,33 @@
 @property --clock-hand-sin { syntax: '<number>'; inherits: false; initial-value: 0; }
 @property --clock-hand-cos { syntax: '<number>'; inherits: false; initial-value: 1; }
 
+.clock-dial {
+	--clock-tilt-x: clamp(-15deg, calc((.5 - var(--flux-pointer-y, .5)) * 60deg), 15deg);
+	--clock-tilt-y: clamp(-15deg, calc((var(--flux-pointer-x, .5) - .5) * 60deg), 15deg);
+	position: relative;
+	width: min(16rem, 100%);
+	aspect-ratio: 1;
+	margin: 1.5rem auto 2rem;
+	perspective: 700px;
+}
+.clock-dial::before {
+	/* Follow the face at one quarter of its tilt. */
+	content: "";
+	position: absolute;
+	inset: 0;
+	border-radius: 50%;
+	background: rgb(0 0 0 / .16);
+	transform: translateY(1rem) scale(.97)
+		rotateX(calc(var(--clock-tilt-x) * .25))
+		rotateY(calc(var(--clock-tilt-y) * .25));
+	transition: transform 150ms ease-out;
+	filter: blur(.15rem);
+	pointer-events: none;
+}
 .clock-face {
 	position: relative;
-	width: min(16rem, 75vw);
+	width: 100%;
 	aspect-ratio: 1;
-	margin: 1.5rem auto;
 	border: 0.2rem solid #111;
 	border-radius: 50%;
 	background: #fff;
@@ -55,18 +77,22 @@
 	.clock-hand { transition: none; }
 }
 
-.clock-stage { perspective: 700px; text-align: center; }
+.clock-stage { text-align: center; }
 .clock-face {
-	/* Increase pointer sensitivity, with a maximum tilt of 30 degrees per axis. */
+	/* Limit the tilt to 15 degrees per axis. */
 	transform:
-		rotateX(clamp(-30deg, calc((.5 - var(--flux-pointer-global-y, .5)) * 120deg), 30deg))
-		rotateY(clamp(-30deg, calc((var(--flux-pointer-global-x, .5) - .5) * 120deg), 30deg));
+		rotateX(var(--clock-tilt-x))
+		rotateY(var(--clock-tilt-y));
 	transition: transform 150ms ease-out;
-	box-shadow: 0 .7rem 0 #ddd;
 }
+.demo:not(:hover) .clock-dial { --clock-tilt-x: 0deg; --clock-tilt-y: 0deg; }
 .clock-digital { font-size: 1.5rem; }
 .calendar-date, .calendar-short { font-size: .9rem; }
 .calendar-progress { margin-block: 2rem; }
 .calendar-progress dd { margin: 0; }
 .calendar-progress .bar { min-width: 4rem; }
-@media (prefers-reduced-motion: reduce) { .clock-face { transform: none; transition: none; } }
+@media (prefers-reduced-motion: reduce) {
+	.clock-dial { --clock-tilt-x: 0deg; --clock-tilt-y: 0deg; }
+	.clock-face { transform: none; transition: none; }
+	.clock-dial::before { transition: none; }
+}

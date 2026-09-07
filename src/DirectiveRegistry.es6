@@ -66,6 +66,7 @@ const DIRECTIVE_DEFINITIONS = Object.freeze({
 		handler: "autoLink",
 		description: "Follow the link in the background.",
 	},
+	"modal": {handler: "modal", description: "Open a server-rendered dialog as a modal."},
 	"drag-order": {
 		handler: "dragOrder",
 		description: "Turn a server-ordered form into a draggable ordering control.",

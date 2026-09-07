@@ -701,7 +701,7 @@ body, .demo {
   margin-block: 0;
 }
 
-.notice, .source, .demo {
+.notice, .city-dialog, .source, .demo {
   box-sizing: border-box;
   min-inline-size: 0;
   padding: var(--flair-surface-padding, var(--flair-space-6));
@@ -801,6 +801,20 @@ body, .demo {
   border-end-end-radius: 0;
 }
 
+.city-dialog {
+  inline-size: min(var(--flair-dialog-width, 32rem), 100% - 2 * var(--flair-space-4));
+  max-block-size: calc(100% - 2 * var(--flair-space-4));
+  overflow: auto;
+  margin: auto;
+}
+[open].city-dialog:not(:modal) {
+  position: static;
+  margin-inline: 0;
+}
+.city-dialog::backdrop {
+  background: var(--flair-dialog-backdrop, rgba(0, 0, 0, 0.55));
+}
+
 .table-scroll {
   min-inline-size: 0;
   max-inline-size: 100%;
@@ -863,11 +877,33 @@ pre > code {
   inherits: false;
   initial-value: 1;
 }
+.clock-dial {
+  --clock-tilt-x: clamp(-15deg, calc((.5 - var(--flux-pointer-y, .5)) * 60deg), 15deg);
+  --clock-tilt-y: clamp(-15deg, calc((var(--flux-pointer-x, .5) - .5) * 60deg), 15deg);
+  position: relative;
+  width: min(16rem, 100%);
+  aspect-ratio: 1;
+  margin: 1.5rem auto 2rem;
+  perspective: 700px;
+}
+
+.clock-dial::before {
+  /* Follow the face at one quarter of its tilt. */
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.16);
+  transform: translateY(1rem) scale(0.97) rotateX(calc(var(--clock-tilt-x) * 0.25)) rotateY(calc(var(--clock-tilt-y) * 0.25));
+  transition: transform 150ms ease-out;
+  filter: blur(0.15rem);
+  pointer-events: none;
+}
+
 .clock-face {
   position: relative;
-  width: min(16rem, 75vw);
+  width: 100%;
   aspect-ratio: 1;
-  margin: 1.5rem auto;
   border: 0.2rem solid #111;
   border-radius: 50%;
   background: #fff;
@@ -1006,15 +1042,18 @@ pre > code {
   }
 }
 .clock-stage {
-  perspective: 700px;
   text-align: center;
 }
 
 .clock-face {
-  /* Increase pointer sensitivity, with a maximum tilt of 30 degrees per axis. */
-  transform: rotateX(clamp(-30deg, (0.5 - var(--flux-pointer-global-y, 0.5)) * 120deg, 30deg)) rotateY(clamp(-30deg, (var(--flux-pointer-global-x, 0.5) - 0.5) * 120deg, 30deg));
+  /* Limit the tilt to 15 degrees per axis. */
+  transform: rotateX(var(--clock-tilt-x)) rotateY(var(--clock-tilt-y));
   transition: transform 150ms ease-out;
-  box-shadow: 0 0.7rem 0 #ddd;
+}
+
+.demo:not(:hover) .clock-dial {
+  --clock-tilt-x: 0deg;
+  --clock-tilt-y: 0deg;
 }
 
 .clock-digital {
@@ -1038,8 +1077,15 @@ pre > code {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .clock-dial {
+    --clock-tilt-x: 0deg;
+    --clock-tilt-y: 0deg;
+  }
   .clock-face {
     transform: none;
+    transition: none;
+  }
+  .clock-dial::before {
     transition: none;
   }
 }
@@ -1562,15 +1608,11 @@ body {
 .split, .demo-grid {
   --flair-grid-columns: 2;
   --flair-grid-min: 17rem;
-  align-items: center;
+  align-items: start;
 }
 
 .demo > :first-child {
   margin-top: 0;
-}
-
-.split > .demo-copy {
-  align-self: start;
 }
 
 .demo-copy p {
@@ -1763,4 +1805,18 @@ pre {
   min-height: 10rem;
   border: 1px dashed #aaa;
   padding: 0.75rem;
+}
+
+.city-dialog dt {
+  font-weight: 600;
+}
+
+.city-dialog dd {
+  margin: 0 0 1rem;
+}
+
+.city-results {
+  max-height: 22rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }

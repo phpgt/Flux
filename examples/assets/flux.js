@@ -1,3 +1,29 @@
+// src/DialogHandler.es6
+var DialogHandler = class {
+  constructor(documentObject = globalThis.document) {
+    this.documentObject = documentObject;
+    this.opened = /* @__PURE__ */ new WeakSet();
+  }
+  initModal = (dialog) => {
+    if (!(dialog instanceof HTMLDialogElement)) {
+      throw new TypeError('data-flux type "modal" requires a dialog element.');
+    }
+    let returnFocus = this.documentObject.activeElement;
+    queueMicrotask(() => {
+      if (!dialog.isConnected || dialog.ownerDocument !== this.documentObject || this.opened.has(dialog)) return;
+      if (typeof dialog.showModal !== "function") return;
+      if (!dialog.matches(":modal")) {
+        dialog.removeAttribute("open");
+        dialog.showModal();
+        dialog.addEventListener("close", () => {
+          if (returnFocus?.isConnected && !dialog.contains(returnFocus)) returnFocus.focus({ preventScroll: true });
+        }, { once: true });
+      }
+      this.opened.add(dialog);
+    });
+  };
+};
+
 // src/CssProperties/Clock.es6
 var Clock = class {
   constructor(windowObject = window) {
@@ -1448,8 +1474,9 @@ var NavigationController = class {
       {
         action: "clickLink",
         errorPrefix: "Link fetch error",
-        scrollX: 0,
-        scrollY: 0,
+        scrollX: scrollState.preserve ? scrollState.x : 0,
+        scrollY: scrollState.preserve ? scrollState.y : 0,
+        preserveScroll: scrollState.preserve,
         scrollBehavior: scrollState.behavior,
         scrollPath: scrollState.path
       },
@@ -1564,6 +1591,7 @@ var NavigationController = class {
     let state = {
       action: historyState.action
     };
+    if (historyState.preserveScroll) state.fluxScrollPreserve = true;
     if (Number.isFinite(historyState.scrollY)) {
       state.fluxScrollX = Number.isFinite(historyState.scrollX) ? historyState.scrollX : 0;
       state.fluxScrollY = historyState.scrollY;
@@ -1602,12 +1630,17 @@ var NavigationController = class {
   }
   getScrollStateForElement(element) {
     let scrollElement = element?.closest?.("[data-flux-scroll]");
+    let preserve = scrollElement?.dataset?.fluxScroll === "preserve";
+    while (scrollElement?.dataset?.fluxScroll === "preserve") {
+      scrollElement = scrollElement.parentElement?.closest("[data-flux-scroll]");
+    }
     let behavior = scrollElement?.dataset?.fluxScroll;
     if (behavior !== "smooth" && behavior !== "auto") {
       behavior = null;
     }
     if (scrollElement && scrollElement !== this.documentObject?.body && scrollElement !== this.documentObject?.documentElement) {
       return {
+        ...preserve ? { preserve: true } : {},
         x: scrollElement.scrollLeft,
         y: scrollElement.scrollTop,
         behavior,
@@ -1615,6 +1648,7 @@ var NavigationController = class {
       };
     }
     return {
+      ...preserve ? { preserve: true } : {},
       x: this.windowObject?.scrollX ?? 0,
       y: this.windowObject?.scrollY ?? 0,
       behavior,
@@ -1885,6 +1919,7 @@ var DIRECTIVE_DEFINITIONS = Object.freeze({
     handler: "autoLink",
     description: "Follow the link in the background."
   },
+  "modal": { handler: "modal", description: "Open a server-rendered dialog as a modal." },
   "drag-order": {
     handler: "dragOrder",
     description: "Turn a server-ordered form into a draggable ordering control."
@@ -2266,7 +2301,7 @@ var ResponseHandler = class _ResponseHandler {
         true
       );
       this.onLiveDocumentUsed();
-      this.scrollToTopAfterPaint(scrollState);
+      this.scrollAfterPaint(scrollState);
     }, 0);
   };
   handleLiveDocument = (newDocument, allowedTargetKeys = void 0) => {
@@ -2291,19 +2326,22 @@ var ResponseHandler = class _ResponseHandler {
   isScrollState(state) {
     return !!state && typeof state === "object" && (Number.isFinite(state.fluxScrollY) || state.action === "clickLink");
   }
-  scrollToTopImmediately(scrollState = null) {
+  applyScrollPosition(scrollState = null) {
     let scrollTarget = this.getScrollTarget(scrollState);
-    let behavior = scrollState?.fluxScrollBehavior ?? RuntimeConfig.scrollToTopBehavior;
+    let preserve = scrollState?.fluxScrollPreserve;
+    let top = preserve ? scrollState.fluxScrollY : 0;
+    let left = preserve ? scrollState.fluxScrollX : 0;
+    let behavior = preserve ? "instant" : scrollState?.fluxScrollBehavior ?? RuntimeConfig.scrollToTopBehavior;
     if (scrollTarget?.element) {
-      this.scrollElementTo(scrollTarget.element, 0, 0, behavior);
+      this.scrollElementTo(scrollTarget.element, top, left, behavior);
       return;
     }
     if (!this.windowObject || typeof this.windowObject.scrollTo !== "function") {
       return;
     }
     this.windowObject.scrollTo({
-      top: 0,
-      left: 0,
+      top,
+      left,
       behavior
     });
   }
@@ -2327,16 +2365,16 @@ var ResponseHandler = class _ResponseHandler {
       element: DomPath.findInDocument(globalThis.document, scrollState.fluxScrollPath)
     };
   }
-  scrollToTopAfterPaint(scrollState = null) {
+  scrollAfterPaint(scrollState = null) {
     if (typeof this.animationFrame !== "function") {
       this.scheduler(() => {
-        this.scrollToTopImmediately(scrollState);
+        this.applyScrollPosition(scrollState);
       }, 0);
       return;
     }
     this.animationFrame(() => {
       this.animationFrame(() => {
-        this.scrollToTopImmediately(scrollState);
+        this.applyScrollPosition(scrollState);
       });
     });
   }
@@ -3247,7 +3285,7 @@ var Flux = class _Flux {
       void 0,
       void 0,
       void 0,
-      this.initCssPropertiesInTree
+      this.initAutocompleteResultElements
     );
     this.dragOrderHandler = dragOrderHandler ?? new Handler(
       this.formHandler,
@@ -3255,6 +3293,7 @@ var Flux = class _Flux {
       this.logger,
       _Flux.DEBUG
     );
+    this.dialogHandler = new DialogHandler();
     this.directiveRegistry = directiveRegistry ?? new DirectiveRegistry({
       autoContainer: this.initAutoContainer,
       cssProperties: this.initCssProperties,
@@ -3270,7 +3309,8 @@ var Flux = class _Flux {
       autocomplete: this.autocompleteHandler.initAutocomplete,
       autocompleteResults: this.autocompleteHandler.initAutocompleteResults,
       autoLink: this.linkHandler.initAutoLink,
-      dragOrder: this.dragOrderHandler.initDragOrder
+      dragOrder: this.dragOrderHandler.initDragOrder,
+      modal: this.dialogHandler.initModal
     });
     document.querySelectorAll("[data-flux]").forEach(this.initFluxElementSafely);
     if (!this.cssPropertyRuntime) document.addEventListener("flux:after-render", this.initRenderedCssProperties);
@@ -3291,6 +3331,10 @@ var Flux = class _Flux {
         error
       );
     }
+  };
+  initAutocompleteResultElements = (element) => {
+    if (element.matches("[data-flux]")) this.initFluxElementSafely(element);
+    element.querySelectorAll("[data-flux]").forEach(this.initFluxElementSafely);
   };
   initRenderedCssProperties = (event) => {
     if (this.cssPropertyRuntime) return;

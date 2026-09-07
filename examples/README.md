@@ -63,3 +63,9 @@ BEHAT_APP_COMMAND='php -S 127.0.0.1:8099 -t examples' BEHAT_APP_PORT=8099 compos
 ```
 
 The earlier demonstration pages now live under `test/fixtures/example/` to retain the existing regression coverage. They are not part of the published website.
+
+## City search and dialogs
+
+The search example reads 600 cities from `data/cities.json`. Names, ASCII names and country labels are searchable; the dataset and attribution are documented in `data/README.md`. No external search service is used.
+
+Result links request a full PHP page containing the selected city in `components/city-dialog.php`. A shared `update-link-inner` region receives that dialog. The result links use `data-flux-scroll="preserve"` to keep the page position. Flux's `modal` directive opens it after insertion, with native modal focus and Escape behaviour. The Close button uses `method="dialog"`. With JavaScript disabled, a normal link navigation displays the server-rendered selection through the dialog's `open` attribute.

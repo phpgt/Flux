@@ -83,8 +83,9 @@ export class NavigationController {
 			{
 				action: "clickLink",
 				errorPrefix: "Link fetch error",
-				scrollX: 0,
-				scrollY: 0,
+				scrollX: scrollState.preserve ? scrollState.x : 0,
+				scrollY: scrollState.preserve ? scrollState.y : 0,
+				preserveScroll: scrollState.preserve,
 				scrollBehavior: scrollState.behavior,
 				scrollPath: scrollState.path,
 			},
@@ -219,6 +220,8 @@ export class NavigationController {
 			action: historyState.action,
 		};
 
+		if(historyState.preserveScroll) state.fluxScrollPreserve = true;
+
 		if(Number.isFinite(historyState.scrollY)) {
 			state.fluxScrollX = Number.isFinite(historyState.scrollX) ? historyState.scrollX : 0;
 			state.fluxScrollY = historyState.scrollY;
@@ -264,6 +267,11 @@ export class NavigationController {
 
 	getScrollStateForElement(element) {
 		let scrollElement = element?.closest?.("[data-flux-scroll]");
+		let preserve = scrollElement?.dataset?.fluxScroll === "preserve";
+		// A preserve marker changes navigation policy, not the scrolling element.
+		while(scrollElement?.dataset?.fluxScroll === "preserve") {
+			scrollElement = scrollElement.parentElement?.closest("[data-flux-scroll]");
+		}
 		let behavior = scrollElement?.dataset?.fluxScroll;
 		if(behavior !== "smooth" && behavior !== "auto") {
 			behavior = null;
@@ -271,6 +279,7 @@ export class NavigationController {
 
 		if(scrollElement && scrollElement !== this.documentObject?.body && scrollElement !== this.documentObject?.documentElement) {
 			return {
+				...(preserve ? {preserve: true} : {}),
 				x: scrollElement.scrollLeft,
 				y: scrollElement.scrollTop,
 				behavior,
@@ -279,6 +288,7 @@ export class NavigationController {
 		}
 
 		return {
+			...(preserve ? {preserve: true} : {}),
 			x: this.windowObject?.scrollX ?? 0,
 			y: this.windowObject?.scrollY ?? 0,
 			behavior,

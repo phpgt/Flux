@@ -1,5 +1,6 @@
 <?php
 session_start();
+require_once __DIR__ . "/cities.php";
 
 $pages = [
 	'home' => ['FLUX: Fluid User Experience', 'A progressive enhancement library'],

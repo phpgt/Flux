@@ -7,12 +7,14 @@ Feature: The Flux website
     When I run this CSS example interaction:
       """
       document.querySelector('#clock-demo').scrollIntoView({block: 'center'});
-      window.dispatchEvent(new PointerEvent('pointermove', {clientX: innerWidth / 2, clientY: innerHeight / 2}));
+      var clockBounds = document.querySelector('#clock-demo').getBoundingClientRect();
+      window.dispatchEvent(new PointerEvent('pointermove', {clientX: clockBounds.left + clockBounds.width / 2, clientY: clockBounds.top + clockBounds.height / 2}));
       """
     Then the CSS example should satisfy:
       """
       document.querySelector('#clock-demo').style.getPropertyValue('--flux-time-second') !== ''
-      && getComputedStyle(document.querySelector('.clock-face')).transform === 'matrix(1, 0, 0, 1, 0, 0)'
+      && document.querySelector('#clock-demo').style.getPropertyValue('--flux-pointer-x') === '0.5'
+      && ['none', 'matrix(1, 0, 0, 1, 0, 0)'].includes(getComputedStyle(document.querySelector('.clock-face')).transform)
       """
     When I run this CSS example interaction:
       """
@@ -72,17 +74,17 @@ Feature: The Flux website
   Scenario: Search previews the marked server response and submits normally
     Given I am on "/"
     Then Flux should be ready
-    When I fill in "Search examples" with "clock"
+    When I fill in "Search cities" with "London"
     Then the CSS example should satisfy:
       """
-      document.querySelector('[data-flux-autocomplete-mounted]')?.textContent.includes('Time and date')
-      && !document.querySelector('[data-flux-autocomplete-mounted]')?.textContent.includes('Forms and lists')
+      document.querySelector('[data-flux-autocomplete-mounted]')?.textContent.includes('London, United Kingdom')
+      && !document.querySelector('[data-flux-autocomplete-mounted]')?.textContent.includes('Tokyo, Japan')
       """
     When I run this CSS example interaction:
       """
       document.querySelector('#search-demo form').requestSubmit();
       """
-    Then I should see "1 feature group matching"
+    Then I should see "London, United Kingdom"
 
   Scenario: Link navigation preserves the surrounding scratchpad
     Given I am on "/?page=navigation"
