@@ -1,7 +1,7 @@
 @javascript
 Feature: Link navigation example
   Scenario: Following Flux links replaces the page shell but preserves the scratchpad
-    Given I am on "/example/04-links.php"
+    Given I am on "/test/fixtures/example/04-links.php"
     Then Flux should be ready
     When I fill the element "textarea" with "Keep this note"
     And I follow "Page 1"
@@ -16,7 +16,7 @@ Feature: Link navigation example
     And the element "textarea" should have value "Keep this note"
 
   Scenario: Inner form updates stay in place on the landing page
-    Given I am on "/example/04-links.php"
+    Given I am on "/test/fixtures/example/04-links.php"
     Then Flux should be ready
     When I fill the element "textarea" with "Keep this note"
     And I fill in "Search term" with "flux link demo"

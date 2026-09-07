@@ -1,0 +1,67 @@
+@use "flair";
+@use "clock";
+@use "controls";
+@use "geometry";
+
+:root { @include flair.defaults; --flair-font-body: system-ui, sans-serif; }
+@include flair.typography;
+@include flair.controls;
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { @extend %d-typography; margin: 0; background: var(--flair-color-surface); color: var(--flair-color-text); }
+.site-header, .site-footer, .site-layout { max-width: 90rem; margin-inline: auto; padding: 1.5rem; }
+.site-header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1.5rem; border-bottom: 1px solid; }
+.wordmark { color: inherit; font-size: 2.8rem; font-weight: 850; letter-spacing: -.08em; text-decoration: none; display: flex; align-items: baseline; gap: 1rem; }
+.wordmark span { font-size: .7rem; letter-spacing: .1em; }
+.site-header p { margin: 0; font-size: .9rem; }
+.site-layout { @extend %l-sidebar; --flair-sidebar-width: 13rem; --flair-content-min: 22rem; gap: 3rem; padding-block: 3rem; }
+.site-nav { @extend %p-side-navigation; }
+.sidebar-note { font-size: .8rem; color: var(--flair-color-muted); margin-block: 2rem; }
+.page-intro { margin-bottom: 2.5rem; }
+.page-intro h1 { font-size: clamp(2.5rem, 5vw, 4.75rem); line-height: 1.05; letter-spacing: -.045em; margin-block: .7rem 1rem; }
+.page-intro > p:last-child, .lead { font-size: 1.25rem; max-width: 55ch; }
+.eyebrow { font-size: .72rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+.demo { @extend %o-card; margin-top: 3rem; padding: clamp(1.25rem, 3vw, 2.5rem); scroll-margin-top: 1rem; opacity: calc(.12 + .88 * var(--flux-first-visible, 1)); translate: 0 calc((1 - var(--flux-first-visible, 1)) * 1.5rem); transition: opacity 650ms ease, translate 650ms ease; }
+.split, .demo-grid { @extend %p-grid; --flair-grid-columns: 2; --flair-grid-min: 17rem; align-items: center; }
+.demo > :first-child { margin-top: 0; }
+.split > .demo-copy { align-self: start; }
+.demo-copy p { max-width: 45ch; }
+.demo h2 { font-size: 1.8rem; line-height: 1.2; }
+.demo h3 { font-size: 1.2rem; }
+.source { @extend %o-disclosure; margin-top: .6rem; font-size: .85rem; }
+pre { @extend %o-code-block; max-height: 30rem; overflow: auto; }
+.fields { @extend %p-form-fields; }
+.field { @extend %o-form-field; }
+.actions { @extend %p-form-actions; }
+.chapter-nav { @extend %p-navigation; }
+.table-scroll { @extend %p-table-scroll; }
+.notice { @extend %o-notice; }
+.sortable-list { list-style: none; padding: 0; margin: 0 0 1.5rem; }
+.sortable-list > li { display: flex; flex-wrap: wrap; align-items: center; gap: .7rem; border-bottom: 1px solid #ccc; padding: .8rem 0; background: white; }
+.item-text { flex: 1 1 8rem; overflow-wrap: anywhere; }
+.complete .item-text { text-decoration: line-through; color: #666; }
+.item-actions { display: flex; gap: .2rem; }
+.item-actions button { min-width: 2.25rem; padding: .2rem; }
+.drag-handle { width: 1.25rem; height: 2rem; cursor: grab; touch-action: none; display: grid; place-items: center; }
+.drag-handle::before { content: '⠿'; font-size: 1.5rem; }
+.flux-drag-order-dragging { outline: 2px dashed; opacity: .6; }
+.drag-form { margin: 0; }
+.list-demo .fields { margin-top: 1rem; }
+.big-number { font-size: 3rem; font-variant-numeric: tabular-nums; }
+.search-results { padding: 0; list-style: none; }
+.search-results li { border-bottom: 1px solid #ddd; padding-block: .75rem; }
+.search-results p { font-size: .85rem; margin-block: .3rem; }
+.chapter { border-block: 1px solid; padding-block: 1rem; margin-block: 1.5rem; }
+.attribute-preview { padding: 1rem; border: 1px solid; }
+.emphasised { color: white; background: #111; }
+.site-footer { border-top: 1px solid; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 1rem; font-size: .85rem; }
+.next-steps { padding-block: 2rem; }
+.skip-link { position: absolute; left: 1rem; top: -5rem; background: white; padding: 1rem; z-index: 10; }
+.skip-link:focus { top: 1rem; }
+.visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.flux-form-waiting button { opacity: .55; }
+@media (min-width: 70rem) { .site-layout > aside { position: sticky; top: 1.5rem; align-self: flex-start; } }
+@media (prefers-reduced-motion: reduce) { .demo { transition: none; translate: none; opacity: 1; } }
+@media print { .site-nav, .source, .site-header > p { display: none; } .demo { opacity: 1; translate: none; break-inside: avoid; } }
+
+.board-column { min-height: 10rem; border: 1px dashed #aaa; padding: .75rem; }

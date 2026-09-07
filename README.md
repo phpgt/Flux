@@ -10,7 +10,7 @@ All of Flux's functionality is done by adding `data-flux` attributes to the page
 
 ## Behat browser tests
 
-This repository includes Behat end-to-end tests for the examples in `example/`.
+This repository includes Behat end-to-end tests for the website in `examples/` and regression fixtures in `test/fixtures/example/`.
 
 Install PHP dependencies with:
 
@@ -122,7 +122,7 @@ Use `auto` to combine background form submission with CSS sources: `<form data-f
 
 Flux batches measurements and changed CSS writes, shares observers, and pauses expensive work while neither a source nor its connected destinations are visible.
 
-See the [CSS property reference](https://github.com/PhpGt/Flux/wiki/CSS-properties), or try the [geometry](example/09-css-geometry.php), [control](example/10-css-controls.php), [palette](example/11-css-palette.php), and [clock](example/12-css-time.php) examples.
+See the [CSS property reference](https://github.com/PhpGt/Flux/wiki/CSS-properties), or try the [geometry](examples/pages/geometry.php), [control](examples/pages/controls.php), [palette](examples/pages/media.php), and [clock](examples/pages/time.php) examples.
 
 `flux-time` supplies seconds, minutes, and twelve-hour values, plus scalars for positioning clock hands. `flux-date` supplies calendar numbers, localised day/month names, and year/month/week/day progress. They share a timer that updates once a second and pauses off-screen. See the [time and date reference](https://github.com/PhpGt/Flux/wiki/Time-and-date).
 
@@ -151,3 +151,9 @@ The following conventions and boundaries define how Flux works:
 [JetBrains Open Source sponsorship program](https://www.jetbrains.com/community/opensource/)
 
 [![JetBrains logo.](https://resources.jetbrains.com/storage/products/company/brand/logos/jetbrains.svg)](https://www.jetbrains.com/community/opensource/)
+
+## Interactive website
+
+Run `php -S localhost:8080` from this repository and visit [localhost:8080](http://localhost:8080/). The site uses PHP, Flair's default styling and Flux attributes, with feature pages and source disclosures for the examples.
+
+You can also serve `examples/` directly as the web root. See [the website README](examples/README.md) for the local Flair symlink, stylesheet build and deployment details.

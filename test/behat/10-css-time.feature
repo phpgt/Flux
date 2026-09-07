@@ -1,7 +1,7 @@
 @javascript
 Feature: CSS time and date
   Scenario: The clock hands and connected calendar receive local browser values
-    Given I am on "/example/12-css-time.php"
+    Given I am on "/test/fixtures/example/12-css-time.php"
     Then Flux should be ready
     And the CSS example should satisfy:
       """
@@ -37,7 +37,7 @@ Feature: CSS time and date
       """
 
   Scenario: A replaced time source reconnects and translates date names
-    Given I am on "/example/12-css-time.php"
+    Given I am on "/test/fixtures/example/12-css-time.php"
     Then Flux should be ready
     When I run this CSS example interaction:
       """

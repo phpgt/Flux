@@ -1,0 +1,1766 @@
+@charset "UTF-8";
+.table-scroll:focus-visible, .source > summary:focus-visible, .site-nav > ul > li > a:focus-visible, .chapter-nav > ul > li > a:focus-visible, :focus-visible:where(a), :focus-visible:where(input[type=checkbox], input[type=radio]), .field > :focus-visible:where(input[type=checkbox], input[type=radio]), .fields > :where(.field, label:not(.choice)) > :focus-visible:where(input[type=checkbox], input[type=radio]), .fields > .field-row > :where(.field, label) > :focus-visible:where(input[type=checkbox], input[type=radio]), .fields > .choice > :focus-visible:where(input[type=checkbox], input[type=radio]), .fields > fieldset > :where(.field, label:not(.choice)) > :focus-visible:where(input[type=checkbox], input[type=radio]), .fields > fieldset > .choice > :focus-visible:where(input[type=checkbox], input[type=radio]), :focus-visible:where(input[type=range]), .field > :focus-visible:where(input[type=range]), .fields > :where(.field, label:not(.choice)) > :focus-visible:where(input[type=range]), .fields > .field-row > :where(.field, label) > :focus-visible:where(input[type=range]), .fields > fieldset > :where(.field, label:not(.choice)) > :focus-visible:where(input[type=range]), :focus-visible:where(button,
+input[type=button],
+input[type=submit],
+input[type=reset]), .actions > :focus-visible:where(button, input[type=submit], input[type=reset]), .field > :focus-visible:where(button,
+input[type=button],
+input[type=submit],
+input[type=reset]), .fields > :where(.field, label:not(.choice)) > :focus-visible:where(button,
+input[type=button],
+input[type=submit],
+input[type=reset]), .fields > .field-row > :where(.field, label) > :focus-visible:where(button,
+input[type=button],
+input[type=submit],
+input[type=reset]), .fields > fieldset > :where(.field, label:not(.choice)) > :focus-visible:where(button,
+input[type=button],
+input[type=submit],
+input[type=reset]), .actions > .primary:focus-visible, :focus-visible:where(input:not([type=hidden],
+[type=checkbox],
+[type=radio],
+[type=range],
+[type=color],
+[type=button],
+[type=submit],
+[type=reset],
+[type=image]),
+select,
+textarea), .field > :focus-visible:where(input:not([type=hidden],
+[type=checkbox],
+[type=radio],
+[type=range],
+[type=color],
+[type=button],
+[type=submit],
+[type=reset],
+[type=image]),
+select,
+textarea), .fields > :where(.field, label:not(.choice)) > :focus-visible:where(input:not([type=hidden],
+[type=checkbox],
+[type=radio],
+[type=range],
+[type=color],
+[type=button],
+[type=submit],
+[type=reset],
+[type=image]),
+select,
+textarea), .fields > .field-row > :where(.field, label) > :focus-visible:where(input:not([type=hidden],
+[type=checkbox],
+[type=radio],
+[type=range],
+[type=color],
+[type=button],
+[type=submit],
+[type=reset],
+[type=image]),
+select,
+textarea), .fields > fieldset > :where(.field, label:not(.choice)) > :focus-visible:where(input:not([type=hidden],
+[type=checkbox],
+[type=radio],
+[type=range],
+[type=color],
+[type=button],
+[type=submit],
+[type=reset],
+[type=image]),
+select,
+textarea), :focus-visible:where(input[type=color]), .field > :focus-visible:where(input[type=color]), .fields > :where(.field, label:not(.choice)) > :focus-visible:where(input[type=color]), .fields > .field-row > :where(.field, label) > :focus-visible:where(input[type=color]), .fields > fieldset > :where(.field, label:not(.choice)) > :focus-visible:where(input[type=color]) {
+  outline: var(--flair-focus-width) solid var(--flair-focus-color, var(--flair-color-accent));
+  outline-offset: var(--flair-focus-offset);
+}
+
+:where(button,
+input[type=button],
+input[type=submit],
+input[type=reset]), .actions > :where(button, input[type=submit], input[type=reset]), .fields > .actions > :where(button, input[type=submit], input[type=reset]), .field > :where(button,
+input[type=button],
+input[type=submit],
+input[type=reset]), .fields > :where(.field, label:not(.choice)) > :where(button,
+input[type=button],
+input[type=submit],
+input[type=reset]), .fields > .field-row > :where(.field, label) > :where(button,
+input[type=button],
+input[type=submit],
+input[type=reset]), .fields > fieldset > :where(.field, label:not(.choice)) > :where(button,
+input[type=button],
+input[type=submit],
+input[type=reset]), .actions > .primary, :where(input:not([type=hidden],
+[type=checkbox],
+[type=radio],
+[type=range],
+[type=color],
+[type=button],
+[type=submit],
+[type=reset],
+[type=image]),
+select,
+textarea), .field > :where(input:not([type=hidden],
+[type=checkbox],
+[type=radio],
+[type=range],
+[type=color],
+[type=button],
+[type=submit],
+[type=reset],
+[type=image]),
+select,
+textarea), .fields > :where(.field, label:not(.choice)) > :where(input:not([type=hidden],
+[type=checkbox],
+[type=radio],
+[type=range],
+[type=color],
+[type=button],
+[type=submit],
+[type=reset],
+[type=image]),
+select,
+textarea), .fields > .field-row > :where(.field, label) > :where(input:not([type=hidden],
+[type=checkbox],
+[type=radio],
+[type=range],
+[type=color],
+[type=button],
+[type=submit],
+[type=reset],
+[type=image]),
+select,
+textarea), .fields > fieldset > :where(.field, label:not(.choice)) > :where(input:not([type=hidden],
+[type=checkbox],
+[type=radio],
+[type=range],
+[type=color],
+[type=button],
+[type=submit],
+[type=reset],
+[type=image]),
+select,
+textarea), :where(input[type=color]), .field > :where(input[type=color]), .fields > :where(.field, label:not(.choice)) > :where(input[type=color]), .fields > .field-row > :where(.field, label) > :where(input[type=color]), .fields > fieldset > :where(.field, label:not(.choice)) > :where(input[type=color]) {
+  box-sizing: border-box;
+  min-inline-size: 0;
+  max-inline-size: 100%;
+  min-block-size: var(--flair-control-min-height);
+  margin: 0;
+  padding: var(--flair-control-padding-block, var(--flair-space-2)) var(--flair-control-padding-inline, var(--flair-space-3));
+  border: var(--flair-border-width) solid var(--flair-control-border, var(--flair-color-border));
+  border-radius: var(--flair-control-radius, var(--flair-radius));
+  background: var(--flair-control-background, var(--flair-color-surface));
+  color: var(--flair-control-text, var(--flair-color-text));
+  font-family: var(--flair-font-body);
+  font-size: var(--flair-font-size);
+  font-weight: var(--flair-font-weight);
+  line-height: var(--flair-line-height);
+}
+:hover:not(:disabled):where(button,
+input[type=button],
+input[type=submit],
+input[type=reset]), .actions > .primary:hover:not(:disabled), :hover:not(:disabled):where(input:not([type=hidden],
+[type=checkbox],
+[type=radio],
+[type=range],
+[type=color],
+[type=button],
+[type=submit],
+[type=reset],
+[type=image]),
+select,
+textarea), :hover:not(:disabled):where(input[type=color]) {
+  border-color: var(--flair-control-border-hover, var(--flair-color-text));
+}
+[aria-invalid=true]:where(button,
+input[type=button],
+input[type=submit],
+input[type=reset]), .fields > .field-row > :where(.field, label) > [aria-invalid=true]:where(button,
+input[type=button],
+input[type=submit],
+input[type=reset]), .fields > fieldset > :where(.field, label:not(.choice)) > [aria-invalid=true]:where(button,
+input[type=button],
+input[type=submit],
+input[type=reset]), .actions > [aria-invalid=true].primary, [aria-invalid=true]:where(input:not([type=hidden],
+[type=checkbox],
+[type=radio],
+[type=range],
+[type=color],
+[type=button],
+[type=submit],
+[type=reset],
+[type=image]),
+select,
+textarea), .fields > .field-row > :where(.field, label) > [aria-invalid=true]:where(input:not([type=hidden],
+[type=checkbox],
+[type=radio],
+[type=range],
+[type=color],
+[type=button],
+[type=submit],
+[type=reset],
+[type=image]),
+select,
+textarea), .fields > fieldset > :where(.field, label:not(.choice)) > [aria-invalid=true]:where(input:not([type=hidden],
+[type=checkbox],
+[type=radio],
+[type=range],
+[type=color],
+[type=button],
+[type=submit],
+[type=reset],
+[type=image]),
+select,
+textarea), [aria-invalid=true]:where(input[type=color]), .fields > .field-row > :where(.field, label) > [aria-invalid=true]:where(input[type=color]), .fields > fieldset > :where(.field, label:not(.choice)) > [aria-invalid=true]:where(input[type=color]) {
+  border-color: var(--flair-color-danger);
+  border-style: var(--flair-control-invalid-border-style, dashed);
+}
+:disabled:where(button,
+input[type=button],
+input[type=submit],
+input[type=reset]), .fields > .field-row > :where(.field, label) > :disabled:where(button,
+input[type=button],
+input[type=submit],
+input[type=reset]), .fields > fieldset > :where(.field, label:not(.choice)) > :disabled:where(button,
+input[type=button],
+input[type=submit],
+input[type=reset]), .actions > .primary:disabled, :disabled:where(input:not([type=hidden],
+[type=checkbox],
+[type=radio],
+[type=range],
+[type=color],
+[type=button],
+[type=submit],
+[type=reset],
+[type=image]),
+select,
+textarea), .fields > .field-row > :where(.field, label) > :disabled:where(input:not([type=hidden],
+[type=checkbox],
+[type=radio],
+[type=range],
+[type=color],
+[type=button],
+[type=submit],
+[type=reset],
+[type=image]),
+select,
+textarea), .fields > fieldset > :where(.field, label:not(.choice)) > :disabled:where(input:not([type=hidden],
+[type=checkbox],
+[type=radio],
+[type=range],
+[type=color],
+[type=button],
+[type=submit],
+[type=reset],
+[type=image]),
+select,
+textarea), :disabled:where(input[type=color]), .fields > .field-row > :where(.field, label) > :disabled:where(input[type=color]), .fields > fieldset > :where(.field, label:not(.choice)) > :disabled:where(input[type=color]) {
+  background: var(--flair-control-background-disabled, var(--flair-color-surface-disabled));
+  color: var(--flair-control-text-disabled, var(--flair-color-muted));
+  cursor: not-allowed;
+  opacity: var(--flair-disabled-opacity, 1);
+}
+
+:where(input:not([type=hidden],
+[type=checkbox],
+[type=radio],
+[type=range],
+[type=color],
+[type=button],
+[type=submit],
+[type=reset],
+[type=image]),
+select,
+textarea), .field > :where(input:not([type=hidden],
+[type=checkbox],
+[type=radio],
+[type=range],
+[type=color],
+[type=button],
+[type=submit],
+[type=reset],
+[type=image]),
+select,
+textarea), .fields > :where(.field, label:not(.choice)) > :where(input:not([type=hidden],
+[type=checkbox],
+[type=radio],
+[type=range],
+[type=color],
+[type=button],
+[type=submit],
+[type=reset],
+[type=image]),
+select,
+textarea), .fields > .field-row > :where(.field, label) > :where(input:not([type=hidden],
+[type=checkbox],
+[type=radio],
+[type=range],
+[type=color],
+[type=button],
+[type=submit],
+[type=reset],
+[type=image]),
+select,
+textarea), .fields > fieldset > :where(.field, label:not(.choice)) > :where(input:not([type=hidden],
+[type=checkbox],
+[type=radio],
+[type=range],
+[type=color],
+[type=button],
+[type=submit],
+[type=reset],
+[type=image]),
+select,
+textarea) {
+  inline-size: 100%;
+}
+:focus:not(:disabled):where(input:not([type=hidden],
+[type=checkbox],
+[type=radio],
+[type=range],
+[type=color],
+[type=button],
+[type=submit],
+[type=reset],
+[type=image]),
+select,
+textarea) {
+  background: var(--flair-control-background-focus, var(--flair-control-background, var(--flair-color-surface)));
+}
+:focus-visible:where(input:not([type=hidden],
+[type=checkbox],
+[type=radio],
+[type=range],
+[type=color],
+[type=button],
+[type=submit],
+[type=reset],
+[type=image]),
+select,
+textarea), .fields > .field-row > :where(.field, label) > :focus-visible:where(input:not([type=hidden],
+[type=checkbox],
+[type=radio],
+[type=range],
+[type=color],
+[type=button],
+[type=submit],
+[type=reset],
+[type=image]),
+select,
+textarea), .fields > fieldset > :where(.field, label:not(.choice)) > :focus-visible:where(input:not([type=hidden],
+[type=checkbox],
+[type=radio],
+[type=range],
+[type=color],
+[type=button],
+[type=submit],
+[type=reset],
+[type=image]),
+select,
+textarea) {
+  outline-offset: var(--flair-control-focus-offset, var(--flair-focus-offset));
+}
+:where(input:not([type=hidden],
+[type=checkbox],
+[type=radio],
+[type=range],
+[type=color],
+[type=button],
+[type=submit],
+[type=reset],
+[type=image]),
+select,
+textarea)::placeholder, .field > :where(input:not([type=hidden],
+[type=checkbox],
+[type=radio],
+[type=range],
+[type=color],
+[type=button],
+[type=submit],
+[type=reset],
+[type=image]),
+select,
+textarea)::placeholder, .fields > :where(.field, label:not(.choice)) > :where(input:not([type=hidden],
+[type=checkbox],
+[type=radio],
+[type=range],
+[type=color],
+[type=button],
+[type=submit],
+[type=reset],
+[type=image]),
+select,
+textarea)::placeholder, .fields > .field-row > :where(.field, label) > :where(input:not([type=hidden],
+[type=checkbox],
+[type=radio],
+[type=range],
+[type=color],
+[type=button],
+[type=submit],
+[type=reset],
+[type=image]),
+select,
+textarea)::placeholder, .fields > fieldset > :where(.field, label:not(.choice)) > :where(input:not([type=hidden],
+[type=checkbox],
+[type=radio],
+[type=range],
+[type=color],
+[type=button],
+[type=submit],
+[type=reset],
+[type=image]),
+select,
+textarea)::placeholder {
+  color: var(--flair-color-muted);
+  opacity: 1;
+}
+:where(textarea):where(input:not([type=hidden],
+[type=checkbox],
+[type=radio],
+[type=range],
+[type=color],
+[type=button],
+[type=submit],
+[type=reset],
+[type=image]),
+select,
+textarea), .field > :where(textarea):where(input:not([type=hidden],
+[type=checkbox],
+[type=radio],
+[type=range],
+[type=color],
+[type=button],
+[type=submit],
+[type=reset],
+[type=image]),
+select,
+textarea), .fields > :where(.field, label:not(.choice)) > :where(textarea):where(input:not([type=hidden],
+[type=checkbox],
+[type=radio],
+[type=range],
+[type=color],
+[type=button],
+[type=submit],
+[type=reset],
+[type=image]),
+select,
+textarea), .fields > .field-row > :where(.field, label) > :where(textarea):where(input:not([type=hidden],
+[type=checkbox],
+[type=radio],
+[type=range],
+[type=color],
+[type=button],
+[type=submit],
+[type=reset],
+[type=image]),
+select,
+textarea), .fields > fieldset > :where(.field, label:not(.choice)) > :where(textarea):where(input:not([type=hidden],
+[type=checkbox],
+[type=radio],
+[type=range],
+[type=color],
+[type=button],
+[type=submit],
+[type=reset],
+[type=image]),
+select,
+textarea) {
+  min-block-size: var(--flair-textarea-min-height);
+  resize: vertical;
+}
+[readonly]:where(input:not([type=hidden],
+[type=checkbox],
+[type=radio],
+[type=range],
+[type=color],
+[type=button],
+[type=submit],
+[type=reset],
+[type=image]),
+select,
+textarea), .fields > .field-row > :where(.field, label) > [readonly]:where(input:not([type=hidden],
+[type=checkbox],
+[type=radio],
+[type=range],
+[type=color],
+[type=button],
+[type=submit],
+[type=reset],
+[type=image]),
+select,
+textarea), .fields > fieldset > :where(.field, label:not(.choice)) > [readonly]:where(input:not([type=hidden],
+[type=checkbox],
+[type=radio],
+[type=range],
+[type=color],
+[type=button],
+[type=submit],
+[type=reset],
+[type=image]),
+select,
+textarea) {
+  border-style: dotted;
+}
+
+:where(input[type=checkbox], input[type=radio]), .field > :where(input[type=checkbox], input[type=radio]), .fields > :where(.field, label:not(.choice)) > :where(input[type=checkbox], input[type=radio]), .fields > .field-row > :where(.field, label) > :where(input[type=checkbox], input[type=radio]), .fields > .choice > :where(input[type=checkbox], input[type=radio]), .fields > fieldset > :where(.field, label:not(.choice)) > :where(input[type=checkbox], input[type=radio]), .fields > fieldset > .choice > :where(input[type=checkbox], input[type=radio]) {
+  box-sizing: border-box;
+  inline-size: var(--flair-choice-size);
+  block-size: var(--flair-choice-size);
+  margin: 0;
+  accent-color: var(--flair-color-accent);
+}
+:disabled:where(input[type=checkbox], input[type=radio]), .fields > .field-row > :where(.field, label) > :disabled:where(input[type=checkbox], input[type=radio]), .fields > .choice > :disabled:where(input[type=checkbox], input[type=radio]), .fields > fieldset > :where(.field, label:not(.choice)) > :disabled:where(input[type=checkbox], input[type=radio]), .fields > fieldset > .choice > :disabled:where(input[type=checkbox], input[type=radio]) {
+  cursor: not-allowed;
+}
+
+:where(input[type=range]), .field > :where(input[type=range]), .fields > :where(.field, label:not(.choice)) > :where(input[type=range]), .fields > .field-row > :where(.field, label) > :where(input[type=range]), .fields > fieldset > :where(.field, label:not(.choice)) > :where(input[type=range]) {
+  inline-size: 100%;
+  min-inline-size: 0;
+  min-block-size: var(--flair-control-min-height);
+  margin: 0;
+  accent-color: var(--flair-color-accent);
+}
+:disabled:where(input[type=range]), .fields > .field-row > :where(.field, label) > :disabled:where(input[type=range]), .fields > fieldset > :where(.field, label:not(.choice)) > :disabled:where(input[type=range]) {
+  cursor: not-allowed;
+}
+
+:where(input[type=color]), .field > :where(input[type=color]), .fields > :where(.field, label:not(.choice)) > :where(input[type=color]), .fields > .field-row > :where(.field, label) > :where(input[type=color]), .fields > fieldset > :where(.field, label:not(.choice)) > :where(input[type=color]) {
+  inline-size: var(--flair-color-control-width, 4rem);
+  padding: var(--flair-space-1);
+}
+
+:where(button,
+input[type=button],
+input[type=submit],
+input[type=reset]), .actions > :where(button, input[type=submit], input[type=reset]), .fields > .actions > :where(button, input[type=submit], input[type=reset]), .field > :where(button,
+input[type=button],
+input[type=submit],
+input[type=reset]), .fields > :where(.field, label:not(.choice)) > :where(button,
+input[type=button],
+input[type=submit],
+input[type=reset]), .fields > .field-row > :where(.field, label) > :where(button,
+input[type=button],
+input[type=submit],
+input[type=reset]), .fields > fieldset > :where(.field, label:not(.choice)) > :where(button,
+input[type=button],
+input[type=submit],
+input[type=reset]), .actions > .primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--flair-space-2);
+  inline-size: auto;
+  min-block-size: var(--flair-button-min-height, var(--flair-control-min-height));
+  padding-block: var(--flair-button-padding-block, var(--flair-control-padding-block, var(--flair-space-2)));
+  padding-inline: var(--flair-button-padding-inline, var(--flair-control-padding-inline, var(--flair-space-3)));
+  border-radius: var(--flair-button-radius, var(--flair-control-radius, var(--flair-radius)));
+  border-color: var(--flair-button-border, var(--flair-control-border, var(--flair-color-border)));
+  font-size: var(--flair-button-font-size, var(--flair-font-size));
+  text-align: center;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+  background: var(--flair-button-background, var(--flair-color-surface));
+  color: var(--flair-button-text, var(--flair-color-text));
+  font-weight: var(--flair-button-weight, var(--flair-label-weight));
+}
+:hover:not(:disabled):where(button,
+input[type=button],
+input[type=submit],
+input[type=reset]), .actions > .primary:hover:not(:disabled) {
+  border-color: var(--flair-button-border-hover, var(--flair-control-border-hover, var(--flair-color-text)));
+  box-shadow: var(--flair-button-shadow-hover, none);
+  background: var(--flair-button-background-hover, var(--flair-color-surface-disabled));
+}
+:active:not(:disabled):where(button,
+input[type=button],
+input[type=submit],
+input[type=reset]), .actions > .primary:active:not(:disabled) {
+  background: var(--flair-button-background-active, var(--flair-button-background-hover, var(--flair-color-surface-disabled)));
+  box-shadow: none;
+}
+
+.actions > .primary:not(:disabled) {
+  background: var(--flair-button-primary-background, var(--flair-color-accent));
+  color: var(--flair-button-primary-text, var(--flair-color-on-accent));
+  border-color: var(--flair-button-primary-border, var(--flair-button-primary-background, var(--flair-color-accent)));
+}
+.actions > .primary:hover:not(:disabled) {
+  border-color: var(--flair-button-primary-border, var(--flair-button-primary-background, var(--flair-color-accent)));
+  background: var(--flair-button-primary-background-hover, var(--flair-color-text));
+  text-decoration: var(--flair-button-primary-decoration-hover, underline);
+}
+.actions > .primary:active:not(:disabled) {
+  background: var(--flair-button-primary-background-active, var(--flair-button-primary-background-hover, var(--flair-color-text)));
+}
+
+.field, .fields > :where(.field, label:not(.choice)), .fields > .field-row > :where(.field, label), .fields > fieldset > :where(.field, label:not(.choice)) {
+  display: grid;
+  align-content: start;
+  gap: var(--flair-field-gap, var(--flair-space-2));
+  min-inline-size: 0;
+  margin: 0;
+  color: var(--flair-color-text);
+  font: var(--flair-font-weight) var(--flair-font-size)/var(--flair-line-height) var(--flair-font-body);
+}
+.field > :where(label, .field-label, span:first-child), .fields > :where(.field, label:not(.choice)) > :where(label, .field-label, span:first-child), .fields > .field-row > :where(.field, label) > :where(label, .field-label, span:first-child), .fields > fieldset > :where(.field, label:not(.choice)) > :where(label, .field-label, span:first-child) {
+  font-weight: var(--flair-label-weight);
+  font-size: var(--flair-label-font-size, var(--flair-font-size));
+}
+.field > :where(.field-help, .field-error), .fields > :where(.field, label:not(.choice)) > :where(.field-help, .field-error), .fields > .field-row > :where(.field, label) > :where(.field-help, .field-error), .fields > fieldset > :where(.field, label:not(.choice)) > :where(.field-help, .field-error) {
+  margin: 0;
+  font: inherit;
+  font-size: var(--flair-message-font-size, var(--flair-font-size));
+}
+.field > .field-help, .fields > :where(.field, label:not(.choice)) > .field-help, .fields > .field-row > :where(.field, label) > .field-help, .fields > fieldset > :where(.field, label:not(.choice)) > .field-help {
+  color: var(--flair-color-muted);
+}
+.field > .field-error, .fields > :where(.field, label:not(.choice)) > .field-error, .fields > .field-row > :where(.field, label) > .field-error, .fields > fieldset > :where(.field, label:not(.choice)) > .field-error {
+  color: var(--flair-color-danger);
+  font-weight: var(--flair-label-weight);
+}
+
+.fields > .choice, .fields > fieldset > .choice {
+  display: grid;
+  grid-template-columns: var(--flair-choice-size) minmax(0, 1fr);
+  align-items: start;
+  gap: var(--flair-space-2);
+  min-inline-size: 0;
+  margin: 0;
+  color: var(--flair-color-text);
+  font: var(--flair-font-weight) var(--flair-font-size)/var(--flair-line-height) var(--flair-font-body);
+}
+.fields > .choice > :where(input[type=checkbox], input[type=radio]), .fields > fieldset > .choice > :where(input[type=checkbox], input[type=radio]) {
+  margin-block-start: var(--flair-space-1);
+}
+
+.fields > fieldset {
+  display: grid;
+  gap: var(--flair-form-gap, var(--flair-space-4));
+  min-inline-size: 0;
+  margin: 0;
+  padding: var(--flair-fieldset-padding, var(--flair-space-4));
+  border: var(--flair-border-width) solid var(--flair-color-border);
+  border-radius: var(--flair-radius);
+  font: var(--flair-font-weight) var(--flair-font-size)/var(--flair-line-height) var(--flair-font-body);
+  color: var(--flair-color-text);
+}
+.fields > fieldset > legend {
+  padding-inline: var(--flair-space-2);
+  font-weight: var(--flair-label-weight);
+}
+.fields > .field-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--flair-form-gap, var(--flair-space-4));
+  min-inline-size: 0;
+}
+.fields > .field-row > :where(.field, label) {
+  flex: 1 1 var(--flair-field-min-width);
+}
+
+.actions, .fields > .actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: var(--flair-actions-align, flex-end);
+  gap: var(--flair-actions-gap, var(--flair-space-3));
+  margin-block-start: var(--flair-actions-margin, var(--flair-space-2));
+}
+.actions > .action-start {
+  margin-inline-end: auto;
+}
+
+.fields {
+  display: grid;
+  gap: var(--flair-form-gap, var(--flair-space-4));
+  min-inline-size: 0;
+  margin: 0;
+  color: var(--flair-color-text);
+  font: var(--flair-font-weight) var(--flair-font-size)/var(--flair-line-height) var(--flair-font-body);
+}
+body, .demo {
+  color: var(--flair-color-text);
+  font-family: var(--flair-font-body);
+  font-size: var(--flair-font-size);
+  font-weight: var(--flair-font-weight);
+  line-height: var(--flair-text-leading, 1.6);
+  overflow-wrap: anywhere;
+}
+
+:where(h1, h2, h3, h4, h5, h6), .demo > :where(h2, h3, h4) {
+  font-family: var(--flair-font-heading, var(--flair-font-body));
+  font-weight: var(--flair-heading-weight, 500);
+  line-height: var(--flair-heading-leading, 1.15);
+  letter-spacing: var(--flair-heading-tracking, normal);
+  overflow-wrap: anywhere;
+}
+
+.demo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--flair-stack-gap, var(--flair-space-4));
+  min-inline-size: 0;
+}
+.demo > * {
+  min-inline-size: 0;
+  margin-block: 0;
+}
+
+.notice, .source, .demo {
+  box-sizing: border-box;
+  min-inline-size: 0;
+  padding: var(--flair-surface-padding, var(--flair-space-6));
+  border: var(--flair-surface-border-width, var(--flair-border-width)) solid var(--flair-color-border);
+  border-radius: var(--flair-surface-radius, var(--flair-radius));
+  background: var(--flair-surface-background, var(--flair-color-surface));
+  color: var(--flair-color-text);
+  box-shadow: var(--flair-surface-shadow, none);
+}
+
+:where(a) {
+  color: var(--flair-color-accent);
+  text-decoration: underline;
+  text-underline-offset: var(--flair-link-offset, 0.2em);
+  text-decoration-thickness: var(--flair-link-thickness, 1px);
+  overflow-wrap: anywhere;
+}
+:hover:where(a) {
+  text-decoration-thickness: var(--flair-link-hover-thickness, var(--flair-link-thickness, 1px));
+}
+.split, .demo-grid {
+  display: grid;
+  gap: var(--flair-grid-gap, var(--flair-space-6));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, max(var(--flair-grid-min, 16rem), (100% - (var(--flair-grid-columns, 3) - 1) * var(--flair-grid-gap, var(--flair-space-6))) / var(--flair-grid-columns, 3))), 1fr));
+}
+.split > *, .demo-grid > * {
+  min-inline-size: 0;
+}
+
+.demo > :where(h2, h3, h4) {
+  font-size: var(--flair-card-title-size, 1.25rem);
+}
+.demo > footer {
+  margin-block-start: auto;
+  padding-block-start: var(--flair-space-4);
+  border-block-start: var(--flair-border-width) solid var(--flair-color-border);
+}
+.demo > img {
+  inline-size: 100%;
+  block-size: auto;
+  border-radius: var(--flair-radius);
+}
+
+.site-nav > ul > li > a, .chapter-nav > ul > li > a {
+  display: block;
+  padding: var(--flair-nav-padding-block, var(--flair-space-3)) var(--flair-nav-padding-inline, var(--flair-space-4));
+  border-radius: var(--flair-nav-radius, var(--flair-radius));
+  color: var(--flair-color-text);
+  font-family: var(--flair-font-body);
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+.site-nav > ul > li > a:hover, .chapter-nav > ul > li > a:hover {
+  background: var(--flair-nav-hover-background, var(--flair-color-surface-disabled));
+}
+.site-nav > ul > li > a[aria-current]:not([aria-current=false]):not([aria-current=""]), .chapter-nav > ul > li > a[aria-current]:not([aria-current=false]):not([aria-current=""]) {
+  background: var(--flair-selected-background, var(--flair-color-surface-disabled));
+  color: var(--flair-selected-text, var(--flair-color-text));
+  font-weight: var(--flair-nav-current-weight, 700);
+  box-shadow: var(--flair-nav-current-shadow, inset 0 -3px var(--flair-color-accent));
+}
+.chapter-nav > ul, .site-nav > ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--flair-nav-gap, var(--flair-space-2));
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.chapter-nav > ul > li, .site-nav > ul > li {
+  min-inline-size: 0;
+  margin: 0;
+}
+.site-nav > ul {
+  flex-direction: column;
+}
+
+.source {
+  padding: 0;
+}
+.source > summary {
+  padding: var(--flair-disclosure-padding, var(--flair-space-4));
+  border-radius: inherit;
+  background: var(--flair-disclosure-background, transparent);
+  font-weight: var(--flair-heading-weight, 500);
+  cursor: pointer;
+}
+.source > summary:hover {
+  background: var(--flair-nav-hover-background, var(--flair-color-surface-disabled));
+}
+.source > .disclosure-content {
+  padding: var(--flair-disclosure-padding, var(--flair-space-4));
+}
+[open].source > summary {
+  border-block-end: var(--flair-border-width) solid var(--flair-color-border);
+  border-end-start-radius: 0;
+  border-end-end-radius: 0;
+}
+
+.table-scroll {
+  min-inline-size: 0;
+  max-inline-size: 100%;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+}
+.notice {
+  border-inline-start: var(--flair-notice-border-width, 4px) solid var(--flair-notice-color, var(--flair-color-accent));
+  background: var(--flair-notice-background, var(--flair-surface-background, var(--flair-color-surface)));
+}
+.notice > :first-child {
+  margin-block-start: 0;
+}
+.notice > :last-child {
+  margin-block-end: 0;
+}
+
+pre {
+  margin: 0;
+  padding: var(--flair-code-padding, var(--flair-space-6));
+  border: var(--flair-border-width) solid var(--flair-color-border);
+  border-radius: var(--flair-code-radius, var(--flair-radius));
+  background: var(--flair-code-background, var(--flair-color-surface-disabled));
+  color: var(--flair-code-text, var(--flair-color-text));
+  font-family: var(--flair-font-mono, "Ubuntu Mono", monospace);
+  font-size: var(--flair-code-size, 0.95em);
+  line-height: var(--flair-code-leading, 1.6);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  tab-size: var(--flair-code-tab-size, 4);
+}
+pre > code {
+  font: inherit;
+  background: transparent;
+  padding: 0;
+}
+
+.site-layout {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--flair-layout-gap, var(--flair-space-6));
+  align-items: flex-start;
+}
+.site-layout > aside {
+  flex: 1 1 var(--flair-sidebar-width, 16rem);
+  min-inline-size: 0;
+}
+.site-layout > .layout-content {
+  flex: 999 1 var(--flair-content-min, 28rem);
+  min-inline-size: min(100%, var(--flair-content-min, 28rem));
+}
+
+@property --clock-hand-sin {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 0;
+}
+@property --clock-hand-cos {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 1;
+}
+.clock-face {
+  position: relative;
+  width: min(16rem, 75vw);
+  aspect-ratio: 1;
+  margin: 1.5rem auto;
+  border: 0.2rem solid #111;
+  border-radius: 50%;
+  background: #fff;
+}
+
+.clock-face > span {
+  position: absolute;
+}
+
+.clock-twelve {
+  top: 0.3rem;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.clock-three {
+  right: 0.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.clock-six {
+  bottom: 0.3rem;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.clock-nine {
+  left: 0.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.clock-hand {
+  bottom: 50%;
+  left: calc(50% - 0.15rem);
+  width: 0.3rem;
+  transform-origin: center bottom;
+  border-radius: 0.15rem;
+  /* Interpolate the direction components, not an angle that wraps at six or twelve. */
+  --clock-hand-sin: sin(var(--clock-hand-angle));
+  --clock-hand-cos: cos(var(--clock-hand-angle));
+  transform: rotate(atan2(var(--clock-hand-sin), var(--clock-hand-cos)));
+  transition: --clock-hand-sin 180ms cubic-bezier(0.2, 0.8, 0.35, 1.15), --clock-hand-cos 180ms cubic-bezier(0.2, 0.8, 0.35, 1.15);
+}
+
+.clock-hour {
+  height: 25%;
+  background: #111;
+  --clock-hand-angle: calc(var(--flux-time-hour-scalar, 0) * 360deg);
+}
+
+.clock-minute {
+  height: 35%;
+  background: #444;
+  --clock-hand-angle: calc(var(--flux-time-minute-scalar, 0) * 360deg);
+}
+
+.clock-second {
+  height: 40%;
+  width: 0.1rem;
+  left: calc(50% - 0.05rem);
+  background: #777;
+  --clock-hand-angle: calc(var(--flux-time-second-scalar, 0) * 360deg);
+}
+
+.clock-centre {
+  left: calc(50% - 0.3rem);
+  top: calc(50% - 0.3rem);
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 50%;
+  background: #111;
+}
+
+.clock-digital {
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.clock-digital::after {
+  counter-reset: hours max(1, var(--flux-time-hour, 0) + 12 * (1 - min(1, var(--flux-time-hour, 0)))) minutes var(--flux-time-minute, 0) seconds var(--flux-time-second, 0);
+  content: counter(hours, decimal-leading-zero) ":" counter(minutes, decimal-leading-zero) ":" counter(seconds, decimal-leading-zero);
+}
+
+.calendar-date::after {
+  counter-reset: day var(--flux-date-day, 1) year var(--flux-date-year, 2026);
+  content: var(--flux-date-day-name, "") ", " counter(day) " " var(--flux-date-month-name, "") " " counter(year);
+}
+
+.calendar-short::after {
+  content: var(--flux-date-day-name-short, "") " · " var(--flux-date-month-name-short, "");
+}
+
+.calendar-progress {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.time-meter {
+  display: block;
+  height: 0.7rem;
+  background: #eee;
+  border-radius: 0.3rem;
+  overflow: hidden;
+}
+
+.time-meter > span {
+  display: block;
+  height: 100%;
+  background: #333;
+  transform-origin: left;
+}
+
+.year-progress {
+  transform: scaleX(var(--flux-date-year-scalar, 0));
+}
+
+.month-progress {
+  transform: scaleX(var(--flux-date-month-scalar, 0));
+}
+
+.week-progress {
+  transform: scaleX(var(--flux-date-week-scalar, 0));
+}
+
+.day-progress {
+  transform: scaleX(var(--flux-day-scalar, 0));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .clock-hand {
+    transition: none;
+  }
+}
+.clock-stage {
+  perspective: 700px;
+  text-align: center;
+}
+
+.clock-face {
+  /* Increase pointer sensitivity, with a maximum tilt of 30 degrees per axis. */
+  transform: rotateX(clamp(-30deg, (0.5 - var(--flux-pointer-global-y, 0.5)) * 120deg, 30deg)) rotateY(clamp(-30deg, (var(--flux-pointer-global-x, 0.5) - 0.5) * 120deg, 30deg));
+  transition: transform 150ms ease-out;
+  box-shadow: 0 0.7rem 0 #ddd;
+}
+
+.clock-digital {
+  font-size: 1.5rem;
+}
+
+.calendar-date, .calendar-short {
+  font-size: 0.9rem;
+}
+
+.calendar-progress {
+  margin-block: 2rem;
+}
+
+.calendar-progress dd {
+  margin: 0;
+}
+
+.calendar-progress .bar {
+  min-width: 4rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .clock-face {
+    transform: none;
+    transition: none;
+  }
+}
+@property --redline {
+  syntax: "<integer>";
+  inherits: true;
+  initial-value: 0;
+}
+.gauge-stage {
+  --load: var(--flux-range, .35);
+  --warm: clamp(0, (var(--load) - .55) * 5, 1);
+  --hot: clamp(0, (var(--load) - .8) * 10, 1);
+  --redline: clamp(0, (var(--load) - .9) * 1000, 1);
+  --gauge-colour: color-mix(in srgb, color-mix(in srgb, #555, #db7700 calc(var(--warm) * 100%)), #ce241c calc(var(--hot) * 100%));
+  text-align: center;
+}
+
+.radial-gauge {
+  width: min(16rem, 100%);
+  aspect-ratio: 1;
+  margin-inline: auto;
+  border-radius: 50%;
+  padding: 1.1rem;
+  background: conic-gradient(from 225deg, var(--gauge-colour) calc(var(--load) * 270deg), #e5e5e5 0deg 270deg, transparent 0);
+}
+
+.gauge-value {
+  display: grid;
+  place-items: center;
+  height: 100%;
+  border-radius: 50%;
+  background: white;
+  font-size: 3rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.gauge-value::after {
+  counter-reset: load calc(var(--load) * 100);
+  content: counter(load) "%";
+}
+
+.gauge-status {
+  display: grid;
+  color: var(--gauge-colour);
+  font-weight: 700;
+}
+
+.gauge-status span {
+  grid-area: 1/1;
+}
+
+.gauge-status span:first-child {
+  opacity: calc(1 - var(--redline));
+}
+
+.gauge-status span:last-child {
+  opacity: var(--redline);
+}
+
+@container style(--redline: 1) {
+  .radial-gauge {
+    animation: strain 90ms linear infinite alternate;
+  }
+}
+@keyframes strain {
+  from {
+    transform: translate(-1px, 0.5px) rotate(-0.4deg);
+  }
+  to {
+    transform: translate(1px, -0.5px) rotate(0.4deg);
+  }
+}
+.level-stage {
+  --level: calc(var(--flux-range, 0) * 4);
+  width: min(18rem, 100%);
+  margin-inline: auto;
+}
+
+.level-current {
+  display: grid;
+  text-align: center;
+  font-size: 1.8rem;
+  font-weight: 750;
+}
+
+.level-current span {
+  grid-area: 1/1;
+  opacity: calc(1 - min(1, max(var(--level) - var(--step), var(--step) - var(--level))));
+  color: color-mix(in srgb, #666, #cb291c calc(var(--step) * 25%));
+}
+
+.level-control {
+  display: grid;
+  grid-template-columns: 3rem 1fr;
+  gap: 2rem;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.level-control label {
+  display: flex;
+  justify-content: center;
+}
+
+.level-control input[type=range] {
+  writing-mode: vertical-lr;
+  direction: rtl;
+  width: 2rem;
+  height: 15rem;
+  accent-color: color-mix(in srgb, #777, #ce241c calc(var(--flux-range, 0) * 100%));
+}
+
+.level-labels {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  font-weight: 700;
+}
+
+.level-labels li {
+  margin: 0;
+  --lit: clamp(0, var(--level) - var(--step) + 1, 1);
+  --step-colour: color-mix(in srgb, #d08000, #ce241c calc(max(0, var(--step) - 2) * 50%));
+  color: color-mix(in srgb, #aaa, var(--step-colour) calc(var(--lit) * min(1, var(--step)) * 100%));
+  transition: color 150ms;
+}
+
+.bar {
+  display: block;
+  height: 0.65rem;
+  background: #eee;
+  overflow: hidden;
+}
+
+.bar > span {
+  display: block;
+  height: 100%;
+  background: #333;
+  transform-origin: left;
+}
+
+.column-preview {
+  display: grid;
+  grid-template-columns: repeat(var(--flux-select, 2), 1fr);
+  gap: 0.5rem;
+  margin-block: 1rem;
+}
+
+.column-preview span {
+  background: #eee;
+  padding: 1rem;
+}
+
+.colour-preview {
+  border-left: 0.6rem solid var(--flux-color, #555);
+  padding: 1rem;
+  margin-top: 1rem;
+}
+
+.field-budget::after {
+  counter-reset: remaining var(--flux-field-remaining, 24);
+  content: counter(remaining) " characters remaining";
+}
+
+.field-state {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+}
+
+.field-state span {
+  border: 1px solid;
+  padding: 0.3rem;
+}
+
+.field-state span:nth-child(1) {
+  opacity: calc(0.25 + var(--flux-field-dirty, 0) * 0.75);
+}
+
+.field-state span:nth-child(2) {
+  opacity: calc(0.25 + var(--flux-field-touched, 0) * 0.75);
+}
+
+.field-state span:nth-child(3) {
+  opacity: calc(0.25 + var(--flux-field-changed, 0) * 0.75);
+}
+
+.validity-progress {
+  transform: scaleX(var(--flux-form-valid-scalar, 0));
+}
+
+.form-count::after {
+  counter-reset: valid var(--flux-form-valid-count, 0) total var(--flux-form-field-count, 0);
+  content: counter(valid) " of " counter(total) " fields valid";
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .radial-gauge {
+    animation: none !important;
+  }
+  .level-labels li {
+    transition: none;
+  }
+}
+.pointer-pad {
+  position: relative;
+  min-height: 12rem;
+  padding: 1rem;
+  border: 1px solid;
+  overflow: hidden;
+}
+
+.pointer-marker {
+  position: absolute;
+  left: calc(var(--flux-pointer-x, 0.5) * 100%);
+  top: calc(var(--flux-pointer-y, 0.5) * 100%);
+  width: 1rem;
+  height: 1rem;
+  border-radius: 50%;
+  background: #111;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.pointer-preview {
+  margin-top: 1rem;
+  width: min(14rem, 100%);
+  min-height: 8rem;
+}
+
+.pointer-readout::after {
+  counter-reset: x calc(var(--flux-pointer-x-px, 0)) y calc(var(--flux-pointer-y-px, 0));
+  content: counter(x) "px, " counter(y) "px";
+}
+
+.viewport-pointer-readout::after {
+  counter-reset: x calc(var(--flux-pointer-global-x-px, 0)) y calc(var(--flux-pointer-global-y-px, 0));
+  content: counter(x) "px, " counter(y) "px";
+}
+
+.size-box {
+  resize: both;
+  overflow: auto;
+  width: 23rem;
+  max-width: 100%;
+  min-width: 8rem;
+  min-height: 7rem;
+  padding: 1rem;
+  border: 1px solid;
+}
+
+.size-readout::after {
+  counter-reset: width calc(var(--flux-size-x, 0)) height calc(var(--flux-size-y, 0));
+  content: counter(width) " × " counter(height) " CSS pixels";
+}
+
+.truncated-text {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.truncation-note {
+  opacity: var(--flux-truncated, 0);
+}
+
+.visibility-preview {
+  margin-top: 2rem;
+  padding: 1rem;
+  border: 3px solid rgb(0, 0, 0, var(--flux-visible, 1));
+}
+
+.palette-preview {
+  margin: 0;
+  border: 0.7rem solid var(--flux-palette, #333);
+  padding: 0.5rem;
+}
+
+.palette-preview img, .palette-preview video {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.palette-preview figcaption {
+  padding-block: 1rem;
+}
+
+.swatches {
+  display: flex;
+  height: 2rem;
+}
+
+.swatches span {
+  flex: 1;
+}
+
+.swatches .accent {
+  background: var(--flux-palette-accent, #777);
+}
+
+.swatches .dark {
+  background: var(--flux-palette-dark, #222);
+}
+
+.swatches .light {
+  background: var(--flux-palette-light, #ddd);
+}
+
+.swatches .average {
+  background: var(--flux-palette-average, #888);
+}
+
+.temperature {
+  position: relative;
+  height: 0.5rem;
+  margin-top: 1rem;
+  background: linear-gradient(to right, #aaa, white, #555);
+}
+
+.temperature span {
+  position: absolute;
+  left: calc((var(--flux-palette-temp, 0) + 1) * 50%);
+  height: 1rem;
+  width: 0.25rem;
+  top: -0.25rem;
+  background: #111;
+}
+
+:root {
+  --flair-space-1: 0.25rem;
+  --flair-space-2: 0.5rem;
+  --flair-space-3: 0.75rem;
+  --flair-space-4: 1rem;
+  --flair-space-6: 1.5rem;
+  --flair-space-8: 2rem;
+  --flair-color-text: #111;
+  --flair-color-muted: #525252;
+  --flair-color-surface: #fff;
+  --flair-color-surface-disabled: #eee;
+  --flair-color-border: #767676;
+  --flair-color-accent: #111;
+  --flair-color-on-accent: #fff;
+  --flair-color-danger: #111;
+  --flair-font-body: "Ubuntu", sans-serif;
+  --flair-font-size: 1rem;
+  --flair-line-height: 1.5;
+  --flair-font-weight: 400;
+  --flair-label-weight: 500;
+  --flair-border-width: 1px;
+  --flair-radius: 0;
+  --flair-focus-width: 3px;
+  --flair-focus-offset: 2px;
+  --flair-control-min-height: 2.75rem;
+  --flair-choice-size: 1.25rem;
+  --flair-textarea-min-height: 8rem;
+  --flair-field-min-width: 14rem;
+  --flair-font-body: system-ui, sans-serif;
+}
+
+:where(h1, h2, h3, h4, h5, h6) {
+  margin-block: var(--flair-space-6) var(--flair-space-3);
+}
+
+:where(h1) {
+  font-size: var(--flair-heading-1, 2.5rem);
+}
+
+:where(h2) {
+  font-size: var(--flair-heading-2, 2rem);
+}
+
+:where(h3) {
+  font-size: var(--flair-heading-3, 1.5rem);
+}
+
+:where(h4) {
+  font-size: var(--flair-heading-4, 1.25rem);
+}
+
+:where(h5, h6) {
+  font-size: var(--flair-font-size);
+}
+
+:where(p, ul, ol, dl, blockquote, figure) {
+  margin: 0;
+  margin-block-end: var(--flair-space-4);
+  line-height: inherit;
+}
+
+:where(ul, ol) {
+  padding-inline-start: var(--flair-space-6);
+}
+
+:where(li + li) {
+  margin-block-start: var(--flair-space-2);
+}
+
+:where(blockquote) {
+  padding-inline-start: var(--flair-space-4);
+  border-inline-start: var(--flair-quote-border-width, 4px) solid var(--flair-color-accent);
+  color: var(--flair-color-muted);
+}
+
+:where(small, figcaption) {
+  font-size: var(--flair-small-size, 0.875rem);
+  color: var(--flair-color-muted);
+}
+
+:where(mark) {
+  background: var(--flair-selected-background, var(--flair-color-surface-disabled));
+  color: var(--flair-selected-text, var(--flair-color-text));
+}
+
+:where(hr) {
+  border: 0;
+  border-block-start: var(--flair-border-width) solid var(--flair-color-border);
+  margin-block: var(--flair-space-6);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+body {
+  margin: 0;
+  background: var(--flair-color-surface);
+  color: var(--flair-color-text);
+}
+
+.site-header, .site-footer, .site-layout {
+  max-width: 90rem;
+  margin-inline: auto;
+  padding: 1.5rem;
+}
+
+.site-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  border-bottom: 1px solid;
+}
+
+.wordmark {
+  color: inherit;
+  font-size: 2.8rem;
+  font-weight: 850;
+  letter-spacing: -0.08em;
+  text-decoration: none;
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+}
+
+.wordmark span {
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+}
+
+.site-header p {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.site-layout {
+  --flair-sidebar-width: 13rem;
+  --flair-content-min: 22rem;
+  gap: 3rem;
+  padding-block: 3rem;
+}
+
+.sidebar-note {
+  font-size: 0.8rem;
+  color: var(--flair-color-muted);
+  margin-block: 2rem;
+}
+
+.page-intro {
+  margin-bottom: 2.5rem;
+}
+
+.page-intro h1 {
+  font-size: clamp(2.5rem, 5vw, 4.75rem);
+  line-height: 1.05;
+  letter-spacing: -0.045em;
+  margin-block: 0.7rem 1rem;
+}
+
+.page-intro > p:last-child, .lead {
+  font-size: 1.25rem;
+  max-width: 55ch;
+}
+
+.eyebrow {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.demo {
+  margin-top: 3rem;
+  padding: clamp(1.25rem, 3vw, 2.5rem);
+  scroll-margin-top: 1rem;
+  opacity: calc(0.12 + 0.88 * var(--flux-first-visible, 1));
+  translate: 0 calc((1 - var(--flux-first-visible, 1)) * 1.5rem);
+  transition: opacity 650ms ease, translate 650ms ease;
+}
+
+.split, .demo-grid {
+  --flair-grid-columns: 2;
+  --flair-grid-min: 17rem;
+  align-items: center;
+}
+
+.demo > :first-child {
+  margin-top: 0;
+}
+
+.split > .demo-copy {
+  align-self: start;
+}
+
+.demo-copy p {
+  max-width: 45ch;
+}
+
+.demo h2 {
+  font-size: 1.8rem;
+  line-height: 1.2;
+}
+
+.demo h3 {
+  font-size: 1.2rem;
+}
+
+.source {
+  margin-top: 0.6rem;
+  font-size: 0.85rem;
+}
+
+pre {
+  max-height: 30rem;
+  overflow: auto;
+}
+
+.sortable-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1.5rem;
+}
+
+.sortable-list > li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.7rem;
+  border-bottom: 1px solid #ccc;
+  padding: 0.8rem 0;
+  background: white;
+}
+
+.item-text {
+  flex: 1 1 8rem;
+  overflow-wrap: anywhere;
+}
+
+.complete .item-text {
+  text-decoration: line-through;
+  color: #666;
+}
+
+.item-actions {
+  display: flex;
+  gap: 0.2rem;
+}
+
+.item-actions button {
+  min-width: 2.25rem;
+  padding: 0.2rem;
+}
+
+.drag-handle {
+  width: 1.25rem;
+  height: 2rem;
+  cursor: grab;
+  touch-action: none;
+  display: grid;
+  place-items: center;
+}
+
+.drag-handle::before {
+  content: "⠿";
+  font-size: 1.5rem;
+}
+
+.flux-drag-order-dragging {
+  outline: 2px dashed;
+  opacity: 0.6;
+}
+
+.drag-form {
+  margin: 0;
+}
+
+.list-demo .fields {
+  margin-top: 1rem;
+}
+
+.big-number {
+  font-size: 3rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.search-results {
+  padding: 0;
+  list-style: none;
+}
+
+.search-results li {
+  border-bottom: 1px solid #ddd;
+  padding-block: 0.75rem;
+}
+
+.search-results p {
+  font-size: 0.85rem;
+  margin-block: 0.3rem;
+}
+
+.chapter {
+  border-block: 1px solid;
+  padding-block: 1rem;
+  margin-block: 1.5rem;
+}
+
+.attribute-preview {
+  padding: 1rem;
+  border: 1px solid;
+}
+
+.emphasised {
+  color: white;
+  background: #111;
+}
+
+.site-footer {
+  border-top: 1px solid;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 1rem;
+  font-size: 0.85rem;
+}
+
+.next-steps {
+  padding-block: 2rem;
+}
+
+.skip-link {
+  position: absolute;
+  left: 1rem;
+  top: -5rem;
+  background: white;
+  padding: 1rem;
+  z-index: 10;
+}
+
+.skip-link:focus {
+  top: 1rem;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.flux-form-waiting button {
+  opacity: 0.55;
+}
+
+@media (min-width: 70rem) {
+  .site-layout > aside {
+    position: sticky;
+    top: 1.5rem;
+    align-self: flex-start;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .demo {
+    transition: none;
+    translate: none;
+    opacity: 1;
+  }
+}
+@media print {
+  .site-nav, .source, .site-header > p {
+    display: none;
+  }
+  .demo {
+    opacity: 1;
+    translate: none;
+    break-inside: avoid;
+  }
+}
+.board-column {
+  min-height: 10rem;
+  border: 1px dashed #aaa;
+  padding: 0.75rem;
+}

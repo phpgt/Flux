@@ -1,7 +1,7 @@
 @javascript
 Feature: CSS properties from native browser state
   Scenario: Control values and connections survive background form replacement
-    Given I am on "/example/10-css-controls.php"
+    Given I am on "/test/fixtures/example/10-css-controls.php"
     Then Flux should be ready
     And the CSS property "--flux-range" on "#range-control" should become "0.35"
     And the CSS property "--flux-select" on "#select-control" should become "2"
@@ -22,7 +22,7 @@ Feature: CSS properties from native browser state
     Then the CSS property "--flux-field-clean" on "#name-control" should become "1"
 
   Scenario: Field flags reflect native constraint validation
-    Given I am on "/example/10-css-controls.php"
+    Given I am on "/test/fixtures/example/10-css-controls.php"
     Then Flux should be ready
     And the CSS property "--flux-form-invalid-count" on "#preferences" should become "1"
     When I fill in "Display name" with "Ad"
@@ -35,7 +35,7 @@ Feature: CSS properties from native browser state
     And the CSS property "--flux-field-filled-scalar" on "#name-control" should become "0.125"
 
   Scenario: Pointer coordinates are shared with a remote preview
-    Given I am on "/example/09-css-geometry.php"
+    Given I am on "/test/fixtures/example/09-css-geometry.php"
     Then Flux should be ready
     When I run this CSS example interaction:
       """
@@ -52,7 +52,7 @@ Feature: CSS properties from native browser state
       """
 
   Scenario: Local and viewport pixel coordinates feed generated text
-    Given I am on "/example/09-css-geometry.php"
+    Given I am on "/test/fixtures/example/09-css-geometry.php"
     Then Flux should be ready
     When I run this CSS example interaction:
       """
@@ -77,7 +77,7 @@ Feature: CSS properties from native browser state
       """
 
   Scenario: Size and truncation follow actual layout changes
-    Given I am on "/example/09-css-geometry.php"
+    Given I am on "/test/fixtures/example/09-css-geometry.php"
     Then Flux should be ready
     When I run this CSS example interaction:
       """
@@ -100,7 +100,7 @@ Feature: CSS properties from native browser state
     Then the CSS property "--flux-truncated" on "#truncated-text" should become "0"
 
   Scenario: First visibility persists after scrolling away
-    Given I am on "/example/09-css-geometry.php"
+    Given I am on "/test/fixtures/example/09-css-geometry.php"
     Then Flux should be ready
     And the CSS property "--flux-visible" on "#visibility-panel" should become "0"
     When I run this CSS example interaction:
@@ -117,7 +117,7 @@ Feature: CSS properties from native browser state
     And the CSS property "--flux-first-visible" on "#visibility-panel" should become "1"
 
   Scenario: Image and video palettes use real canvas pixels
-    Given I am on "/example/11-css-palette.php"
+    Given I am on "/test/fixtures/example/11-css-palette.php"
     Then Flux should be ready
     When I run this CSS example interaction:
       """
@@ -140,7 +140,7 @@ Feature: CSS properties from native browser state
       """
 
   Scenario: Removing a connection restores an author's important declaration
-    Given I am on "/example/10-css-controls.php"
+    Given I am on "/test/fixtures/example/10-css-controls.php"
     Then Flux should be ready
     When I run this CSS example interaction:
       """
