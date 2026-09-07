@@ -1,3 +1,4 @@
+import {Clock} from "./Clock.es6";
 import {ConnectionResolver} from "./ConnectionResolver.es6";
 import {DomPath} from "../DomPath.es6";
 import {FrameScheduler} from "./FrameScheduler.es6";
@@ -18,6 +19,7 @@ export class CssPropertyRuntime {
 		this.logger = logger;
 		this.scheduler = new FrameScheduler(this.window, logger);
 		this.writer = new PropertyWriter(this.scheduler, logger);
+		this.clock = new Clock(this.window);
 		this.bindings = new Map();
 		this.connections = new ConnectionResolver(documentObject, logger);
 		this.history = new WeakMap();
@@ -183,6 +185,7 @@ export class CssPropertyRuntime {
 		this.intersections?.dispose();
 		this.resizes?.dispose();
 		this.writer.dispose();
+		this.clock.dispose();
 		this.scheduler.dispose();
 	}
 }

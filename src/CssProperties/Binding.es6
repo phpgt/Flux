@@ -45,7 +45,8 @@ export class Binding {
 			if(!Number.isFinite(value)) value = 0;
 			value = Math.round(value * 10000) / 10000;
 		}
-		let name = `--${this.name}${suffix ? "-" + suffix : ""}`;
+		let name = this.definition.properties?.[suffix]
+			?? `--${this.name}${suffix ? "-" + suffix : ""}`;
 		this.values.set(name, value);
 		this.runtime.writer.set(this, this.element, name, value);
 		for(let destination of this.destinations.keys()) this.runtime.writer.set(this, destination, name, value);

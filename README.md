@@ -110,7 +110,7 @@ Combine directives with spaces to expose browser state to your stylesheet:
 }
 ```
 
-CSS sources cover local and viewport pointer positions, element size, visibility and first appearance, range/select/colour controls, field history, form validity, image/video palettes, and content truncation. Numeric values have no unit suffix, ready for `calc()`.
+CSS sources cover local and viewport pointer positions, element size, visibility and first appearance, range/select/colour controls, field history, form validity, image/video palettes, content truncation, and local time/date. Numeric values have no unit suffix, ready for `calc()`.
 
 Use `auto` to combine background form submission with CSS sources: `<form data-flux="auto flux-form">`. Connections share a source's properties with other regions:
 
@@ -122,7 +122,9 @@ Use `auto` to combine background form submission with CSS sources: `<form data-f
 
 Flux batches measurements and changed CSS writes, shares observers, and pauses expensive work while neither a source nor its connected destinations are visible.
 
-See the [CSS property reference](https://github.com/PhpGt/Flux/wiki/CSS-properties), or try the [geometry](example/09-css-geometry.php), [control](example/10-css-controls.php), and [palette](example/11-css-palette.php) examples.
+See the [CSS property reference](https://github.com/PhpGt/Flux/wiki/CSS-properties), or try the [geometry](example/09-css-geometry.php), [control](example/10-css-controls.php), [palette](example/11-css-palette.php), and [clock](example/12-css-time.php) examples.
+
+`flux-time` supplies seconds, minutes, and twelve-hour values, plus scalars for positioning clock hands. `flux-date` supplies calendar numbers, localised day/month names, and year/month/week/day progress. They share a timer that updates once a second and pauses off-screen. See the [time and date reference](https://github.com/PhpGt/Flux/wiki/Time-and-date).
 
 ## Development
 

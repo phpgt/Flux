@@ -1,9 +1,12 @@
+import {TimeSource} from "./TimeSource.es6";
 import {ControlSource} from "./ControlSource.es6";
 import {GeometrySource} from "./GeometrySource.es6";
 import {PaletteSource} from "./PaletteSource.es6";
 
 /** The complete CSS source catalogue: construction and scheduling policy in one place. */
 export const CSS_SOURCES = Object.freeze({
+	"flux-time": {source: TimeSource},
+	"flux-date": {source: TimeSource, properties: {"day-scalar": "--flux-day-scalar"}},
 	"flux-pointer": {source: GeometrySource, pointer: true, resize: true},
 	"flux-pointer-global": {source: GeometrySource, pointer: true},
 	"flux-size": {source: GeometrySource, resize: true},

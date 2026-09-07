@@ -1,3 +1,41 @@
+// src/CssProperties/Clock.es6
+var Clock = class {
+  constructor(windowObject = window) {
+    this.window = windowObject;
+    this.subscribers = /* @__PURE__ */ new Set();
+    this.timer = null;
+  }
+  now() {
+    return new this.window.Date();
+  }
+  subscribe(callback) {
+    this.subscribers.add(callback);
+    this.schedule();
+    return () => {
+      this.subscribers.delete(callback);
+      if (!this.subscribers.size) this.cancel();
+    };
+  }
+  schedule() {
+    if (this.timer !== null || !this.subscribers.size) return;
+    let delay = 1e3 - this.now().getMilliseconds();
+    this.timer = this.window.setTimeout(this.tick, delay);
+  }
+  tick = () => {
+    this.timer = null;
+    for (let callback of this.subscribers) callback();
+    this.schedule();
+  };
+  cancel() {
+    if (this.timer !== null) this.window.clearTimeout(this.timer);
+    this.timer = null;
+  }
+  dispose() {
+    this.cancel();
+    this.subscribers.clear();
+  }
+};
+
 // src/DirectiveParser.es6
 var DirectiveParser = class {
   static parse(value = "") {
@@ -48,6 +86,111 @@ var DirectiveParser = class {
   }
   static has(element, name) {
     return this.parse(element.dataset["flux"]).some((token) => !token.selector && token.names.includes(name));
+  }
+};
+
+// src/CssProperties/CalendarValues.es6
+var SECONDS_PER_DAY = 86400;
+var MILLISECONDS_PER_DAY = 864e5;
+function calendarValues(date) {
+  let year = date.getFullYear();
+  let monthIndex = date.getMonth();
+  let day = date.getDate();
+  let weekday = (date.getDay() + 6) % 7 + 1;
+  let dayScalar = (date.getHours() * 3600 + date.getMinutes() * 60 + date.getSeconds()) / SECONDS_PER_DAY;
+  let startOfYear = calendarDay(year, 0, 1);
+  let daysInYear = calendarDay(year + 1, 0, 1) - startOfYear;
+  let daysInMonth = calendarDay(year, monthIndex + 1, 1) - calendarDay(year, monthIndex, 1);
+  return {
+    year,
+    month: monthIndex + 1,
+    day,
+    weekday,
+    "year-scalar": (calendarDay(year, monthIndex, day) - startOfYear + dayScalar) / daysInYear,
+    "month-scalar": (day - 1 + dayScalar) / daysInMonth,
+    "week-scalar": (weekday - 1 + dayScalar) / 7,
+    "day-scalar": dayScalar
+  };
+}
+function calendarDay(year, month, day) {
+  let date = /* @__PURE__ */ new Date(0);
+  date.setUTCFullYear(year, month, day);
+  return date.getTime() / MILLISECONDS_PER_DAY;
+}
+function timeValues(date) {
+  let second = date.getSeconds();
+  let minute = date.getMinutes();
+  let hour = date.getHours() % 12;
+  let secondScalar = second / 60;
+  let minuteScalar = (minute + secondScalar) / 60;
+  return {
+    second,
+    minute,
+    hour,
+    "second-scalar": secondScalar,
+    "minute-scalar": minuteScalar,
+    "hour-scalar": (hour + minuteScalar) / 12
+  };
+}
+
+// src/CssProperties/TimeSource.es6
+var TimeSource = class {
+  constructor(binding) {
+    this.binding = binding;
+    this.unsubscribe = null;
+    this.locale = null;
+    this.formatters = null;
+    this.nameDate = null;
+    this.names = {};
+  }
+  refresh() {
+    let { runtime, name } = this.binding;
+    this.unsubscribe ??= runtime.clock.subscribe(this.binding.requestRefresh);
+    let date = runtime.clock.now();
+    let values = name === "flux-time" ? timeValues(date) : calendarValues(date);
+    for (let [suffix, value] of Object.entries(values)) this.binding.set(suffix, value);
+    if (name === "flux-date") this.writeNames(date);
+  }
+  writeNames(date) {
+    let { element, runtime } = this.binding;
+    let locale = element.closest("[lang]")?.getAttribute("lang") || runtime.window.navigator.language;
+    if (!this.formatters || this.locale !== locale) {
+      this.locale = locale;
+      this.formatters = this.createFormatters(locale);
+      this.nameDate = null;
+    }
+    let day = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+    if (this.nameDate !== day) {
+      this.nameDate = day;
+      for (let [suffix, formatter] of Object.entries(this.formatters)) {
+        this.names[suffix] = JSON.stringify(formatter.format(date));
+      }
+    }
+    for (let [suffix, value] of Object.entries(this.names)) this.binding.set(suffix, value);
+  }
+  createFormatters(locale) {
+    let options = {
+      "month-name": { month: "long" },
+      "month-name-short": { month: "short" },
+      "day-name": { weekday: "long" },
+      "day-name-short": { weekday: "short" }
+    };
+    let formatters = {};
+    for (let [name, fields] of Object.entries(options)) {
+      try {
+        formatters[name] = new Intl.DateTimeFormat(locale, { ...fields, calendar: "gregory" });
+      } catch {
+        formatters[name] = new Intl.DateTimeFormat(void 0, { ...fields, calendar: "gregory" });
+      }
+    }
+    return formatters;
+  }
+  stop() {
+    this.unsubscribe?.();
+    this.unsubscribe = null;
+  }
+  dispose() {
+    this.stop();
   }
 };
 
@@ -389,6 +532,8 @@ var PaletteSource = class _PaletteSource {
 
 // src/CssProperties/SourceRegistry.es6
 var CSS_SOURCES = Object.freeze({
+  "flux-time": { source: TimeSource },
+  "flux-date": { source: TimeSource, properties: { "day-scalar": "--flux-day-scalar" } },
   "flux-pointer": { source: GeometrySource, pointer: true, resize: true },
   "flux-pointer-global": { source: GeometrySource, pointer: true },
   "flux-size": { source: GeometrySource, resize: true },
@@ -730,7 +875,7 @@ var Binding = class {
       if (!Number.isFinite(value)) value = 0;
       value = Math.round(value * 1e4) / 1e4;
     }
-    let name = `--${this.name}${suffix ? "-" + suffix : ""}`;
+    let name = this.definition.properties?.[suffix] ?? `--${this.name}${suffix ? "-" + suffix : ""}`;
     this.values.set(name, value);
     this.runtime.writer.set(this, this.element, name, value);
     for (let destination of this.destinations.keys()) this.runtime.writer.set(this, destination, name, value);
@@ -780,6 +925,7 @@ var CssPropertyRuntime = class {
     this.logger = logger;
     this.scheduler = new FrameScheduler(this.window, logger);
     this.writer = new PropertyWriter(this.scheduler, logger);
+    this.clock = new Clock(this.window);
     this.bindings = /* @__PURE__ */ new Map();
     this.connections = new ConnectionResolver(documentObject, logger);
     this.history = /* @__PURE__ */ new WeakMap();
@@ -945,6 +1091,7 @@ var CssPropertyRuntime = class {
     this.intersections?.dispose();
     this.resizes?.dispose();
     this.writer.dispose();
+    this.clock.dispose();
     this.scheduler.dispose();
   }
 };
