@@ -27,6 +27,8 @@ describe("CSS runtime geometry and connections", () => {
 		expect(measure).toHaveBeenCalledOnce();
 		expect(property("div", "pointer-x")).toBe("0.5");
 		expect(property("div", "pointer-y")).toBe("0.25");
+		expect(property("div", "pointer-x-px")).toBe("100");
+		expect(property("div", "pointer-y-px")).toBe("25");
 		expect(property("div", "size-x")).toBe("200");
 		expect(frames.size).toBe(0);
 		intersect(intersections[0], element, false); await flush(); measure.mockClear();
@@ -50,6 +52,42 @@ describe("CSS runtime geometry and connections", () => {
 		await flush();
 		expect(property("div", "pointer-global-x")).toBe("0.5");
 		expect(property("div", "pointer-global-y")).toBe("0.25");
+		expect(property("div", "pointer-global-x-px")).toBe(String(window.innerWidth / 2));
+		expect(property("div", "pointer-global-y-px")).toBe(String(window.innerHeight / 4));
+	});
+	it("retains fractional pixels and remeasures local coordinates after scrolling", async () => {
+		let {flush} = start('<div data-flux="flux-pointer flux-pointer-global"></div>');
+		let measure = rectangle(document.querySelector("div"), {left: 20.25, top: 40.75, width: 200, height: 100});
+		window.dispatchEvent(new MouseEvent("pointermove", {clientX: 120, clientY: 65}));
+		await flush();
+		expect(property("div", "pointer-x-px")).toBe("99.75");
+		expect(property("div", "pointer-y-px")).toBe("24.25");
+		measure.mockReturnValue({left: 10.25, top: 30.75, width: 200, height: 100});
+		document.dispatchEvent(new Event("scroll"));
+		await flush();
+		expect(property("div", "pointer-x-px")).toBe("109.75");
+		expect(property("div", "pointer-y-px")).toBe("34.25");
+		expect(property("div", "pointer-global-x-px")).toBe("120");
+		expect(property("div", "pointer-global-y-px")).toBe("65");
+	});
+	it("clamps pixel coordinates to the local and viewport edges, including empty boxes", async () => {
+		let {flush} = start('<div data-flux="flux-pointer flux-pointer-global"></div>');
+		let measure = rectangle(document.querySelector("div"));
+		await flush();
+		expect(property("div", "pointer-x-px")).toBe("0");
+		expect(property("div", "pointer-global-y-px")).toBe("0");
+		window.dispatchEvent(new MouseEvent("pointermove", {clientX: -10, clientY: window.innerHeight + 100}));
+		await flush();
+		expect(property("div", "pointer-x-px")).toBe("0");
+		expect(property("div", "pointer-y-px")).toBe("100");
+		expect(property("div", "pointer-global-x-px")).toBe("0");
+		expect(property("div", "pointer-global-y-px")).toBe(String(window.innerHeight));
+		measure.mockReturnValue({left: 0, top: 0, width: 0, height: 0});
+		window.dispatchEvent(new Event("resize"));
+		await flush();
+		expect(property("div", "pointer-x-px")).toBe("0");
+		expect(property("div", "pointer-y-px")).toBe("0");
+		expect(property("div", "pointer-y")).toBe("0");
 	});
 	it("keeps an off-screen source active for a visible remote destination", async () => {
 		let {flush, intersections} = start('<div data-flux="(flux-pointer@footer > :is(.preview,.summary))"></div><footer><output class="preview"></output><output class="summary"></output></footer>', {observers: true});
@@ -60,6 +98,8 @@ describe("CSS runtime geometry and connections", () => {
 		expect(property("div", "pointer-x")).toBe("0.5");
 		expect(property(".preview", "pointer-x")).toBe("0.5");
 		expect(property(".summary", "pointer-x")).toBe("0.5");
+		expect(property(".preview", "pointer-x-px")).toBe("100");
+		expect(property(".summary", "pointer-y-px")).toBe("50");
 	});
 	it("reconnects after destination replacement and restores author properties on removal", async () => {
 		let {flush} = start('<input type="range" value="40" data-flux="(flux-range@footer)"><footer style="--flux-range: .7"></footer>');

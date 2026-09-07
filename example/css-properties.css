@@ -52,3 +52,12 @@
 @media (prefers-reduced-motion: reduce) { .visibility-panel { transition: none; } }
 
 input[type="color"] { width: 5rem; height: 3rem; padding: 0.2rem; }
+
+.pointer-readout::after {
+	counter-reset: x calc(var(--flux-pointer-x-px, 0)) y calc(var(--flux-pointer-y-px, 0));
+	content: counter(x) "px, " counter(y) "px";
+}
+.viewport-pointer-readout::after {
+	counter-reset: x calc(var(--flux-pointer-global-x-px, 0)) y calc(var(--flux-pointer-global-y-px, 0));
+	content: counter(x) "px, " counter(y) "px";
+}

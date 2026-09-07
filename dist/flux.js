@@ -337,20 +337,25 @@ var GeometrySource = class {
       return;
     }
     if (name === "flux-pointer-global") {
-      this.binding.set("x", scalar(runtime.pointer.x / Math.max(1, runtime.window.innerWidth)));
-      this.binding.set("y", scalar(runtime.pointer.y / Math.max(1, runtime.window.innerHeight)));
+      this.setPointerAxis("x", runtime.pointer.x, runtime.window.innerWidth);
+      this.setPointerAxis("y", runtime.pointer.y, runtime.window.innerHeight);
       return;
     }
     let rectangle = element.getBoundingClientRect();
     if (name === "flux-pointer") {
-      this.binding.set("x", rectangle.width ? scalar((runtime.pointer.x - rectangle.left) / rectangle.width) : 0);
-      this.binding.set("y", rectangle.height ? scalar((runtime.pointer.y - rectangle.top) / rectangle.height) : 0);
+      this.setPointerAxis("x", runtime.pointer.x - rectangle.left, rectangle.width);
+      this.setPointerAxis("y", runtime.pointer.y - rectangle.top, rectangle.height);
     } else {
       let box = this.binding.resizeEntry?.borderBoxSize?.[0];
       let vertical = box && runtime.window.getComputedStyle(element).writingMode.startsWith("vertical");
       this.binding.set("x", box ? vertical ? box.blockSize : box.inlineSize : rectangle.width);
       this.binding.set("y", box ? vertical ? box.inlineSize : box.blockSize : rectangle.height);
     }
+  }
+  setPointerAxis(axis, position, size) {
+    let pixels = Math.max(0, Math.min(position, size));
+    this.binding.set(axis, size > 0 ? scalar(pixels / size) : 0);
+    this.binding.set(`${axis}-px`, pixels);
   }
   dispose() {
   }

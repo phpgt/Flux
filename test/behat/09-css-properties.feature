@@ -51,6 +51,31 @@ Feature: CSS properties from native browser state
       Number(getComputedStyle(document.body).getPropertyValue('--flux-pointer-global-x')) > 0
       """
 
+  Scenario: Local and viewport pixel coordinates feed generated text
+    Given I am on "/example/09-css-geometry.php"
+    Then Flux should be ready
+    When I run this CSS example interaction:
+      """
+      const pad = document.querySelector('#pointer-pad');
+      pad.scrollIntoView({block: 'center'});
+      const rect = pad.getBoundingClientRect();
+      window.pointerReadoutPosition = {x: rect.left + 50.25, y: rect.top + 60.75};
+      window.dispatchEvent(new PointerEvent('pointermove', {clientX: pointerReadoutPosition.x, clientY: pointerReadoutPosition.y}));
+      """
+    Then the CSS property "--flux-pointer-x-px" on "#pointer-pad" should become "50.25"
+    And the CSS property "--flux-pointer-y-px" on "#pointer-preview" should become "60.75"
+    And the CSS example should satisfy:
+      """
+      (() => {
+        const local = getComputedStyle(document.querySelector('.pointer-readout'), '::after');
+        const viewport = getComputedStyle(document.querySelector('.viewport-pointer-readout'), '::after');
+        return local.counterReset === 'x 50 y 61'
+          && viewport.counterReset === `x ${Math.round(pointerReadoutPosition.x)} y ${Math.round(pointerReadoutPosition.y)}`
+          && local.content === 'counter(x) "px, " counter(y) "px"'
+          && viewport.content === local.content;
+      })()
+      """
+
   Scenario: Size and truncation follow actual layout changes
     Given I am on "/example/09-css-geometry.php"
     Then Flux should be ready

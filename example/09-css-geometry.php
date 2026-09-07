@@ -18,8 +18,10 @@
 		<div id="pointer-pad" class="pointer-pad" data-flux="flux-pointer (flux-pointer@#pointer-preview)">
 			<span class="pointer-marker" aria-hidden="true"></span>
 			<p>Move the pointer here. The smaller pad receives the same local coordinates through a connection.</p>
+			<p class="pointer-readout">Local position: </p>
 		</div>
 		<div id="pointer-preview" class="pointer-pad pointer-preview" aria-label="Connected pointer preview"><span class="pointer-marker" aria-hidden="true"></span></div>
+		<p class="viewport-pointer-readout">Viewport position: </p>
 		<p>The line below follows the horizontal pointer position within the browser viewport.</p>
 		<div class="meter" aria-hidden="true"><span class="viewport-progress"></span></div>
 	</section>
