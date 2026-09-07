@@ -46,7 +46,7 @@ Feature: The Flux website
       [...document.querySelectorAll('.level-current span')].filter(e => getComputedStyle(e).opacity === '1').map(e => e.textContent).join() === 'HIGH'
       """
 
-  Scenario: Tasks persist and shopping items can be dragged
+  Scenario: New tasks persist after reloading
     Given I am on "/"
     Then Flux should be ready
     When I fill the element "#todo-list input[name='item']" with "Review the Flux website"
@@ -61,15 +61,21 @@ Feature: The Flux website
     When I reload the page
     Then Flux should be ready
     And I should see "Review the Flux website"
+
+  Scenario: To-do items can be dragged and their order persists
+    Given I have a fresh browser session
+    And I am on "/"
+    Then Flux should be ready
+    And the items in "#todo-list ul" should be ordered "plan,try,share"
     When I run this CSS example interaction:
       """
-      document.querySelector('#shopping-list').scrollIntoView({block: 'center'});
+      document.querySelector('#todo-list').scrollIntoView({block: 'center'});
       """
-    And I drag the item with id "bread" to position "3" in "#shopping-list ul"
-    Then the items in "#shopping-list ul" should be ordered "apples,coffee,bread,oats"
+    And I drag the item with id "plan" to position "3" in "#todo-list ul"
+    Then the items in "#todo-list ul" should be ordered "try,share,plan"
     When I reload the page
     Then Flux should be ready
-    And the items in "#shopping-list ul" should be ordered "apples,coffee,bread,oats"
+    And the items in "#todo-list ul" should be ordered "try,share,plan"
 
   Scenario: Search previews the marked server response and submits normally
     Given I am on "/"

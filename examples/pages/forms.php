@@ -1,1 +1,1 @@
-<?php foreach(['todo', 'shopping', 'board', 'counters', 'autosave', 'search'] as $example) demo($example); ?>
+<?php foreach(['todo', 'board', 'counters', 'autosave', 'search'] as $example) demo($example); ?>

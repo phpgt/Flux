@@ -8,7 +8,7 @@
 		'data-flux-drag-parent; data-flux-drag-handle' => ['forms', 'board-demo', 'Move cards between lists'],
 		'modal' => ['search', 'search-results-demo', 'Server-rendered city selection'],
 		'autosave' => ['forms', 'autosave-demo', 'A note saved on change'],
-		'drag-order' => ['forms', 'shopping-demo', 'Shopping order, with keyboard controls'],
+		'drag-order' => ['forms', 'todo-demo', 'To-do list ordering'],
 		'link; empty data-flux on links' => ['navigation', 'navigation-demo', 'Chapter navigation and browser history'],
 		'update-link; update-link-inner' => ['navigation', 'navigation-demo', 'Link-only replacement targets'],
 		'update; update-outer; update-inner; update-attributes' => ['navigation', 'updates-demo', 'Three scopes of server updates'],
