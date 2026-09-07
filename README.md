@@ -2,9 +2,9 @@
 
 Flux is a minimalist JavaScript library that's shipped by default with [WebEngine]. 
 
-Its purpose is to give server-rendered applications a _fluid user experience_: instead of every link click and form submission causing a harsh full-page refresh, navigation and updates feel continuous, more like an SPA where the user never really leaves the page.
+Flux gives server-rendered applications a _fluid user experience_ by handling navigation and form submissions in the background, preforming background updates to content within the page, and enriching CSS variables with live information from JavaScript.
 
-The difference is that your application still uses the same straightforward server-rendered code, so it stays readable and predictable, while Flux adds the client-side layer for smooth updates without requiring you to write any JavaScript yourself.
+All of Flux's functionality is done by adding `data-flux` attributes to the page, rather than writing JavaScript. 
 
 [Read the documentation](https://www.php.gt/flux/).
 
@@ -42,7 +42,7 @@ Useful overrides:
 - `BEHAT_APP_PORT=8080 composer behat`
 - `BEHAT_CHROME_PORT=9333 composer behat`
 
-To use Flux, convert a "regular" HTML form into a _flux form_ by adding the `data-flux` attribute:
+To enable Flux on an HTML form, add the `data-flux` attribute:
 
 ```html
 <form method="post" data-flux>
@@ -58,7 +58,7 @@ To use Flux, convert a "regular" HTML form into a _flux form_ by adding the `dat
 </form>
 ```
 
-When the above form submits, because it has been marked with the `data-flux` attribute, the default submit behaviour will be suppressed, and a [background fetch][fetch] will be emitted instead, submitting the POST data in the background. When the fetch completes, the default behaviour is to replace the form with the form's counterpart on the new HTML document (after submitting the page), but other behaviours can be configured.
+When this form submits, Flux sends its POST data using a [background fetch][fetch]. By default, Flux then replaces the form with its counterpart in the returned HTML document. Other update behaviours can be configured.
 
 Flux also supports polling-based live regions:
 
@@ -91,18 +91,18 @@ Use `data-flux-drag-handle` on the draggable item or its parent container to cha
 
 Drag ordering can be nested: the board can sort list containers, and each list can sort its own cards. Flux uses horizontal ordering when sortable siblings are laid out side by side and vertical ordering for normal lists.
 
-## Limitations compared to other libraries
+## Design and scope
 
-Flux is designed as a **progressive enhancement** tool that encourages plain HTTP techniques. Your web applications should function fully even without any JavaScript or CSS, ensuring simplicity and accessibility. This approach simplifies development by focusing on straightforward, reliable techniques, making the entire development experience more manageable.
+Flux is designed for **progressive enhancement**: server-rendered HTML, links, and forms provide the application's core functionality, and Flux adds background requests and page updates. Build the core interactions to work independently of JavaScript and CSS so they remain available when those enhancements are unavailable.
 
-This design decision leads to several limitations compared to other libraries:
+The following conventions and boundaries define how Flux works:
 
-- GET and POST are the only methods available to you as a web developer. This library doesn't change that.
-- Flux is only triggered by actions like clicking a link or submitting a form. While forms can update in the background and elements can refresh automatically, all Flux actions are powered by server-side responses tied to links or buttons, which can be hidden by Flux for better usability.
-- Fetched page responses are expected to be full-page responses by default. Partial page renders are not the norm and go against the principles of plain HTTP usage.
-- State management is not included, as HTTP is a stateless protocol. Any state must be managed on the server side, similar to how it would be handled without client-side code.
-- Client-side routing is not supported. Features like dynamic routes, code-splitting, or navigation guards must be handled entirely on the server.
-- WebSocket and Server-Sent Events are not supported. Live updates with `data-flux="live"` rely on regular GET requests with polling.
+- Flux uses GET and POST for link navigation and form submissions.
+- Page updates use HTML responses from the server. Links and forms trigger requests through user interaction, and live regions refresh automatically through polling.
+- Fetched responses are expected to contain full HTML pages by default. Flux selects the relevant content from each response to update the current page.
+- Application state is managed on the server. Flux does not provide a client-side state management system.
+- Routing is handled by the server. Flux does not provide client-side routing.
+- Live updates with `data-flux="live"` use regular GET requests with polling. WebSocket and Server-Sent Events are outside Flux's scope.
 
 [WebEngine]: https://www.php.gt/webengine/
 [fetch]: https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API
