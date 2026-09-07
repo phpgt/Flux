@@ -1,4 +1,11 @@
+import {DirectiveParser} from "./DirectiveParser.es6";
+import {CSS_SOURCES} from "./CssProperties/SourceRegistry.es6";
+
 const DIRECTIVE_DEFINITIONS = Object.freeze({
+	...Object.fromEntries(Object.keys(CSS_SOURCES).map(name => [name, {
+		handler: "cssProperties", description: `Expose ${name} CSS properties.`,
+	}])),
+	"auto": {handler: "autoContainer", description: "Enable automatic Flux interactions."},
 	"": {
 		handler: "autoContainer",
 		description: "Initialise a container element for automatic Flux interactions.",
@@ -78,24 +85,29 @@ export class DirectiveRegistry {
 	}
 
 	initElement(fluxElement) {
-		let fluxType = fluxElement.dataset["flux"];
-		if(fluxType === "") {
-			if(fluxElement instanceof HTMLButtonElement) {
-				fluxType = "submit";
+		let declarations = DirectiveParser.parse(fluxElement.dataset["flux"]);
+		if(!declarations.length) declarations = [{names: [""], selector: null}];
+		let invoked = new Set();
+		let errors = [];
+		for(let declaration of declarations) {
+			for(let name of declaration.names) {
+				try {
+					if(declaration.selector && !Object.hasOwn(CSS_SOURCES, name)) {
+						throw new TypeError(`Only CSS sources can be connected: ${name}`);
+					}
+					if((name === "" || name === "auto") && fluxElement instanceof HTMLButtonElement) name = "submit";
+					let definition = Object.hasOwn(DirectiveRegistry.DEFINITIONS, name) ? DirectiveRegistry.DEFINITIONS[name] : null;
+					if(!definition) throw new TypeError(`Unknown flux element type: ${name}`);
+					if(invoked.has(definition.handler)) continue;
+					let handler = this.handlers[definition.handler];
+					if(typeof handler !== "function") throw new TypeError(`Missing Flux directive handler: ${definition.handler}`);
+					handler(fluxElement);
+					invoked.add(definition.handler);
+				}
+				catch(error) { errors.push(error); }
 			}
 		}
-
-		let definition = DirectiveRegistry.DEFINITIONS[fluxType];
-		if(!definition) {
-			throw new TypeError(`Unknown flux element type: ${fluxType}`);
-		}
-
-		let handler = this.handlers[definition.handler];
-		if(typeof handler !== "function") {
-			throw new TypeError(`Missing Flux directive handler: ${definition.handler}`);
-		}
-
-		handler(fluxElement);
+		if(errors.length) throw errors[0];
 	}
 
 	getDefinitions() {

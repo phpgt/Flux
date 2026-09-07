@@ -1,3 +1,4 @@
+import {CssPropertyRuntime} from "./CssProperties/Runtime.es6";
 import {Style} from "./Style.es6";
 import {ElementEventMapper} from "./ElementEventMapper.es6";
 import {DomPath} from "./DomPath.es6";
@@ -127,6 +128,10 @@ export class Flux {
 			this.navigationController,
 			this.logger,
 			Flux.DEBUG,
+			undefined,
+			undefined,
+			undefined,
+			this.initCssPropertiesInTree,
 		);
 		this.dragOrderHandler = dragOrderHandler ?? new DragOrderHandler(
 			this.formHandler,
@@ -136,6 +141,7 @@ export class Flux {
 		);
 		this.directiveRegistry = directiveRegistry ?? new DirectiveRegistry({
 			autoContainer: this.initAutoContainer,
+			cssProperties: this.initCssProperties,
 			autoSave: this.formHandler.initAutoSave,
 			updateOuter: this.storeOuterUpdateElement,
 			updateInner: this.storeInnerUpdateElement,
@@ -152,6 +158,7 @@ export class Flux {
 		});
 
 		document.querySelectorAll("[data-flux]").forEach(this.initFluxElementSafely);
+		if(!this.cssPropertyRuntime) document.addEventListener("flux:after-render", this.initRenderedCssProperties);
 	}
 
 	/**
@@ -172,6 +179,24 @@ export class Flux {
 				error,
 			);
 		}
+	}
+
+	initRenderedCssProperties = event => {
+		if(this.cssPropertyRuntime) return;
+		for(let update of event.detail.updates) this.initCssPropertiesInTree(update.element);
+	}
+
+	initCssPropertiesInTree = element => {
+		if(this.cssPropertyRuntime || !element) return;
+		let selector = '[data-flux*="flux-"]';
+		if(element.matches(selector) || element.querySelector(selector)) this.initCssProperties();
+	}
+
+	initCssProperties = () => {
+		if(this.cssPropertyRuntime) return;
+		document.removeEventListener("flux:after-render", this.initRenderedCssProperties);
+		this.cssPropertyRuntime = new CssPropertyRuntime(document, this.logger);
+		queueMicrotask(() => this.cssPropertyRuntime.synchronise());
 	}
 
 	initAutoContainer = (fluxElement) => {

@@ -1,3 +1,954 @@
+// src/DirectiveParser.es6
+var DirectiveParser = class {
+  static parse(value = "") {
+    let tokens = [];
+    let start = 0;
+    let depth = 0;
+    let quote = null;
+    let escaped = false;
+    for (let index = 0; index < value.length; index++) {
+      let character = value[index];
+      if (escaped) {
+        escaped = false;
+        continue;
+      }
+      if (character === "\\") {
+        escaped = true;
+        continue;
+      }
+      if (quote) {
+        if (character === quote) quote = null;
+        continue;
+      }
+      if (character === '"' || character === "'") {
+        quote = character;
+        continue;
+      }
+      if (character === "(") depth++;
+      if (character === ")" && --depth < 0) throw new SyntaxError("Unexpected closing Flux connection bracket.");
+      if (/\s/.test(character) && depth === 0) {
+        if (index > start) tokens.push(value.slice(start, index));
+        start = index + 1;
+      }
+    }
+    if (depth || quote || escaped) throw new SyntaxError("Unclosed Flux connection or quoted selector.");
+    if (start < value.length) tokens.push(value.slice(start));
+    return [...new Set(tokens)].map((token) => this.parseToken(token));
+  }
+  static parseToken(token) {
+    if (!token.startsWith("(")) return { names: [token], selector: null };
+    let separator = token.indexOf("@");
+    if (separator < 2 || !token.endsWith(")")) throw new SyntaxError(`Invalid Flux connection: ${token}`);
+    let names = [...new Set(token.slice(1, separator).split(",").map((name) => name.trim()))];
+    let selector = token.slice(separator + 1, -1).trim();
+    if (!selector || names.some((name) => !/^flux-[a-z-]+$/.test(name))) {
+      throw new SyntaxError(`Invalid Flux connection: ${token}`);
+    }
+    return { names, selector };
+  }
+  static has(element, name) {
+    return this.parse(element.dataset["flux"]).some((token) => !token.selector && token.names.includes(name));
+  }
+};
+
+// src/CssProperties/ControlSource.es6
+var SELECTORS = {
+  "flux-range": 'input[type="range"]',
+  "flux-select": "select",
+  "flux-color": 'input[type="color"]',
+  "flux-field": "input, textarea",
+  "flux-form": "form"
+};
+function findControl(element, name) {
+  let selector = SELECTORS[name];
+  return element.matches(selector) ? element : element.querySelector(selector);
+}
+function scalar(value) {
+  return Math.max(0, Math.min(1, value));
+}
+var ControlSource = class {
+  constructor(binding) {
+    this.binding = binding;
+    this.resolveControl();
+  }
+  resolveControl() {
+    let { element, name, state, runtime } = this.binding;
+    this.control = findControl(element, name);
+    if (this.control && name === "flux-field" && state.initial === void 0) {
+      state.initial = this.valueOf(this.control);
+      state.touched = this.control === runtime.document.activeElement;
+    }
+  }
+  refresh() {
+    this.resolveControl();
+    let { name } = this.binding;
+    let control = this.control;
+    if (!control) {
+      this.binding.clear();
+      return;
+    }
+    switch (name) {
+      case "flux-range":
+        this.range(control);
+        break;
+      case "flux-select":
+        this.select(control);
+        break;
+      case "flux-color":
+        this.binding.set("", control.value);
+        break;
+      case "flux-field":
+        this.field(control);
+        break;
+      case "flux-form":
+        this.form(control);
+        break;
+    }
+  }
+  range(control) {
+    let minimum = control.min === "" ? 0 : Number(control.min);
+    let maximum = control.max === "" ? 100 : Number(control.max);
+    this.binding.set("", maximum > minimum ? scalar((control.valueAsNumber - minimum) / (maximum - minimum)) : 0);
+  }
+  select(control) {
+    let value = control.value.trim();
+    this.binding.set("", value && Number.isFinite(Number(value)) ? Number(value) : null);
+  }
+  field(control) {
+    let { state } = this.binding;
+    let length = control.value.length;
+    let maximum = control.maxLength;
+    let valid = control.validity.valid;
+    this.binding.set("length", length);
+    this.binding.set("empty", Number(length === 0));
+    this.binding.set("valid", Number(valid));
+    this.binding.set("invalid", Number(!valid));
+    this.binding.set("remaining", maximum >= 0 ? Math.max(0, maximum - length) : null);
+    this.binding.set("filled-scalar", maximum >= 0 ? maximum ? scalar(length / maximum) : 0 : null);
+    this.binding.set("too-short", Number(control.validity.tooShort));
+    this.binding.set("pattern-error", Number(control.validity.patternMismatch));
+    this.pair("dirty", "clean", state.dirty);
+    this.pair("touched", "untouched", state.touched);
+    this.pair("changed", "unchanged", this.valueOf(control) !== state.initial);
+  }
+  pair(positive, negative, value) {
+    this.binding.set(positive, Number(Boolean(value)));
+    this.binding.set(negative, Number(!value));
+  }
+  form(control) {
+    let fields = [...control.elements].filter((field) => field.matches("input, select, textarea") && field.willValidate);
+    let valid = fields.filter((field) => field.validity.valid).length;
+    this.binding.set("field-count", fields.length);
+    this.binding.set("valid-count", valid);
+    this.binding.set("invalid-count", fields.length - valid);
+    this.binding.set("all-valid", Number(valid === fields.length));
+    this.binding.set("valid-scalar", fields.length ? valid / fields.length : 1);
+  }
+  valueOf(control) {
+    if (control.matches('input[type="checkbox"], input[type="radio"]')) return control.checked;
+    return control.value;
+  }
+  onEvent(event) {
+    let control = this.control;
+    if (!control) return;
+    if (event.type === "reset" && (control.form === event.target || control === event.target)) {
+      if (!event.defaultPrevented) {
+        this.binding.state.dirty = false;
+        this.binding.state.touched = false;
+      }
+      this.binding.requestRefresh();
+      return;
+    }
+    let radioPeer = control.matches('input[type="radio"]') && event.target.matches?.('input[type="radio"]') && control.name !== "" && control.name === event.target.name && control.form === event.target.form;
+    if (event.target !== control && event.target.form !== control && !radioPeer) return;
+    if (this.binding.name === "flux-field") {
+      if ((event.type === "input" || event.type === "change") && this.valueOf(control) !== this.binding.state.initial) this.binding.state.dirty = true;
+      if (event.type === "focusin" && event.target === control) this.binding.state.touched = true;
+    }
+    this.binding.requestRefresh();
+  }
+  dispose() {
+  }
+};
+
+// src/CssProperties/GeometrySource.es6
+var GeometrySource = class {
+  constructor(binding) {
+    this.binding = binding;
+  }
+  refresh() {
+    let { name, element, runtime } = this.binding;
+    if (name === "flux-visible" || name === "flux-first-visible") {
+      let visible = this.binding.visible;
+      if (visible) this.binding.state.entered = true;
+      this.binding.set("", Number(name === "flux-visible" ? visible : Boolean(this.binding.state.entered)));
+      return;
+    }
+    if (name === "flux-truncated") {
+      let style = runtime.window.getComputedStyle(element);
+      let x = style.overflowX !== "visible" && element.scrollWidth > element.clientWidth;
+      let y = style.overflowY !== "visible" && element.scrollHeight > element.clientHeight;
+      this.binding.set("", Number(x || y));
+      this.binding.set("x", Number(x));
+      this.binding.set("y", Number(y));
+      return;
+    }
+    if (name === "flux-pointer-global") {
+      this.binding.set("x", scalar(runtime.pointer.x / Math.max(1, runtime.window.innerWidth)));
+      this.binding.set("y", scalar(runtime.pointer.y / Math.max(1, runtime.window.innerHeight)));
+      return;
+    }
+    let rectangle = element.getBoundingClientRect();
+    if (name === "flux-pointer") {
+      this.binding.set("x", rectangle.width ? scalar((runtime.pointer.x - rectangle.left) / rectangle.width) : 0);
+      this.binding.set("y", rectangle.height ? scalar((runtime.pointer.y - rectangle.top) / rectangle.height) : 0);
+    } else {
+      let box = this.binding.resizeEntry?.borderBoxSize?.[0];
+      let vertical = box && runtime.window.getComputedStyle(element).writingMode.startsWith("vertical");
+      this.binding.set("x", box ? vertical ? box.blockSize : box.inlineSize : rectangle.width);
+      this.binding.set("y", box ? vertical ? box.inlineSize : box.blockSize : rectangle.height);
+    }
+  }
+  dispose() {
+  }
+};
+
+// src/CssProperties/Palette.es6
+function hex(channels) {
+  return "#" + channels.map((channel) => Math.round(channel).toString(16).padStart(2, "0")).join("");
+}
+function brightness([red, green, blue]) {
+  return (red * 0.2126 + green * 0.7152 + blue * 0.0722) / 255;
+}
+function extractPalette(pixels) {
+  let buckets = /* @__PURE__ */ new Map();
+  let total = [0, 0, 0];
+  let count = 0;
+  for (let offset = 0; offset < pixels.length; offset += 4) {
+    if (pixels[offset + 3] < 128) continue;
+    let colour = [...pixels.slice(offset, offset + 3)];
+    let key = colour.map((channel) => Math.floor(channel / 16)).join(",");
+    let bucket = buckets.get(key) ?? { count: 0, sum: [0, 0, 0] };
+    bucket.count++;
+    for (let channel = 0; channel < 3; channel++) {
+      bucket.sum[channel] += colour[channel];
+      total[channel] += colour[channel];
+    }
+    buckets.set(key, bucket);
+    count++;
+  }
+  if (!count) return null;
+  let colours = [...buckets.values()].map((bucket) => ({
+    count: bucket.count,
+    channels: bucket.sum.map((channel) => channel / bucket.count)
+  }));
+  let dominant = colours.reduce((best, colour) => colour.count > best.count ? colour : best);
+  let darkest = null;
+  let lightest = null;
+  let accent = dominant;
+  let greatestChroma = 0;
+  for (let colour of colours) {
+    let light = brightness(colour.channels);
+    let chroma = Math.max(...colour.channels) - Math.min(...colour.channels);
+    if (chroma > greatestChroma) {
+      greatestChroma = chroma;
+      accent = colour;
+    }
+    if (light > 0.04 && (!darkest || light < brightness(darkest.channels))) darkest = colour;
+    if (light < 0.96 && (!lightest || light > brightness(lightest.channels))) lightest = colour;
+  }
+  let average = total.map((channel) => channel / count);
+  return {
+    "": hex(dominant.channels),
+    accent: hex(accent.channels),
+    dark: hex((darkest ?? dominant).channels),
+    light: hex((lightest ?? dominant).channels),
+    average: hex(average),
+    temp: (average[0] - average[2]) / 255
+  };
+}
+
+// src/CssProperties/PaletteSource.es6
+var PaletteSource = class _PaletteSource {
+  static SAMPLE_SIZE = 16;
+  static VIDEO_INTERVAL = 250;
+  constructor(binding) {
+    this.binding = binding;
+    this.media = null;
+    this.context = null;
+    this.frame = null;
+    this.lastSample = -Infinity;
+    this.sampledSource = null;
+    this.failedSource = null;
+    this.generation = 0;
+    this.pending = false;
+  }
+  refresh() {
+    let element = this.binding.element;
+    let media = element.matches("img, video") ? element : element.querySelector("img, video");
+    if (media !== this.media) {
+      this.stop();
+      this.media = media;
+      this.sampledSource = null;
+      this.failedSource = null;
+      this.context = null;
+      this.binding.clear();
+    }
+    if (!media || !this.binding.active) {
+      this.stop();
+      return;
+    }
+    let source = media.currentSrc || media.src;
+    if (this.failedSource === source) return;
+    if (media.tagName === "IMG") {
+      if (!media.complete || !media.naturalWidth || this.sampledSource === source || this.pending) return;
+      this.sampleImage(source);
+      return;
+    }
+    let now = this.binding.runtime.window.performance.now();
+    if (media.readyState >= 2 && now - this.lastSample >= _PaletteSource.VIDEO_INTERVAL) {
+      this.sample(media, source);
+      this.lastSample = now;
+    }
+    if (!media.paused && this.frame === null && media.requestVideoFrameCallback) {
+      this.frame = media.requestVideoFrameCallback(() => {
+        this.frame = null;
+        this.binding.requestRefresh();
+      });
+    }
+  }
+  async sampleImage(source) {
+    let generation = this.generation;
+    let media = this.media;
+    this.pending = true;
+    let bitmap;
+    try {
+      let createBitmap = this.binding.runtime.window.createImageBitmap;
+      if (createBitmap) {
+        try {
+          bitmap = await createBitmap(media, { resizeWidth: 16, resizeHeight: 16 });
+        } catch {
+        }
+      }
+      if (generation !== this.generation || (media.currentSrc || media.src) !== source) return;
+      this.sample(bitmap ?? media, source);
+      this.sampledSource = source;
+    } finally {
+      bitmap?.close();
+      if (generation === this.generation) {
+        this.pending = false;
+        if ((media.currentSrc || media.src) !== source) this.binding.requestRefresh();
+      }
+    }
+  }
+  sample(media, source) {
+    try {
+      if (!this.context) {
+        let canvas = this.binding.runtime.document.createElement("canvas");
+        canvas.width = canvas.height = _PaletteSource.SAMPLE_SIZE;
+        this.context = canvas.getContext("2d", { willReadFrequently: true });
+      }
+      if (!this.context) {
+        this.failedSource = source;
+        return;
+      }
+      this.context.drawImage(media, 0, 0, 16, 16);
+      let palette = extractPalette(this.context.getImageData(0, 0, 16, 16).data);
+      if (palette) {
+        for (let [name, value] of Object.entries(palette)) this.binding.set(name, value);
+      } else this.binding.clear();
+    } catch {
+      this.failedSource = source;
+      this.context = null;
+      this.binding.clear();
+    }
+  }
+  onEvent(event) {
+    if (event.target !== this.media) return;
+    if (event.type === "seeked" || event.type === "loadeddata") this.lastSample = -Infinity;
+    if (event.type === "load") {
+      this.sampledSource = null;
+      this.failedSource = null;
+    }
+    if (event.type === "error" || event.type === "emptied") {
+      this.sampledSource = null;
+      this.binding.clear();
+    }
+    this.binding.requestRefresh();
+  }
+  stop() {
+    if (this.frame !== null) this.media?.cancelVideoFrameCallback?.(this.frame);
+    this.frame = null;
+    this.generation++;
+    this.pending = false;
+  }
+  dispose() {
+    this.stop();
+  }
+};
+
+// src/CssProperties/SourceRegistry.es6
+var CSS_SOURCES = Object.freeze({
+  "flux-pointer": { source: GeometrySource, pointer: true, resize: true },
+  "flux-pointer-global": { source: GeometrySource, pointer: true },
+  "flux-size": { source: GeometrySource, resize: true },
+  "flux-visible": { source: GeometrySource, always: true },
+  "flux-first-visible": { source: GeometrySource, always: true },
+  "flux-range": { source: ControlSource, always: true },
+  "flux-select": { source: ControlSource, always: true },
+  "flux-color": { source: ControlSource, always: true },
+  "flux-field": { source: ControlSource, always: true },
+  "flux-form": { source: ControlSource, always: true },
+  "flux-palette": { source: PaletteSource },
+  "flux-truncated": { source: GeometrySource, resize: true }
+});
+
+// src/CssProperties/ConnectionResolver.es6
+var ConnectionResolver = class {
+  constructor(documentObject, logger) {
+    this.document = documentObject;
+    this.logger = logger;
+    this.declarations = /* @__PURE__ */ new WeakMap();
+    this.selectors = /* @__PURE__ */ new Map();
+  }
+  begin() {
+    this.selectors.clear();
+  }
+  resolve(element) {
+    let value = element.dataset["flux"];
+    let cached = this.declarations.get(element);
+    if (!cached || cached.value !== value) {
+      cached = { value, tokens: DirectiveParser.parse(value) };
+      this.declarations.set(element, cached);
+    }
+    let sources = /* @__PURE__ */ new Map();
+    for (let { names, selector } of cached.tokens) {
+      let destinations = selector ? this.find(selector) : [];
+      for (let name of names) {
+        if (!Object.hasOwn(CSS_SOURCES, name)) continue;
+        if (!sources.has(name)) sources.set(name, /* @__PURE__ */ new Set());
+        for (let destination of destinations) sources.get(name).add(destination);
+      }
+    }
+    return sources;
+  }
+  find(selector) {
+    if (this.selectors.has(selector)) return this.selectors.get(selector);
+    let elements = [];
+    try {
+      elements = this.document.querySelectorAll(selector);
+    } catch (error) {
+      this.logger.error(`Invalid Flux connection selector: ${selector}`, error);
+    }
+    this.selectors.set(selector, elements);
+    return elements;
+  }
+};
+
+// src/DomPath.es6
+var DomPath = class {
+  static getXPathForElement(element, context) {
+    if (!element) {
+      return null;
+    }
+    let xpath = "";
+    if (context instanceof Document) {
+      context = context.documentElement;
+    }
+    if (!context) {
+      context = element.ownerDocument?.documentElement;
+    }
+    if (!context) {
+      return null;
+    }
+    while (element && element !== context) {
+      let pos = 0;
+      let sibling = element;
+      while (sibling) {
+        if (sibling.nodeName === element.nodeName) {
+          pos += 1;
+        }
+        sibling = sibling.previousElementSibling;
+      }
+      xpath = `./${element.nodeName}[${pos}]/${xpath}`;
+      element = element.parentElement;
+    }
+    if (element !== context) {
+      return null;
+    }
+    return xpath.replace(/\/$/, "");
+  }
+  static findInDocument(document2, path) {
+    return this.find(document2, document2.documentElement, path);
+  }
+  static findInContext(context, path) {
+    if (!path) {
+      return null;
+    }
+    return this.find(context.ownerDocument, context, path);
+  }
+  static find(document2, context, path) {
+    if (!path) {
+      return null;
+    }
+    return document2.evaluate(
+      path,
+      context,
+      null,
+      XPathResult.FIRST_ORDERED_NODE_TYPE,
+      null
+    ).singleNodeValue;
+  }
+};
+
+// src/CssProperties/FrameScheduler.es6
+var FrameScheduler = class {
+  constructor(windowObject = window, logger = console) {
+    this.window = windowObject;
+    this.logger = logger;
+    this.reads = /* @__PURE__ */ new Set();
+    this.writes = /* @__PURE__ */ new Set();
+    this.frame = null;
+    this.flushing = false;
+    this.onVisibility = () => {
+      if (this.window.document.hidden) this.cancel();
+      else this.schedule();
+    };
+    this.window.document.addEventListener("visibilitychange", this.onVisibility);
+  }
+  measure(callback) {
+    this.reads.add(callback);
+    this.schedule();
+  }
+  write(callback) {
+    this.writes.add(callback);
+    this.schedule();
+  }
+  forget(callback) {
+    this.reads.delete(callback);
+    this.writes.delete(callback);
+  }
+  schedule() {
+    if (this.frame !== null || this.flushing || this.window.document.hidden) return;
+    if (!this.reads.size && !this.writes.size) return;
+    this.frame = this.window.requestAnimationFrame(this.flush);
+  }
+  flush = () => {
+    this.frame = null;
+    this.flushing = true;
+    this.run(this.reads);
+    this.run(this.writes);
+    this.flushing = false;
+    this.schedule();
+  };
+  run(queue) {
+    let callbacks = [...queue];
+    queue.clear();
+    for (let callback of callbacks) {
+      try {
+        callback();
+      } catch (error) {
+        this.logger.error("Error updating Flux CSS properties:", error);
+      }
+    }
+  }
+  cancel() {
+    if (this.frame !== null) this.window.cancelAnimationFrame(this.frame);
+    this.frame = null;
+  }
+  dispose() {
+    this.cancel();
+    this.reads.clear();
+    this.writes.clear();
+    this.window.document.removeEventListener("visibilitychange", this.onVisibility);
+  }
+};
+
+// src/CssProperties/PropertyWriter.es6
+var PropertyWriter = class {
+  constructor(scheduler, logger = console) {
+    this.scheduler = scheduler;
+    this.logger = logger;
+    this.targets = /* @__PURE__ */ new Map();
+    this.pending = /* @__PURE__ */ new Set();
+    this.ownership = /* @__PURE__ */ new Map();
+  }
+  set(owner, element, name, value) {
+    let properties = this.targets.get(element);
+    if (!properties) this.targets.set(element, properties = /* @__PURE__ */ new Map());
+    let property = properties.get(name);
+    if (!property) {
+      property = {
+        element,
+        name,
+        owners: /* @__PURE__ */ new Map(),
+        original: element.style.getPropertyValue(name),
+        priority: element.style.getPropertyPriority(name),
+        written: null
+      };
+      properties.set(name, property);
+    }
+    let actual = element.style.getPropertyValue(name);
+    if (property.written !== null && property.written !== actual) {
+      property.original = actual;
+      property.priority = element.style.getPropertyPriority(name);
+      property.written = null;
+    }
+    if (!property.owners.has(owner) && property.owners.size) {
+      this.logger.warn(`Conflicting Flux CSS sources for ${name}; the first binding takes precedence.`, element);
+    }
+    let next = value === null ? "" : String(value);
+    if (property.owners.get(owner) === next && property.written === element.style.getPropertyValue(name)) return;
+    property.owners.set(owner, next);
+    let owned = this.ownership.get(owner);
+    if (!owned) this.ownership.set(owner, owned = /* @__PURE__ */ new Set());
+    owned.add(property);
+    this.pending.add(property);
+    this.scheduler.write(this.flush);
+  }
+  flush = () => {
+    for (let property of this.pending) {
+      let value = property.owners.size ? property.owners.values().next().value : property.original;
+      let priority = property.owners.size ? "" : property.priority;
+      if (property.element.style.getPropertyValue(property.name) !== value || property.element.style.getPropertyPriority(property.name) !== priority) {
+        property.element.style.setProperty(property.name, value, priority);
+      }
+      property.written = value;
+      if (!property.owners.size) {
+        let properties = this.targets.get(property.element);
+        properties?.delete(property.name);
+        if (!properties?.size) this.targets.delete(property.element);
+      }
+    }
+    this.pending.clear();
+  };
+  release(owner, element = null) {
+    let owned = this.ownership.get(owner);
+    if (!owned) return;
+    for (let property of owned) {
+      if (element && property.element !== element) continue;
+      property.owners.delete(owner);
+      owned.delete(property);
+      this.pending.add(property);
+    }
+    if (!owned.size) this.ownership.delete(owner);
+    if (this.pending.size) this.scheduler.write(this.flush);
+  }
+  dispose() {
+    for (let properties of this.targets.values()) {
+      for (let property of properties.values()) {
+        property.owners.clear();
+        this.pending.add(property);
+      }
+    }
+    this.flush();
+    this.targets.clear();
+    this.ownership.clear();
+    this.scheduler.forget(this.flush);
+  }
+};
+
+// src/CssProperties/ObserverHub.es6
+var ObserverHub = class {
+  constructor(createObserver) {
+    this.createObserver = createObserver;
+    this.subscriptions = /* @__PURE__ */ new Map();
+    this.observer = null;
+  }
+  observe(element, callback) {
+    if (!this.observer) this.observer = this.createObserver(this.dispatch);
+    let subscription = this.subscriptions.get(element);
+    if (!subscription) {
+      subscription = { callbacks: /* @__PURE__ */ new Set(), entry: null };
+      this.subscriptions.set(element, subscription);
+      this.observer.observe(element);
+    }
+    subscription.callbacks.add(callback);
+    if (subscription.entry) callback(subscription.entry);
+    return () => {
+      subscription.callbacks.delete(callback);
+      if (subscription.callbacks.size) return;
+      this.observer.unobserve(element);
+      this.subscriptions.delete(element);
+    };
+  }
+  dispatch = (entries) => {
+    for (let entry of entries) {
+      let subscription = this.subscriptions.get(entry.target);
+      if (!subscription) continue;
+      subscription.entry = entry;
+      for (let callback of [...subscription.callbacks]) callback(entry);
+    }
+  };
+  dispose() {
+    this.observer?.disconnect();
+    this.subscriptions.clear();
+    this.observer = null;
+  }
+};
+
+// src/CssProperties/Binding.es6
+var Binding = class {
+  constructor(runtime, element, name, definition, state = {}) {
+    this.runtime = runtime;
+    this.element = element;
+    this.name = name;
+    this.definition = definition;
+    this.state = state;
+    this.values = /* @__PURE__ */ new Map();
+    this.destinations = /* @__PURE__ */ new Map();
+    this.source = new definition.source(this);
+    this.disposed = false;
+    this.visible = false;
+    this.resizeEntry = null;
+    this.offVisibility = runtime.observeVisibility(element, (visible) => {
+      this.visible = visible;
+      this.requestRefresh();
+    });
+    this.offResize = definition.resize ? runtime.observeResize(element, (entry) => {
+      this.resizeEntry = entry;
+      this.requestRefresh();
+    }) : null;
+    this.requestRefresh();
+  }
+  get active() {
+    if (this.runtime.document.hidden) return false;
+    if (this.visible) return true;
+    for (let target of this.destinations.values()) if (target.visible) return true;
+    return false;
+  }
+  requestRefresh = () => {
+    if (!this.disposed) this.runtime.scheduler.measure(this.refresh);
+  };
+  refresh = () => {
+    if (this.disposed || !this.element.isConnected) return;
+    if (this.definition.always || this.active) this.source.refresh();
+    else this.source.stop?.();
+  };
+  set(suffix, value) {
+    if (typeof value === "number") {
+      if (!Number.isFinite(value)) value = 0;
+      value = Math.round(value * 1e4) / 1e4;
+    }
+    let name = `--${this.name}${suffix ? "-" + suffix : ""}`;
+    this.values.set(name, value);
+    this.runtime.writer.set(this, this.element, name, value);
+    for (let destination of this.destinations.keys()) this.runtime.writer.set(this, destination, name, value);
+  }
+  connect(elements) {
+    for (let [element, target] of this.destinations) {
+      if (elements.has(element)) continue;
+      target.dispose();
+      this.destinations.delete(element);
+      this.runtime.writer.release(this, element);
+    }
+    for (let element of elements) {
+      if (element === this.element || this.destinations.has(element)) continue;
+      let target = { visible: false, dispose: () => {
+      } };
+      this.destinations.set(element, target);
+      target.dispose = this.runtime.observeVisibility(element, (visible) => {
+        target.visible = visible;
+        this.requestRefresh();
+      });
+      for (let [name, value] of this.values) this.runtime.writer.set(this, element, name, value);
+    }
+  }
+  clear() {
+    this.values.clear();
+    this.runtime.writer.release(this);
+  }
+  dispose() {
+    this.disposed = true;
+    this.runtime.scheduler.forget(this.refresh);
+    this.source.dispose();
+    this.offVisibility();
+    this.offResize?.();
+    for (let target of this.destinations.values()) target.dispose();
+    this.destinations.clear();
+    this.clear();
+  }
+};
+
+// src/CssProperties/Runtime.es6
+var CONTROL_EVENTS = ["input", "change", "focusin", "reset", "invalid"];
+var MEDIA_EVENTS = ["load", "loadeddata", "timeupdate", "play", "pause", "seeked", "error", "emptied"];
+var CssPropertyRuntime = class {
+  constructor(documentObject = document, logger = console) {
+    this.document = documentObject;
+    this.window = documentObject.defaultView;
+    this.logger = logger;
+    this.scheduler = new FrameScheduler(this.window, logger);
+    this.writer = new PropertyWriter(this.scheduler, logger);
+    this.bindings = /* @__PURE__ */ new Map();
+    this.connections = new ConnectionResolver(documentObject, logger);
+    this.history = /* @__PURE__ */ new WeakMap();
+    this.pointer = { x: 0, y: 0 };
+    this.listeners = [];
+    this.pointerAttached = false;
+    this.intersections = this.window.IntersectionObserver ? new ObserverHub((callback) => new this.window.IntersectionObserver(callback)) : null;
+    this.resizes = this.window.ResizeObserver ? new ObserverHub((callback) => new this.window.ResizeObserver(callback)) : null;
+    this.mutations = new this.window.MutationObserver((records) => {
+      if (records.some((record) => record.type !== "attributes" || record.attributeName !== "style")) this.synchronise();
+    });
+    this.mutations.observe(documentObject.documentElement, {
+      subtree: true,
+      childList: true,
+      characterData: true,
+      attributes: true
+    });
+    for (let name of [...CONTROL_EVENTS, ...MEDIA_EVENTS]) this.listen(documentObject, name, this.onEvent, true);
+    this.listen(documentObject, "visibilitychange", this.onVisibility);
+    this.listen(documentObject, "flux:before-render", this.beforeRender);
+    this.listen(documentObject, "flux:after-render", this.synchronise);
+    this.listen(this.window, "resize", this.refreshGeometry);
+    this.listen(documentObject, "scroll", this.refreshPointers, true);
+    this.document.fonts?.ready.then(() => {
+      if (!this.disposed) this.refreshAll();
+    });
+    if (this.document.fonts) this.listen(this.document.fonts, "loadingdone", this.refreshAll);
+  }
+  listen(target, name, callback, capture = false) {
+    target.addEventListener(name, callback, { passive: true, capture });
+    this.listeners.push(() => target.removeEventListener(name, callback, capture));
+  }
+  observeVisibility(element, callback) {
+    if (element === this.document.documentElement || !this.intersections) {
+      callback(true);
+      return () => {
+      };
+    }
+    return this.intersections.observe(element, (entry) => callback(entry.isIntersecting && entry.intersectionRatio > 0));
+  }
+  observeResize(element, callback) {
+    return this.resizes?.observe(element, callback) ?? (() => {
+    });
+  }
+  synchronise = () => {
+    if (this.disposed) return;
+    this.connections.begin();
+    let elements = new Set(this.document.querySelectorAll("[data-flux]"));
+    for (let [element, bindings] of this.bindings) {
+      if (elements.has(element)) continue;
+      for (let binding of bindings.values()) binding.dispose();
+      this.bindings.delete(element);
+    }
+    for (let element of elements) this.syncElement(element);
+    this.syncPointerListener();
+  };
+  syncElement(element) {
+    if (!element.isConnected || element.ownerDocument !== this.document) return;
+    let wanted;
+    try {
+      wanted = this.connections.resolve(element);
+    } catch (error) {
+      this.logger.error("Invalid Flux CSS declaration:", error);
+      return;
+    }
+    let bindings = this.bindings.get(element) ?? /* @__PURE__ */ new Map();
+    for (let [name, binding] of bindings) {
+      if (wanted.has(name)) continue;
+      binding.dispose();
+      bindings.delete(name);
+    }
+    for (let [name, destinations] of wanted) {
+      let binding = bindings.get(name);
+      if (!binding) {
+        binding = new Binding(this, element, name, CSS_SOURCES[name], this.history.get(element)?.get(name));
+        bindings.set(name, binding);
+      }
+      binding.connect(destinations);
+      binding.requestRefresh();
+    }
+    if (bindings.size) this.bindings.set(element, bindings);
+    else this.bindings.delete(element);
+    this.history.delete(element);
+  }
+  forEach(callback) {
+    for (let bindings of this.bindings.values()) for (let binding of bindings.values()) callback(binding);
+  }
+  refreshAll = () => this.forEach((binding) => binding.requestRefresh());
+  refreshGeometry = () => this.forEach((binding) => {
+    if (!binding.definition.always) binding.requestRefresh();
+  });
+  refreshPointers = () => this.forEach((binding) => {
+    if (binding.definition.pointer && binding.active) binding.requestRefresh();
+  });
+  onVisibility = () => {
+    if (this.document.hidden) this.forEach((binding) => binding.source.stop?.());
+    else this.refreshAll();
+  };
+  onPointer = (event) => {
+    if (this.pointer.x === event.clientX && this.pointer.y === event.clientY) return;
+    this.pointer = { x: event.clientX, y: event.clientY };
+    this.refreshPointers();
+  };
+  syncPointerListener() {
+    let needed = false;
+    this.forEach((binding) => {
+      if (binding.definition.pointer) needed = true;
+    });
+    if (needed === this.pointerAttached) return;
+    this.pointerAttached = needed;
+    if (needed) this.window.addEventListener("pointermove", this.onPointer, { passive: true });
+    else this.window.removeEventListener("pointermove", this.onPointer);
+  }
+  onEvent = (event) => {
+    if (event.type === "reset") {
+      queueMicrotask(() => {
+        if (!event.defaultPrevented && !this.disposed) this.forEach((binding) => binding.source.onEvent?.(event));
+      });
+      return;
+    }
+    this.forEach((binding) => binding.source.onEvent?.(event));
+  };
+  beforeRender = (event) => {
+    let { updates, navigation = false } = event.detail;
+    for (let update of updates) {
+      if (navigation) {
+        this.forEach((binding) => {
+          if (update.existingElement.contains(binding.element)) {
+            for (let key of Object.keys(binding.state)) delete binding.state[key];
+          }
+        });
+        continue;
+      }
+      if (!update.newElement || update.mode === "attributes") continue;
+      this.forEach((binding) => this.preserveHistory(binding, update));
+    }
+  };
+  preserveHistory(binding, update) {
+    let { element, name, state } = binding;
+    if (!update.existingElement.contains(element)) return;
+    if (update.mode === "inner" && element === update.existingElement) return;
+    let replacement;
+    if (element === update.existingElement) replacement = update.newElement;
+    else if (element.id) {
+      replacement = [...update.newElement.querySelectorAll("[id]")].find((candidate) => candidate.id === element.id);
+    } else {
+      let path = DomPath.getXPathForElement(element, update.existingElement);
+      replacement = DomPath.findInContext(update.newElement, path);
+    }
+    if (!replacement || replacement.tagName !== element.tagName) return;
+    let history2 = this.history.get(replacement) ?? /* @__PURE__ */ new Map();
+    history2.set(name, { ...state });
+    this.history.set(replacement, history2);
+  }
+  dispose() {
+    this.disposed = true;
+    this.mutations.disconnect();
+    this.forEach((binding) => binding.dispose());
+    this.bindings.clear();
+    this.connections.begin();
+    this.window.removeEventListener("pointermove", this.onPointer);
+    for (let remove of this.listeners) remove();
+    this.intersections?.dispose();
+    this.resizes?.dispose();
+    this.writer.dispose();
+    this.scheduler.dispose();
+  }
+};
+
 // src/Style.es6
 var Style = class {
   element;
@@ -15,7 +966,7 @@ var Style = class {
   }
 };
 var CSS_CONTENT = `
-[data-flux="autosave"] {
+[data-flux~="autosave"] {
 	display: none;
 }
 
@@ -109,62 +1060,6 @@ var ElementEventMapper = class {
       mapObj[type].push(listener);
     }
   };
-};
-
-// src/DomPath.es6
-var DomPath = class {
-  static getXPathForElement(element, context) {
-    if (!element) {
-      return null;
-    }
-    let xpath = "";
-    if (context instanceof Document) {
-      context = context.documentElement;
-    }
-    if (!context) {
-      context = element.ownerDocument?.documentElement;
-    }
-    if (!context) {
-      return null;
-    }
-    while (element && element !== context) {
-      let pos = 0;
-      let sibling = element;
-      while (sibling) {
-        if (sibling.nodeName === element.nodeName) {
-          pos += 1;
-        }
-        sibling = sibling.previousElementSibling;
-      }
-      xpath = `./${element.nodeName}[${pos}]/${xpath}`;
-      element = element.parentElement;
-    }
-    if (element !== context) {
-      return null;
-    }
-    return xpath.replace(/\/$/, "");
-  }
-  static findInDocument(document2, path) {
-    return this.find(document2, document2.documentElement, path);
-  }
-  static findInContext(context, path) {
-    if (!path) {
-      return null;
-    }
-    return this.find(context.ownerDocument, context, path);
-  }
-  static find(document2, context, path) {
-    if (!path) {
-      return null;
-    }
-    return document2.evaluate(
-      path,
-      context,
-      null,
-      XPathResult.FIRST_ORDERED_NODE_TYPE,
-      null
-    ).singleNodeValue;
-  }
 };
 
 // src/UpdateTargetRegistry.es6
@@ -601,7 +1496,7 @@ var DocumentUpdater = class {
     this.logger = logger;
     this.debug = debug;
   }
-  apply(newDocument, allowedTypes = void 0, allowedTargetKeys = void 0, requestElementState = null) {
+  apply(newDocument, allowedTypes = void 0, allowedTargetKeys = void 0, requestElementState = null, navigation = false) {
     this.focusStateManager.markAutofocus(newDocument);
     let newActiveElement = this.focusStateManager.capturePendingActiveElement(newDocument);
     let allowedTypeSet = allowedTypes ? new Set(allowedTypes) : null;
@@ -630,7 +1525,7 @@ var DocumentUpdater = class {
     }
     updates = this.withoutTargetsDisconnectedByOuterUpdates(updates);
     if (updates.length > 0) {
-      this.dispatchFluxEvent("flux:before-render", { updates });
+      this.dispatchFluxEvent("flux:before-render", { updates, navigation });
       updates.forEach((update) => this.applyUpdate(update, requestElementState));
       this.dispatchFluxEvent("flux:after-render", { updates });
     }
@@ -773,6 +1668,11 @@ var DocumentUpdater = class {
 
 // src/DirectiveRegistry.es6
 var DIRECTIVE_DEFINITIONS = Object.freeze({
+  ...Object.fromEntries(Object.keys(CSS_SOURCES).map((name) => [name, {
+    handler: "cssProperties",
+    description: `Expose ${name} CSS properties.`
+  }])),
+  "auto": { handler: "autoContainer", description: "Enable automatic Flux interactions." },
   "": {
     handler: "autoContainer",
     description: "Initialise a container element for automatic Flux interactions."
@@ -844,21 +1744,30 @@ var DirectiveRegistry = class _DirectiveRegistry {
     this.handlers = handlers;
   }
   initElement(fluxElement) {
-    let fluxType = fluxElement.dataset["flux"];
-    if (fluxType === "") {
-      if (fluxElement instanceof HTMLButtonElement) {
-        fluxType = "submit";
+    let declarations = DirectiveParser.parse(fluxElement.dataset["flux"]);
+    if (!declarations.length) declarations = [{ names: [""], selector: null }];
+    let invoked = /* @__PURE__ */ new Set();
+    let errors = [];
+    for (let declaration of declarations) {
+      for (let name of declaration.names) {
+        try {
+          if (declaration.selector && !Object.hasOwn(CSS_SOURCES, name)) {
+            throw new TypeError(`Only CSS sources can be connected: ${name}`);
+          }
+          if ((name === "" || name === "auto") && fluxElement instanceof HTMLButtonElement) name = "submit";
+          let definition = Object.hasOwn(_DirectiveRegistry.DEFINITIONS, name) ? _DirectiveRegistry.DEFINITIONS[name] : null;
+          if (!definition) throw new TypeError(`Unknown flux element type: ${name}`);
+          if (invoked.has(definition.handler)) continue;
+          let handler = this.handlers[definition.handler];
+          if (typeof handler !== "function") throw new TypeError(`Missing Flux directive handler: ${definition.handler}`);
+          handler(fluxElement);
+          invoked.add(definition.handler);
+        } catch (error) {
+          errors.push(error);
+        }
       }
     }
-    let definition = _DirectiveRegistry.DEFINITIONS[fluxType];
-    if (!definition) {
-      throw new TypeError(`Unknown flux element type: ${fluxType}`);
-    }
-    let handler = this.handlers[definition.handler];
-    if (typeof handler !== "function") {
-      throw new TypeError(`Missing Flux directive handler: ${definition.handler}`);
-    }
-    handler(fluxElement);
+    if (errors.length) throw errors[0];
   }
   getDefinitions() {
     return _DirectiveRegistry.DEFINITIONS;
@@ -1201,7 +2110,8 @@ var ResponseHandler = class _ResponseHandler {
         newDocument,
         _ResponseHandler.LINK_UPDATE_TYPES,
         void 0,
-        elementState
+        elementState,
+        true
       );
       this.onLiveDocumentUsed();
       this.scrollToTopAfterPaint(scrollState);
@@ -1456,13 +2366,15 @@ var LiveHandler = class _LiveHandler {
 
 // src/AutocompleteHandler.es6
 var AutocompleteHandler = class {
-  constructor(navigationController, logger = console, debug = false, scheduler = globalThis.setTimeout.bind(globalThis), clearScheduler = globalThis.clearTimeout.bind(globalThis), delay = 200) {
+  constructor(navigationController, logger = console, debug = false, scheduler = globalThis.setTimeout.bind(globalThis), clearScheduler = globalThis.clearTimeout.bind(globalThis), delay = 200, onResults = () => {
+  }) {
     this.navigationController = navigationController;
     this.logger = logger;
     this.debug = debug;
     this.scheduler = scheduler;
     this.clearScheduler = clearScheduler;
     this.delay = delay;
+    this.onResults = onResults;
     this.state = /* @__PURE__ */ new WeakMap();
   }
   initAutocomplete = (fluxElement) => {
@@ -1561,7 +2473,7 @@ var AutocompleteHandler = class {
     return false;
   }
   applyResults(form, state, newDocument) {
-    let newResultsElement = newDocument.querySelector('[data-flux="autocomplete-results"]');
+    let newResultsElement = newDocument.querySelector('[data-flux~="autocomplete-results"]');
     if (!newResultsElement) {
       this.removeResults(form, state);
       if (this.debug) {
@@ -1577,6 +2489,7 @@ var AutocompleteHandler = class {
       form.after(newResultsElement);
     }
     state.resultsElement = newResultsElement;
+    this.onResults(newResultsElement);
   }
   onResultsKeyDown = (e) => {
     if (e.key !== "ArrowDown" && e.key !== "ArrowUp") {
@@ -1668,7 +2581,7 @@ var DropTargetResolver = class {
     if (!outerContainer?.contains(dragState.initialContainer)) {
       return null;
     }
-    let host = element.closest("[data-flux='drag-order']");
+    let host = element.closest("[data-flux~='drag-order']");
     if (!host || host === dragState.item) {
       return null;
     }
@@ -1844,7 +2757,7 @@ var SortableItems = class {
     return [...container.children].filter((child) => this.isSortable(child));
   }
   isSortable(child) {
-    return child.dataset["flux"] === "drag-order" || child.hasAttribute(LEGACY_SORTABLE_ITEM_ATTRIBUTE);
+    return DirectiveParser.has(child, "drag-order") || child.hasAttribute(LEGACY_SORTABLE_ITEM_ATTRIBUTE);
   }
   isHorizontal(siblings) {
     if (siblings.length < 2) {
@@ -2178,7 +3091,11 @@ var Flux = class _Flux {
     this.autocompleteHandler = autocompleteHandler ?? new AutocompleteHandler(
       this.navigationController,
       this.logger,
-      _Flux.DEBUG
+      _Flux.DEBUG,
+      void 0,
+      void 0,
+      void 0,
+      this.initCssPropertiesInTree
     );
     this.dragOrderHandler = dragOrderHandler ?? new Handler(
       this.formHandler,
@@ -2188,6 +3105,7 @@ var Flux = class _Flux {
     );
     this.directiveRegistry = directiveRegistry ?? new DirectiveRegistry({
       autoContainer: this.initAutoContainer,
+      cssProperties: this.initCssProperties,
       autoSave: this.formHandler.initAutoSave,
       updateOuter: this.storeOuterUpdateElement,
       updateInner: this.storeInnerUpdateElement,
@@ -2203,6 +3121,7 @@ var Flux = class _Flux {
       dragOrder: this.dragOrderHandler.initDragOrder
     });
     document.querySelectorAll("[data-flux]").forEach(this.initFluxElementSafely);
+    if (!this.cssPropertyRuntime) document.addEventListener("flux:after-render", this.initRenderedCssProperties);
   }
   /**
    * Initialise a single element using the central Flux directive registry.
@@ -2220,6 +3139,21 @@ var Flux = class _Flux {
         error
       );
     }
+  };
+  initRenderedCssProperties = (event) => {
+    if (this.cssPropertyRuntime) return;
+    for (let update of event.detail.updates) this.initCssPropertiesInTree(update.element);
+  };
+  initCssPropertiesInTree = (element) => {
+    if (this.cssPropertyRuntime || !element) return;
+    let selector = '[data-flux*="flux-"]';
+    if (element.matches(selector) || element.querySelector(selector)) this.initCssProperties();
+  };
+  initCssProperties = () => {
+    if (this.cssPropertyRuntime) return;
+    document.removeEventListener("flux:after-render", this.initRenderedCssProperties);
+    this.cssPropertyRuntime = new CssPropertyRuntime(document, this.logger);
+    queueMicrotask(() => this.cssPropertyRuntime.synchronise());
   };
   initAutoContainer = (fluxElement) => {
     if (fluxElement instanceof HTMLFormElement) {

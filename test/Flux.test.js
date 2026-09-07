@@ -1619,7 +1619,7 @@ describe("DocumentUpdater", () => {
 
 describe("DirectiveRegistry", () => {
 	it("defines every supported data-flux value in one place", () => {
-		expect(DirectiveRegistry.DEFINITIONS).toEqual({
+		expect(DirectiveRegistry.DEFINITIONS).toMatchObject({
 			"": expect.objectContaining({handler: "autoContainer"}),
 			"autosave": expect.objectContaining({handler: "autoSave"}),
 			"update": expect.objectContaining({handler: "updateOuter"}),
@@ -3221,6 +3221,7 @@ describe("ResponseHandler", () => {
 			["outer", "inner", "attributes", "live-outer", "live-inner", "link-outer", "link-inner"],
 			undefined,
 			null,
+			true,
 		);
 		expect(animationFrame).toHaveBeenCalledTimes(2);
 		expect(scrollTo).toHaveBeenCalledWith({

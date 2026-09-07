@@ -77,6 +77,7 @@ export class ResponseHandler {
 				ResponseHandler.LINK_UPDATE_TYPES,
 				undefined,
 				elementState,
+				true,
 			);
 			this.onLiveDocumentUsed();
 			this.scrollToTopAfterPaint(scrollState);

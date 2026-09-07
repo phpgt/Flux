@@ -11,6 +11,7 @@ export class AutocompleteHandler {
 		scheduler = globalThis.setTimeout.bind(globalThis),
 		clearScheduler = globalThis.clearTimeout.bind(globalThis),
 		delay = 200,
+		onResults = () => {},
 	) {
 		this.navigationController = navigationController;
 		this.logger = logger;
@@ -18,6 +19,7 @@ export class AutocompleteHandler {
 		this.scheduler = scheduler;
 		this.clearScheduler = clearScheduler;
 		this.delay = delay;
+		this.onResults = onResults;
 		this.state = new WeakMap();
 	}
 
@@ -138,7 +140,7 @@ export class AutocompleteHandler {
 	}
 
 	applyResults(form, state, newDocument) {
-		let newResultsElement = newDocument.querySelector('[data-flux="autocomplete-results"]');
+		let newResultsElement = newDocument.querySelector('[data-flux~="autocomplete-results"]');
 		if(!newResultsElement) {
 			this.removeResults(form, state);
 			if(this.debug) {
@@ -157,6 +159,7 @@ export class AutocompleteHandler {
 		}
 
 		state.resultsElement = newResultsElement;
+		this.onResults(newResultsElement);
 	}
 
 	onResultsKeyDown = (e) => {
