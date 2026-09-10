@@ -1,5 +1,7 @@
 <section id="updates-demo" class="demo" data-flux="flux-first-visible">
-	<h2>Update targets</h2><p>This button submits a normal POST. One target replaces its outer HTML, one its inner HTML, and one just its attributes.</p>
+	<h2>Update targets</h2>
+	<p>The button's <code>data-flux="submit"</code> submits a POST in the background. PHP toggles a session value and returns a page containing the updated text and CSS class.</p>
+	<p>Each target has an ID and a directive that determines what Flux copies from the response: <code>update-outer</code> replaces the element, <code>update-inner</code> replaces its contents, and <code>update-attributes</code> copies only its attributes. The last target changes emphasis through its class while keeping its existing text.</p>
 	<form method="post"><?php formFields('attributes'); ?><button name="do" value="toggle" data-flux="submit" data-flux-rate="0.3">Toggle emphasis</button></form>
 	<div class="demo-grid">
 		<p id="outer-update" data-flux="update-outer">Outer update: <strong><?= ($_SESSION['emphasis'] ?? false) ? 'on' : 'off' ?></strong></p>

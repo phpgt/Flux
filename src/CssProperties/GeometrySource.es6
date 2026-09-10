@@ -41,6 +41,7 @@ export class GeometrySource {
 
 	setPointerAxis(axis, position, size) {
 		let pixels = Math.max(0, Math.min(position, size));
+		this.binding.set(`${axis}-raw-px`, position);
 		this.binding.set(axis, size > 0 ? scalar(pixels / size) : 0);
 		this.binding.set(`${axis}-px`, pixels);
 	}

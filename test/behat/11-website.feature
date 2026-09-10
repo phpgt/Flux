@@ -144,3 +144,141 @@ Feature: The Flux website
       """
       document.querySelector('#saved-name').textContent === 'Alex'
       """
+
+  Scenario: The homepage counter increments and decrements without losing page state
+    Given I have a fresh browser session
+    And I am on "/"
+    Then Flux should be ready
+    When I run this CSS example interaction:
+      """
+      window.counterPageMarker = true;
+      document.querySelector('#single-counter button[value="plus"]').click();
+      """
+    Then the CSS example should satisfy:
+      """
+      document.querySelector('#single-counter output').textContent === '1' && window.counterPageMarker === true
+      """
+    When I run this CSS example interaction:
+      """
+      document.querySelector('#single-counter button[value="minus"]').click();
+      """
+    Then the CSS example should satisfy:
+      """
+      document.querySelector('#single-counter output').textContent === '0' && window.counterPageMarker === true
+      """
+
+  Scenario: Independent forms update their sum and preserve the scratchpad
+    Given I have a fresh browser session
+    And I am on "/?page=forms"
+    Then Flux should be ready
+    When I fill in "Your scratchpad" with "Keep my working"
+    And I run this CSS example interaction:
+      """
+      document.querySelector('#counter-a button[value="plus"]').click();
+      """
+    Then the CSS example should satisfy:
+      """
+      document.querySelector('#counter-total').textContent === '1'
+      """
+    When I run this CSS example interaction:
+      """
+      document.querySelector('#counter-b button[value="plus"]').click();
+      """
+    Then the CSS example should satisfy:
+      """
+      document.querySelector('#counter-total').textContent === '2'
+      && document.querySelector('#counter-a output').textContent === '1'
+      && document.querySelector('#counter-b output').textContent === '1'
+      && document.querySelector('#counters-demo textarea').value === 'Keep my working'
+      """
+    When I reload the page
+    Then Flux should be ready
+    And the CSS example should satisfy:
+      """
+      document.querySelector('#counter-total').textContent === '2'
+      """
+
+  Scenario Outline: Axis-constrained lists save their order
+    Given I have a fresh browser session
+    And I am on "/?page=forms"
+    Then Flux should be ready
+    When I run this CSS example interaction:
+      """
+      document.querySelector('#order-<direction>').scrollIntoView({block: 'center'});
+      """
+    And I drag the item with id "first" to position "3" in "#order-<direction> ul"
+    Then the items in "#order-<direction> ul" should be ordered "second,third,first"
+    When I reload the page
+    Then Flux should be ready
+    And the items in "#order-<direction> ul" should be ordered "second,third,first"
+
+    Examples:
+      | direction  |
+      | horizontal |
+      | vertical   |
+
+  Scenario: Every arrow points towards a pointer outside the grid
+    Given I am on "/"
+    Then Flux should be ready
+    And the CSS example should satisfy:
+      """
+      [...document.querySelectorAll('main > section.demo')].slice(0, 3).map(e => e.id).join() === 'clock-demo,counter-demo,arrows-demo'
+      """
+    When I run this CSS example interaction:
+      """
+      document.querySelector('#arrows-demo').scrollIntoView({block: 'center'});
+      """
+    Then the CSS example should satisfy:
+      """
+      getComputedStyle(document.querySelector('#arrows-demo')).opacity === '1'
+      """
+    When I run this CSS example interaction:
+      """
+      var gridBounds = document.querySelector('.arrow-grid').getBoundingClientRect();
+      window.arrowPointer = {x: gridBounds.left - 20, y: gridBounds.top + gridBounds.height / 2};
+      window.dispatchEvent(new PointerEvent('pointermove', {clientX: arrowPointer.x, clientY: arrowPointer.y}));
+      """
+    Then the CSS example should satisfy:
+      """
+      document.querySelectorAll('.arrow-cell').length === 40 && [...document.querySelectorAll('.arrow-cell')].every(cell => {
+        var rect = cell.getBoundingClientRect();
+        var dx = arrowPointer.x - rect.left - rect.width / 2;
+        var dy = arrowPointer.y - rect.top - rect.height / 2;
+        var distance = Math.hypot(dx, dy);
+        var matrix = new DOMMatrix(getComputedStyle(cell.firstElementChild).transform);
+        return Math.abs(matrix.a - dx / distance) < .02 && Math.abs(matrix.b - dy / distance) < .02;
+      })
+      """
+
+  Scenario: New Kanban tasks appear without reloading and persist after moving
+    Given I have a fresh browser session
+    And I am on "/?page=forms"
+    Then Flux should be ready
+    When I fill in "New Kanban task" with "Review <draft> & publish"
+    And I run this CSS example interaction:
+      """
+      window.kanbanPageMarker = true;
+      document.querySelector('#board-add-task button').click();
+      """
+    Then the CSS example should satisfy:
+      """
+      [...document.querySelectorAll('#board [data-flux-drag-parent="ready"] .item-text')].some(e => e.textContent === 'Review <draft> & publish')
+      && document.querySelector('#board [data-flux-drag-parent="ready"] li:last-child .drag-handle') !== null
+      && document.querySelector('#board-add-task input[name="item"]').value === ''
+      && window.kanbanPageMarker === true
+      """
+    When I run this CSS example interaction:
+      """
+      document.querySelector('#board [data-flux-drag-parent="ready"] li:last-child button[data-flux="submit"]').click();
+      """
+    Then the CSS example should satisfy:
+      """
+      document.querySelector('#board [data-flux-drag-parent="doing"] .item-text')?.textContent === 'Review <draft> & publish'
+      """
+    When I reload the page
+    Then Flux should be ready
+    And the CSS example should satisfy:
+      """
+      document.querySelector('#board [data-flux-drag-parent="doing"] .item-text')?.textContent === 'Review <draft> & publish'
+      && document.querySelectorAll('#board li').length === 3
+      """

@@ -2,6 +2,7 @@
 @use "clock";
 @use "controls";
 @use "geometry";
+@use "interactions";
 
 :root { @include flair.defaults; --flair-font-body: system-ui, sans-serif; }
 @include flair.typography;
@@ -69,3 +70,6 @@ pre { @extend %o-code-block; max-height: 30rem; overflow: auto; }
 .city-dialog dt { font-weight: 600; }
 .city-dialog dd { margin: 0 0 1rem; }
 .city-results { max-height: 22rem; overflow-y: auto; overscroll-behavior: contain; }
+code {
+	font-weight: bold;
+}

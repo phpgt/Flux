@@ -89,6 +89,8 @@ Flux can also turn a server-ordered form into a drag handle:
 
 Use `data-flux-drag-handle` on the draggable item or its parent container to change the generated handle text. If it is omitted, the handle text is `Drag`.
 
+Use `data-flux-drag-axis="y"` or `data-flux-drag-axis="x"` on the draggable item or its container to constrain dragging vertically or horizontally within its original container. The generated handle uses the corresponding directional cursor.
+
 Drag ordering can be nested: the board can sort list containers, and each list can sort its own cards. Flux uses horizontal ordering when sortable siblings are laid out side by side and vertical ordering for normal lists.
 
 ## CSS properties
@@ -111,6 +113,8 @@ Combine directives with spaces to expose browser state to your stylesheet:
 ```
 
 CSS sources cover local and viewport pointer positions, element size, visibility and first appearance, range/select/colour controls, field history, form validity, image/video palettes, content truncation, and local time/date. Numeric values have no unit suffix, ready for `calc()`.
+
+Pointer sources also expose `--flux-pointer-x-raw-px` and `--flux-pointer-y-raw-px` (or `--flux-pointer-global-x-raw-px` and `--flux-pointer-global-y-raw-px`). These retain coordinates outside the element or viewport, while the existing scalar and pixel properties stay clamped. Combine the local raw coordinates with `flux-size` and CSS `atan2()` to point an arrow towards the pointer.
 
 Use `auto` to combine background form submission with CSS sources: `<form data-flux="auto flux-form">`. Connections share a source's properties with other regions:
 

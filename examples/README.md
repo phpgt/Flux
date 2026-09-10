@@ -48,7 +48,7 @@ npm run build
 - `style/` binds Flair's layout, pattern and object placeholders to the site's markup, and defines the CSS demonstrations.
 - `assets/` holds the compiled stylesheet, Flux bundle and local palette media.
 
-The homepage begins with a clock that turns towards the pointer, followed by a session-backed to-do list, redlining radial gauge, five-step vertical range, shopping order and autocomplete search. Feature pages cover the remaining directives, including background updates, polling, calendar progress, validation, geometry, connections and palettes. The feature index links each directive to its working example.
+The homepage begins with an analogue clock, an increment/decrement counter and a grid of arrows that point towards the mouse. A session-backed to-do list, radial gauge, five-step range and autocomplete search follow. The forms page includes independent counters with a shared sum, horizontal and vertical drag ordering, and a three-column Kanban board. Every demo includes its template source; form demos also expose their server actions. The arrows use raw local pointer coordinates, element size and CSS `atan2()` without application JavaScript.
 
 The gauge uses a native range input: HTML does not define an `input type="meter"`. Pixel readouts use CSS counters, and labels use the range variable. The redline effect uses a CSS style query; the gauge remains readable in browsers without style-query support. Motion effects respect `prefers-reduced-motion`. Forms have ordinary server actions, and ordering also has keyboard buttons.
 

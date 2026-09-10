@@ -38,7 +38,7 @@ function demo(string $name): void {
 		<?php if(in_array(basename($templatePath), ['todo.php', 'shopping.php'], true)): ?>
 		<h3>The shared list template</h3><pre><code><?= h(file_get_contents(__DIR__ . '/components/list.php')) ?></code></pre>
 		<?php endif; ?>
-		<?php if(in_array(basename($templatePath), ['todo.php', 'shopping.php', 'board.php', 'counters.php', 'autosave.php', 'preferences.php', 'updates.php'], true)): ?>
+		<?php if(in_array(basename($templatePath), ['todo.php', 'shopping.php', 'board.php', 'counter.php', 'counters.php', 'drag-order.php', 'autosave.php', 'preferences.php', 'updates.php'], true)): ?>
 		<details><summary>The server actions</summary><pre><code><?= h(file_get_contents(__FILE__)) ?></code></pre></details>
 		<?php endif; ?>
 	</div></details>
@@ -68,6 +68,14 @@ function handleSubmission(): void {
 		],
 	];
 	$_SESSION['board'] ??= ['ready' => [['id' => 'build', 'text' => 'Build an example'], ['id' => 'test', 'text' => 'Test the example']], 'finished' => []];
+	$_SESSION['board']['doing'] ??= [];
+	foreach(['horizontal', 'vertical'] as $direction) {
+		$_SESSION['lists']['order-' . $direction] ??= [
+			['id' => 'first', 'text' => 'First'],
+			['id' => 'second', 'text' => 'Second'],
+			['id' => 'third', 'text' => 'Third'],
+		];
+	}
 	if($_SERVER['REQUEST_METHOD'] !== 'POST') {
 		session_write_close();
 		return;
@@ -82,7 +90,11 @@ function handleSubmission(): void {
 		updateList($_SESSION['lists'][$demo], $action);
 	}
 	elseif($demo === 'board') {
-		moveCard();
+		if($action === 'add') addCard();
+		elseif($action === 'move') moveCard();
+	}
+	elseif($demo === 'single-counter' && in_array($action, ['minus', 'plus'], true)) {
+		$_SESSION['single-counter'] = ($_SESSION['single-counter'] ?? 0) + ($action === 'minus' ? -1 : 1);
 	}
 	elseif($demo === 'counter') {
 		$key = input($_POST, 'counter', 'a') === 'b' ? 'b' : 'a';
@@ -122,6 +134,15 @@ function updateList(array &$items, string $action): void {
 		}
 		return;
 	}
+}
+
+function addCard(): void {
+	$text = trim(input($_POST, 'item'));
+	if($text === '') return;
+	$_SESSION['board']['ready'][] = [
+		'id' => bin2hex(random_bytes(6)),
+		'text' => substr($text, 0, 160),
+	];
 }
 
 function moveCard(): void {

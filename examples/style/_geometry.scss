@@ -6,9 +6,9 @@
 .size-box { resize: both; overflow: auto; width: 23rem; max-width: 100%; min-width: 8rem; min-height: 7rem; padding: 1rem; border: 1px solid; }
 .size-readout::after { counter-reset: width calc(var(--flux-size-x, 0)) height calc(var(--flux-size-y, 0)); content: counter(width) ' × ' counter(height) ' CSS pixels'; }
 .truncated-text { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
-.truncation-note { opacity: var(--flux-truncated, 0); }
+.truncation-note { opacity: var(--flux-truncated, 0); color: #ce241c; }
 .visibility-preview { margin-top: 2rem; padding: 1rem; border: 3px solid rgb(0 0 0 / var(--flux-visible, 1)); }
-.palette-preview { margin: 0; border: .7rem solid var(--flux-palette, #333); padding: .5rem; }
+.palette-preview { margin: 0; box-shadow: 0 1rem 3rem .5rem var(--flux-palette, #333); padding: .5rem; }
 .palette-preview img, .palette-preview video { display: block; width: 100%; height: auto; }
 .palette-preview figcaption { padding-block: 1rem; }
 .swatches { display: flex; height: 2rem; }

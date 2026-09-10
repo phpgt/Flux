@@ -8,7 +8,7 @@
 		'data-flux-drag-parent; data-flux-drag-handle' => ['forms', 'board-demo', 'Move cards between lists'],
 		'modal' => ['search', 'search-results-demo', 'Server-rendered city selection'],
 		'autosave' => ['forms', 'autosave-demo', 'A note saved on change'],
-		'drag-order' => ['forms', 'todo-demo', 'To-do list ordering'],
+		'drag-order; data-flux-drag-axis' => ['forms', 'drag-order-demo', 'Horizontal and vertical ordering'],
 		'link; empty data-flux on links' => ['navigation', 'navigation-demo', 'Chapter navigation and browser history'],
 		'update-link; update-link-inner' => ['navigation', 'navigation-demo', 'Link-only replacement targets'],
 		'update; update-outer; update-inner; update-attributes' => ['navigation', 'updates-demo', 'Three scopes of server updates'],
@@ -21,7 +21,8 @@
 		'flux-range' => ['controls', 'gauge-demo', 'Radial gauge and five-step vertical range'],
 		'flux-select; flux-color' => ['controls', 'preferences-demo', 'Grid columns and connected colour'],
 		'flux-field; flux-form' => ['controls', 'preferences-demo', 'Validation, character budgets and edit history'],
-		'flux-palette' => ['media', 'palettes-demo', 'Image and video palettes'],
+		'flux-palette (image)' => ['media', 'image-palette-demo', 'Image palette and shadow'],
+		'flux-palette (video)' => ['media', 'video-palette-demo', 'Video palette and shadow'],
 		'Multiple directives and connections' => ['geometry', 'pointer-demo', 'Two sources connected to a smaller preview'],
 	]; foreach($features as $feature => [$destination, $anchor, $label]): ?>
 		<tr><th scope="row"><code><?= h($feature) ?></code></th><td><a href="<?= pageUrl($destination) ?>#<?= $anchor ?>"><?= h($label) ?></a></td></tr>

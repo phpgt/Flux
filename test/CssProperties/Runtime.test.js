@@ -81,6 +81,10 @@ describe("CSS runtime geometry and connections", () => {
 		expect(property("div", "pointer-x-px")).toBe("0");
 		expect(property("div", "pointer-y-px")).toBe("100");
 		expect(property("div", "pointer-global-x-px")).toBe("0");
+		expect(property("div", "pointer-global-x-raw-px")).toBe("-10");
+		expect(property("div", "pointer-global-y-raw-px")).toBe(String(window.innerHeight + 100));
+		expect(Number(property("div", "pointer-x-raw-px"))).toBeLessThan(0);
+		expect(Number(property("div", "pointer-y-raw-px"))).toBeGreaterThan(100);
 		expect(property("div", "pointer-global-y-px")).toBe(String(window.innerHeight));
 		measure.mockReturnValue({left: 0, top: 0, width: 0, height: 0});
 		window.dispatchEvent(new Event("resize"));

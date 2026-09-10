@@ -32,11 +32,20 @@ export class AutocompleteHandler {
 			return;
 		}
 
+		let resultsElement = fluxElement.nextElementSibling;
+		if(!resultsElement?.matches('[data-flux~="autocomplete-results"]')) {
+			resultsElement = null;
+		}
+		if(resultsElement) {
+			resultsElement.dataset["fluxAutocompleteMounted"] = "";
+			resultsElement.addEventListener("keydown", this.onResultsKeyDown);
+		}
+
 		this.state.set(fluxElement, {
 			timer: null,
 			minLength: this.getMinLength(fluxElement),
 			requestId: 0,
-			resultsElement: null,
+			resultsElement,
 		});
 		this.hideSubmitControls(fluxElement);
 		fluxElement.addEventListener("input", this.onInput);

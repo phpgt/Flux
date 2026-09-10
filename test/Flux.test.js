@@ -1965,6 +1965,42 @@ describe("FormHandler", () => {
 });
 
 describe("AutocompleteHandler", () => {
+	it("reuses server-rendered results for keyboard navigation and subsequent queries", async () => {
+		document.body.innerHTML = `
+		<form method="get" data-flux-min-length="0"><input name="q" value=""><button>Search</button></form>
+		<div id="results" data-flux="autocomplete-results"><a href="?city=london">London</a></div>
+		`;
+		let navigationController = {
+			fetchForm: vi.fn((form, formData, onDocument) => {
+				onDocument(new DOMParser().parseFromString(`
+					<div id="results" data-flux="autocomplete-results"><a href="?city=tokyo">Tokyo</a></div>
+				`, "text/html"));
+				return Promise.resolve();
+			}),
+		};
+		let handler = new AutocompleteHandler(navigationController);
+		let form = document.querySelector("form");
+		let input = form.querySelector("input");
+		let initialResults = document.querySelector("#results");
+		handler.initAutocomplete(form);
+
+		input.focus();
+		input.dispatchEvent(new KeyboardEvent("keydown", {key: "ArrowDown", bubbles: true}));
+		expect(document.activeElement).toBe(initialResults.querySelector("a"));
+		document.activeElement.dispatchEvent(new KeyboardEvent("keydown", {key: "ArrowUp", bubbles: true}));
+		expect(document.activeElement).toBe(input);
+
+		input.value = "Tokyo";
+		await handler.updateResults(form);
+		expect(initialResults.isConnected).toBe(false);
+		expect(document.querySelectorAll("#results")).toHaveLength(1);
+		expect(form.nextElementSibling.textContent).toBe("Tokyo");
+
+		let submit = new Event("submit", {bubbles: true, cancelable: true});
+		form.dispatchEvent(submit);
+		expect(submit.defaultPrevented).toBe(false);
+	});
+
 	it("fetches and mounts marked results after input changes", async () => {
 		vi.useFakeTimers();
 		document.body.innerHTML = `
@@ -2912,6 +2948,60 @@ describe("DragOrderHandler", () => {
 
 		expect(removeSpy).toHaveBeenCalledWith("pointermove", handler.pointerMove, true);
 		expect(document.querySelector("[data-id='1']").classList.contains("flux-drag-order-dragging")).toBe(false);
+	});
+
+	it("constrains vertical dragging to the original column and submits the new order", () => {
+		document.body.innerHTML = `
+		<ul data-flux-drag-axis="y">
+			<li data-flux="drag-order"><form><input name="order"><button name="do" value="move">Move</button></form></li>
+			<li data-flux="drag-order"><form><input name="order"><button name="do" value="move">Move</button></form></li>
+		</ul>
+		<ul data-flux-drag-parent="other"></ul>`;
+		let submitForm = vi.fn();
+		let handler = new DragOrderHandler({submitForm}, document);
+		let [container, otherContainer] = document.querySelectorAll("ul");
+		let [item, secondItem] = container.children;
+		let form = item.querySelector("form");
+		item.getBoundingClientRect = () => ({left: 20, top: 40, width: 120, height: 50});
+		secondItem.getBoundingClientRect = () => ({left: 20, top: 90, width: 120, height: 50});
+		handler.initDragOrder(item);
+		expect(item.querySelector(".drag-handle").style.cursor).toBe("ns-resize");
+		handler.startPointerDrag({button: 0, clientX: 30, clientY: 50, pointerId: 1, preventDefault: vi.fn()}, form, item);
+		handler.moveItem(150, otherContainer, 300);
+		expect(item.parentElement).toBe(container);
+		expect(container.lastElementChild).toBe(item);
+		expect(handler.dragState.floatingItem.style.transform).toBe("translate(20px, 140px)");
+		handler.pointerUp({pointerId: 1});
+		expect(form.elements.order.value).toBe("1");
+		expect(submitForm).toHaveBeenCalledWith(form, form.querySelector("button"));
+		expect(document.querySelector(".flux-drag-order-floating")).toBe(null);
+	});
+
+	it("constrains horizontal dragging to the original column and submits the new order", () => {
+		document.body.innerHTML = `
+		<ul data-flux-drag-axis="x">
+			<li data-flux="drag-order"><form><input name="order"><button name="do" value="move">Move</button></form></li>
+			<li data-flux="drag-order"><form><input name="order"><button name="do" value="move">Move</button></form></li>
+		</ul>
+		<ul data-flux-drag-parent="other"></ul>`;
+		let submitForm = vi.fn();
+		let handler = new DragOrderHandler({submitForm}, document);
+		let [container, otherContainer] = document.querySelectorAll("ul");
+		let [item, secondItem] = container.children;
+		let form = item.querySelector("form");
+		item.getBoundingClientRect = () => ({left: 20, top: 40, width: 120, height: 50});
+		secondItem.getBoundingClientRect = () => ({left: 140, top: 40, width: 120, height: 50});
+		handler.initDragOrder(item);
+		expect(item.querySelector(".drag-handle").style.cursor).toBe("ew-resize");
+		handler.startPointerDrag({button: 0, clientX: 30, clientY: 50, pointerId: 1, preventDefault: vi.fn()}, form, item);
+		handler.moveItem(150, otherContainer, 300);
+		expect(item.parentElement).toBe(container);
+		expect(container.lastElementChild).toBe(item);
+		expect(handler.dragState.floatingItem.style.transform).toBe("translate(290px, 40px)");
+		handler.pointerUp({pointerId: 1});
+		expect(form.elements.order.value).toBe("1");
+		expect(submitForm).toHaveBeenCalledWith(form, form.querySelector("button"));
+		expect(document.querySelector(".flux-drag-order-floating")).toBe(null);
 	});
 
 	it("uses a floating clone while the real item reserves its place", () => {

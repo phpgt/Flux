@@ -1,5 +1,8 @@
 <section id="preferences-demo" class="demo" data-flux="flux-first-visible">
-	<h2>Input values and validation state</h2><p>Choose a column count and colour, then edit a name. The native form still validates, submits and resets as usual. Flux exposes the current control values and validity to CSS.</p>
+	<h2>Input values and validation state</h2>
+	<p>The control containers use <code>flux-select</code> and <code>flux-color</code> to expose their values as CSS variables. CSS uses <code>--flux-select</code> for the preview's column count, and a connection copies the colour to the border of the separate preview.</p>
+	<p>The name label uses <code>flux-field</code> to expose its remaining character count and editing state. The form uses <code>flux-form</code> to expose how many fields pass native validation. CSS uses those values for the labels and progress bar, so the feedback follows the HTML input constraints.</p>
+	<p>The form also has <code>auto</code> to submit in the background. PHP saves the display name in the session, and the separate <code>update</code> target shows the saved value. The column and colour controls provide local previews.</p>
 	<form id="preferences" method="post" class="fields" data-flux="auto flux-form">
 		<?php formFields('preferences'); ?>
 		<div data-flux="flux-select"><label class="field"><span>Preview columns</span><select name="columns"><option value="1">One</option><option value="2" selected>Two</option><option value="3">Three</option></select></label><div class="column-preview"><span>One</span><span>Two</span><span>Three</span></div></div>

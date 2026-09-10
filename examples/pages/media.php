@@ -1,1 +1,1 @@
-<?php demo('palettes'); ?>
+<?php demo('image-palette'); demo('video-palette'); ?>

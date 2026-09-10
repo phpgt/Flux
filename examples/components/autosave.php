@@ -1,5 +1,7 @@
 <section id="autosave-demo" class="demo" data-flux="flux-first-visible">
-	<h2>Saving on change</h2><p><code>autosave</code> belongs on a button. Change the note and leave the field: Flux submits its form and hides the save button. The saved preview updates independently.</p>
+	<h2>Saving on change</h2>
+	<p>The Save button has <code>data-flux="autosave"</code>. Flux hides the button and submits its form on a <code>change</code> event, which for this textarea happens when you edit the note and leave the field.</p>
+	<p>PHP stores the note in the session. The preview has <code>data-flux="update-inner"</code>, so Flux replaces its contents from the returned page. Without JavaScript, the Save button submits the same form.</p>
 	<form method="post" class="fields">
 		<?php formFields('note'); ?>
 		<label><span>Note</span><textarea name="note" maxlength="1000"><?= h($_SESSION['note'] ?? '') ?></textarea></label>

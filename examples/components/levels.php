@@ -1,7 +1,8 @@
 <section id="levels-demo" class="demo split" data-flux="flux-first-visible flux-range">
-	<div class="demo-copy"><h2>Vertical range input</h2>
-		<p>Five discrete steps, from OFF to EXTREME. The label colours change as the value increases. The current label above the control is selected entirely in CSS from the Flux variable.</p>
-		<p>Use the arrow keys to move one step at a time, or Home and End to reach either end.</p>
+	<div class="demo-copy">
+		<h2>Vertical range input</h2>
+		<p>An HTML range input has five discrete values, labelled from OFF to EXTREME. CSS makes the input vertical, and <code>data-flux="flux-range"</code> on its container exposes its value as <code>--flux-range</code>, normalised from zero to one.</p>
+		<p>CSS multiplies the variable by four to recover the selected step. It uses that step to colour the labels and set their opacity, showing the current label above the control. The input retains its native pointer and keyboard controls.</p>
 	</div>
 	<div class="level-stage">
 		<p class="level-current" aria-hidden="true"><?php foreach(['OFF', 'LOW', 'MID', 'HIGH', 'EXTREME'] as $i => $label): ?><span style="--step: <?= $i ?>"><?= $label ?></span><?php endforeach; ?></p>

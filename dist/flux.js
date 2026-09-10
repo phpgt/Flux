@@ -380,6 +380,7 @@ var GeometrySource = class {
   }
   setPointerAxis(axis, position, size) {
     let pixels = Math.max(0, Math.min(position, size));
+    this.binding.set(`${axis}-raw-px`, position);
     this.binding.set(axis, size > 0 ? scalar(pixels / size) : 0);
     this.binding.set(`${axis}-px`, pixels);
   }
@@ -2574,11 +2575,19 @@ var AutocompleteHandler = class {
     if (this.state.has(fluxElement)) {
       return;
     }
+    let resultsElement = fluxElement.nextElementSibling;
+    if (!resultsElement?.matches('[data-flux~="autocomplete-results"]')) {
+      resultsElement = null;
+    }
+    if (resultsElement) {
+      resultsElement.dataset["fluxAutocompleteMounted"] = "";
+      resultsElement.addEventListener("keydown", this.onResultsKeyDown);
+    }
     this.state.set(fluxElement, {
       timer: null,
       minLength: this.getMinLength(fluxElement),
       requestId: 0,
-      resultsElement: null
+      resultsElement
     });
     this.hideSubmitControls(fluxElement);
     fluxElement.addEventListener("input", this.onInput);
@@ -3014,6 +3023,11 @@ var Handler = class _Handler {
     handle.tabIndex = 0;
     handle.ariaLabel = "Drag to reorder";
     handle.dataset["fluxTitle"] = handleTitle;
+    if (this.getDragAxis(form, item) === "y") {
+      handle.style.cursor = "ns-resize";
+    } else if (this.getDragAxis(form, item) === "x") {
+      handle.style.cursor = "ew-resize";
+    }
     form.prepend(handle);
     handle.addEventListener("dragstart", (e) => this.startNativeDrag(e, form, item));
     handle.addEventListener("dragend", this.endNativeDrag);
@@ -3026,6 +3040,9 @@ var Handler = class _Handler {
   };
   getHandleTitle(dragElement, item) {
     return dragElement.dataset["fluxDragHandle"] ?? dragElement.parentElement?.dataset["fluxDragHandle"] ?? item.parentElement?.dataset["fluxDragHandle"] ?? "Drag";
+  }
+  getDragAxis(form, item) {
+    return form.closest("[data-flux-drag-axis]")?.dataset["fluxDragAxis"] ?? item.closest("[data-flux-drag-axis]")?.dataset["fluxDragAxis"];
   }
   initContainer(container) {
     if (this.containerState.has(container)) {
@@ -3077,6 +3094,9 @@ var Handler = class _Handler {
     this.dragState = {
       form,
       item,
+      axis: this.getDragAxis(form, item),
+      initialClientX: clientX,
+      initialClientY: clientY,
       floatingItem: this.preview.create(item, rect),
       initialContainer: item.parentElement,
       container: item.parentElement,
@@ -3127,13 +3147,20 @@ var Handler = class _Handler {
     this.activePointerId = null;
   }
   moveItem(clientY, container = this.dragState.container, clientX = null) {
+    if (this.dragState.axis === "y") {
+      container = this.dragState.initialContainer;
+      clientX = this.dragState.initialClientX;
+    } else if (this.dragState.axis === "x") {
+      container = this.dragState.initialContainer;
+      clientY = this.dragState.initialClientY;
+    }
     if (!(container instanceof HTMLElement)) {
       container = this.dragState.container;
     }
     let { item, pointerOffsetX, pointerOffsetY } = this.dragState;
     let sortableItems = this.sortableItems.getSiblings(container);
     let siblings = sortableItems.filter((child) => child !== item);
-    let horizontal = this.sortableItems.isHorizontal(sortableItems);
+    let horizontal = this.dragState.axis === "x" || this.dragState.axis !== "y" && this.sortableItems.isHorizontal(sortableItems);
     let itemCenter = horizontal ? (clientX ?? 0) + pointerOffsetX : clientY + pointerOffsetY;
     let insertBefore = siblings.find((child) => {
       let rect = child.getBoundingClientRect();

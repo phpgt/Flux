@@ -1,1 +1,1 @@
-<?php demo('pointer'); demo('geometry'); ?>
+<?php demo('arrows'); demo('pointer'); demo('geometry'); ?>

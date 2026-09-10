@@ -1,5 +1,5 @@
 <div id="<?= h($listName) ?>-list" class="list-demo" data-flux="update-inner">
-	<ul class="sortable-list" data-flux-drag-handle="⠿">
+	<ul class="sortable-list" data-flux-drag-handle="⠿"<?= $listName === 'todo' ? ' data-flux-drag-axis="y"' : '' ?>>
 	<?php foreach($_SESSION['lists'][$listName] as $position => $item): ?>
 		<li data-id="<?= h($item['id']) ?>" data-flux="drag-order" class="<?= $item['done'] ? 'complete' : '' ?>">
 			<form method="post" class="drag-form">

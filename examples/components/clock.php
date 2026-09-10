@@ -1,7 +1,7 @@
-<section id="clock-demo" class="demo split" data-flux="flux-first-visible flux-time flux-date flux-pointer">
+<section id="clock-demo" class="demo split" data-flux="flux-time flux-date flux-pointer">
 	<div class="demo-copy"><h2>Analogue clock</h2>
-		<p>The element has the attribute <code>data-flux="flux-time flux-pointer"</code>, which supplies the time as CSS variables, which are used to position the clock's hands.</p>
-		<p>Flux also supplies the pointer position within this section, allowing CSS to use the pointer coordinates to rotate the clock face while the pointer is over the section.</p>
+		<p>The container has <code>data-flux="flux-time flux-date flux-pointer"</code>, which exposes the device's local time, date and pointer position as CSS variables.</p>
+		<p>The clock's hands are HTML elements. CSS multiplies the time variables by <code>360deg</code> to rotate them, and uses the pointer coordinates to tilt the face. CSS counters and date variables provide the text below the clock, so the display needs no requests to the server.</p>
 		<p><a href="?page=time">Time and date examples</a></p>
 	</div>
 	<div class="clock-stage">
