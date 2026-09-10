@@ -1243,7 +1243,10 @@ pre > code {
 }
 
 .colour-preview {
+  --preview-background: color-mix(in srgb, var(--flux-color, #555) 20%, white);
   border-left: 0.6rem solid var(--flux-color, #555);
+  background: var(--preview-background);
+  color: rgb(from var(--preview-background) calc(255 - r) calc(255 - g) calc(255 - b));
   padding: 1rem;
   margin-top: 1rem;
 }

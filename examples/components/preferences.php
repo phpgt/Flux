@@ -1,6 +1,6 @@
 <section id="preferences-demo" class="demo" data-flux="flux-first-visible">
 	<h2>Input values and validation state</h2>
-	<p>The control containers use <code>flux-select</code> and <code>flux-color</code> to expose their values as CSS variables. CSS uses <code>--flux-select</code> for the preview's column count, and a connection copies the colour to the border of the separate preview.</p>
+	<p>The control containers use <code>flux-select</code> and <code>flux-color</code> to expose their values as CSS variables. CSS uses <code>--flux-select</code> for the preview's column count, and a connection copies the colour to the separate preview. CSS mixes that colour with white for the background and inverts the background's RGB channels for the text.</p>
 	<p>The name label uses <code>flux-field</code> to expose its remaining character count and editing state. The form uses <code>flux-form</code> to expose how many fields pass native validation. CSS uses those values for the labels and progress bar, so the feedback follows the HTML input constraints.</p>
 	<p>The form also has <code>auto</code> to submit in the background. PHP saves the display name in the session, and the separate <code>update</code> target shows the saved value. The column and colour controls provide local previews.</p>
 	<form id="preferences" method="post" class="fields" data-flux="auto flux-form">
@@ -11,6 +11,6 @@
 		<div class="bar" aria-hidden="true"><span class="validity-progress"></span></div><p class="form-count" aria-hidden="true"></p>
 		<div class="actions"><button name="do" value="save">Save preferences</button><button type="reset">Reset</button></div>
 	</form>
-	<aside id="colour-preview" class="colour-preview"><h3>Connected colour preview</h3><p>This border receives the colour through <code>(flux-color@#colour-preview)</code>. The connection follows the form when it is replaced.</p></aside>
+	<aside id="colour-preview" class="colour-preview"><h3>Connected colour preview</h3><p>This preview receives the colour through <code>(flux-color@#colour-preview)</code>. The border uses the selected colour, the background uses a tint, and the text uses the inverse of that tint. The connection follows the form when it is replaced.</p></aside>
 	<p>Saved name: <output id="saved-name" data-flux="update"><?= h($_SESSION['display-name'] ?? 'Not saved yet') ?></output></p>
 </section>

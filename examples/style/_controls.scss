@@ -28,7 +28,14 @@
 .bar > span { display: block; height: 100%; background: #333; transform-origin: left; }
 .column-preview { display: grid; grid-template-columns: repeat(var(--flux-select, 2), 1fr); gap: .5rem; margin-block: 1rem; }
 .column-preview span { background: #eee; padding: 1rem; }
-.colour-preview { border-left: .6rem solid var(--flux-color, #555); padding: 1rem; margin-top: 1rem; }
+.colour-preview {
+	--preview-background: color-mix(in srgb, var(--flux-color, #555) 20%, white);
+	border-left: .6rem solid var(--flux-color, #555);
+	background: var(--preview-background);
+	color: rgb(from var(--preview-background) calc(255 - r) calc(255 - g) calc(255 - b));
+	padding: 1rem;
+	margin-top: 1rem;
+}
 .field-budget::after { counter-reset: remaining var(--flux-field-remaining, 24); content: counter(remaining) ' characters remaining'; }
 .field-state { display: flex; flex-wrap: wrap; gap: .5rem; font-size: .75rem; }
 .field-state span { border: 1px solid; padding: .3rem; }
