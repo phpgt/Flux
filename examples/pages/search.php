@@ -1,1 +1,1 @@
-<?php demo('search-results'); ?>
+<?php demo('search'); ?>

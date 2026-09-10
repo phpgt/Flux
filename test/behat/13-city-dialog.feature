@@ -59,20 +59,20 @@ Feature: City search and server-rendered dialogs
       """
       document.querySelectorAll('.city-results li').length === 600
       """
-    When I fill the element "#search-results-demo input[name='q']" with "Canada"
+    When I fill the element "#search-demo input[name='q']" with "Canada"
     Then the CSS example should satisfy:
       """
       document.querySelectorAll('.city-results li').length > 1
       && [...document.querySelectorAll('.city-results a')].every(a => a.textContent.includes('Canada'))
       && document.querySelectorAll('#search-results').length === 1
       """
-    When I fill the element "#search-results-demo input[name='q']" with "Tokyo"
+    When I fill the element "#search-demo input[name='q']" with "Tokyo"
     Then the CSS example should satisfy:
       """
       document.querySelectorAll('.city-results li').length === 1
       && document.querySelector('.city-results a').textContent === 'Tokyo, Japan'
       """
-    When I fill the element "#search-results-demo input[name='q']" with ""
+    When I fill the element "#search-demo input[name='q']" with ""
     Then the CSS example should satisfy:
       """
       document.querySelectorAll('.city-results li').length === 600
@@ -84,10 +84,10 @@ Feature: City search and server-rendered dialogs
     Then Flux should be ready
     And the CSS example should satisfy:
       """
-      document.querySelector('#search-results-demo input[name="q"]').value === 'London'
+      document.querySelector('#search-demo input[name="q"]').value === 'London'
       && document.querySelectorAll('.city-results li').length === 1
       """
-    When I fill the element "#search-results-demo input[name='q']" with "Tokyo"
+    When I fill the element "#search-demo input[name='q']" with "Tokyo"
     Then the CSS example should satisfy:
       """
       document.querySelector('.city-results a')?.textContent === 'Tokyo, Japan'
@@ -95,13 +95,13 @@ Feature: City search and server-rendered dialogs
       """
     When I run this CSS example interaction:
       """
-      document.querySelector('#search-results-demo form').requestSubmit();
+      document.querySelector('#search-demo form').requestSubmit();
       """
     Then Flux should be ready
     And the CSS example should satisfy:
       """
       new URL(location.href).searchParams.get('q') === 'Tokyo'
-      && document.querySelector('#search-results-demo input[name="q"]').value === 'Tokyo'
+      && document.querySelector('#search-demo input[name="q"]').value === 'Tokyo'
       && document.querySelector('.city-results a')?.textContent === 'Tokyo, Japan'
       """
 
