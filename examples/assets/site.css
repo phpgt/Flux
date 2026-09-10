@@ -1798,7 +1798,7 @@ pre {
   margin-block: 1.5rem;
 }
 
-.attribute-preview {
+#updates-demo .demo-grid > p {
   padding: 1rem;
   border: 1px solid;
 }

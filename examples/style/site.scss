@@ -52,7 +52,7 @@ pre { @extend %o-code-block; max-height: 30rem; overflow: auto; }
 .search-results li { border-bottom: 1px solid #ddd; padding-block: .75rem; }
 .search-results p { font-size: .85rem; margin-block: .3rem; }
 .chapter { border-block: 1px solid; padding-block: 1rem; margin-block: 1.5rem; }
-.attribute-preview { padding: 1rem; border: 1px solid; }
+#updates-demo .demo-grid > p { padding: 1rem; border: 1px solid; }
 .emphasised { color: white; background: #111; }
 .site-footer { border-top: 1px solid; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 1rem; font-size: .85rem; }
 .next-steps { padding-block: 2rem; }
