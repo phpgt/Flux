@@ -130,6 +130,51 @@ See the [CSS property reference](https://github.com/PhpGt/Flux/wiki/CSS-properti
 
 `flux-time` supplies seconds, minutes, and twelve-hour values, plus scalars for positioning clock hands. `flux-date` supplies calendar numbers, localised day/month names, and year/month/week/day progress. They share a timer that updates once a second and pauses off-screen. See the [time and date reference](https://github.com/PhpGt/Flux/wiki/Time-and-date).
 
+### Scroll position
+
+`flux-scroll` measures the declaring element’s own scroll area. On `<body>` or `<html>` it measures the document’s scrolling element, making page offsets available through CSS inheritance.
+
+| Directive | CSS properties | Meaning |
+| --- | --- | --- |
+| `flux-scroll` | `--flux-scroll-x`, `--flux-scroll-y` | Scroll offset divided by the available scroll range, clamped to 0–1. Zero when that axis has no scroll range. |
+| `flux-scroll` | `--flux-scroll-x-px`, `--flux-scroll-y-px` | Native signed scroll offsets in unitless CSS pixels, retaining fractional pixels. |
+| `flux-scroll-progress` | `--flux-scroll-progress-x`, `--flux-scroll-progress-y` | Unclamped passage through the nearest ancestor scrollport on each axis, falling back to the page viewport. |
+
+```html
+<body data-flux="flux-scroll">
+  <div class="reading-progress"></div>
+  <article data-flux="flux-scroll-progress">
+    <div class="illustration">Scroll to reveal this story.</div>
+  </article>
+</body>
+```
+
+```css
+.reading-progress {
+  position: fixed;
+  inset: 0 0 auto;
+  height: 4px;
+  background: currentColor;
+  transform-origin: left;
+  transform: scaleX(var(--flux-scroll-y, 0));
+}
+.illustration {
+  opacity: clamp(0.2, var(--flux-scroll-progress-y, 0), 1);
+}
+```
+
+`--flux-scroll-progress-x-inverse` and `--flux-scroll-progress-y-inverse` expose **1 − progress**, without clamping. The vertical inverse is greater than 1 before entry from below, 1 at entry, between 1 and 0 during passage, 0 at exit, and negative after leaving above. A zero-length passage has forward progress 0 and inverse progress 1. Both values are included in CSS connections.
+
+`flux-scroll-progress` also supplies `--flux-scroll-midway-x` and `--flux-scroll-midway-y`: **1 − abs(2 × progress − 1)**. Midway is negative outside the scrollport, 0 at entry, 0.5 at quarter passage, 1 at centre alignment, 0.5 at three-quarter passage, and 0 at exit. It is unclamped below zero and included in CSS connections. A zero-length passage returns midway 0.
+
+For vertical passage, **0** is when the element’s top edge reaches the scrollport’s bottom edge. **1** is when its bottom edge reaches the scrollport’s top edge. Halfway is when their centres align. Values are negative before entry and greater than one after exit, including while the element is off-screen. Horizontal passage enters from the right and exits through the left. This works for elements taller or wider than their scrollport too.
+
+Passage uses `(scrollport end − element start) / (scrollport size + element size)`, accounting for container borders and scrollbar space. An ancestor with `overflow: auto`, `scroll`, or `hidden` establishes the scrollport even before its content overflows; `overflow: clip` does not. Nested scrollports are measured independently of whether an outer ancestor currently clips them. These are physical X/Y coordinates, rather than writing-mode-relative axes. RTL/reversed scroll offsets retain their native negative pixel values while their scalar measures progress from the scroll origin to the opposite end.
+
+Use `(flux-scroll@#meter)` or `(flux-scroll-progress@#meter)` to copy measurements to another element. Properties are refreshed on scroll, viewport and observed container/content resizes, DOM changes, and media loads. Updates are batched per animation frame and suspend while the tab is hidden. There is no continuous animation loop: CSS-only movement or transforms need another measurement event. Passage measures the current bounding rectangle; animate a child if you want to avoid changing the measured element’s own geometry. A zero-length passage returns zero.
+
+The `data-flux-scroll` attribute still controls navigation scroll restoration; it is separate from these CSS source directives. Try both [interactive scroll examples](examples/pages/scroll.php), including a connected meter that stays visible before and after the measured element passes through a nested scroll area.
+
 ## Development
 
 Run `npm test` for unit and integration tests, `npm run build` to rebuild `dist/flux.js`, and `composer behat` for real-browser examples. See [CONTRIBUTING.md](CONTRIBUTING.md) for component responsibilities and testing guidance.

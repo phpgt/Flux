@@ -723,7 +723,7 @@ body, .demo {
   min-inline-size: 0;
 }
 
-.notice, .city-dialog, .source, .demo, #updates-demo .demo-grid > p {
+.notice, .city-dialog, .source, .demo, #updates-demo .demo-grid > p, .scroll-offset-box, .scroll-passage-box, .scroll-passage-marker {
   box-sizing: border-box;
   min-inline-size: 0;
   padding: var(--flair-surface-padding, var(--flair-space-6));
@@ -767,7 +767,7 @@ body, .demo {
   border-radius: var(--flair-radius);
 }
 
-#updates-demo .demo-grid > p {
+#updates-demo .demo-grid > p, .scroll-offset-box, .scroll-passage-box, .scroll-passage-marker {
   background: var(--flair-inset-background, var(--flair-color-surface-disabled));
   box-shadow: none;
 }
@@ -950,7 +950,7 @@ pre > code {
   min-inline-size: min(100%, var(--flair-content-min, 28rem));
 }
 
-.big-number, .gauge-value, #single-counter > :where(output, .metric-value), #counter-a > :where(output, .metric-value), #counter-b > :where(output, .metric-value), .counter-sum > :where(output, .metric-value) {
+.big-number, .scroll-offset-readout, .scroll-passage-readout, .gauge-value, #single-counter > :where(output, .metric-value), #counter-a > :where(output, .metric-value), #counter-b > :where(output, .metric-value), .counter-sum > :where(output, .metric-value) {
   font-size: var(--flair-value-size, 3rem);
   font-weight: var(--flair-value-weight, 700);
   line-height: var(--flair-value-leading, 1.2);
@@ -958,7 +958,7 @@ pre > code {
   overflow-wrap: anywhere;
   min-inline-size: 0;
 }
-.big-number > .metric-unit, .gauge-value > .metric-unit, #single-counter > :where(output, .metric-value) > .metric-unit, #counter-a > :where(output, .metric-value) > .metric-unit, #counter-b > :where(output, .metric-value) > .metric-unit, .counter-sum > :where(output, .metric-value) > .metric-unit {
+.big-number > .metric-unit, .scroll-offset-readout > .metric-unit, .scroll-passage-readout > .metric-unit, .gauge-value > .metric-unit, #single-counter > :where(output, .metric-value) > .metric-unit, #counter-a > :where(output, .metric-value) > .metric-unit, #counter-b > :where(output, .metric-value) > .metric-unit, .counter-sum > :where(output, .metric-value) > .metric-unit {
   font-size: var(--flair-value-unit-size, 0.5em);
   font-weight: var(--flair-label-weight);
 }
@@ -1648,6 +1648,80 @@ pre > code {
   width: 0.25rem;
   top: -0.25rem;
   background: #111;
+}
+
+.scroll-offset-box, .scroll-passage-box {
+  height: 18rem;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+.scroll-reading {
+  min-height: 45rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.scroll-reading-middle {
+  margin-block: auto;
+}
+
+.scroll-meter {
+  margin-block: var(--flair-space-6);
+}
+
+.scroll-offset-readout, .scroll-passage-readout {
+  --flair-value-size: 2rem;
+  text-align: center;
+}
+
+.scroll-offset-readout::after {
+  counter-reset: percent calc(var(--flux-scroll-y, 0) * 100) pixels calc(var(--flux-scroll-y-px, 0));
+  content: counter(percent) "% · " counter(pixels) "px";
+}
+
+.scroll-offset-fill {
+  transform: scaleX(var(--flux-scroll-y, 0));
+}
+
+.scroll-passage-spacer {
+  height: 24rem;
+  margin: 0;
+}
+
+.scroll-passage-marker {
+  height: 8rem;
+  display: grid;
+  align-content: center;
+  background: color-mix(in srgb, var(--flair-color-surface) calc((1 - clamp(0, var(--flux-scroll-progress-y, 0), 1)) * 100%), var(--flair-color-surface-disabled));
+  border-inline-start: var(--flair-space-2) solid var(--flair-color-accent);
+}
+
+.scroll-passage-readout::after {
+  counter-reset: progress calc(var(--flux-scroll-progress-y, 0) * 100);
+  content: counter(progress) "% through";
+}
+
+.scroll-passage-fill {
+  transform: scaleX(clamp(0, var(--flux-scroll-progress-y, 0), 1));
+}
+
+.scroll-passage-inverse-readout::after {
+  counter-reset: progress calc(var(--flux-scroll-progress-y-inverse, 1) * 100);
+  content: counter(progress) "% remaining";
+}
+
+.scroll-passage-inverse-fill {
+  transform: scaleX(clamp(0, var(--flux-scroll-progress-y-inverse, 1), 1));
+}
+
+.scroll-passage-midway-readout::after {
+  counter-reset: midway calc(var(--flux-scroll-midway-y, 0) * 100);
+  content: counter(midway) "% centred";
+}
+
+.scroll-passage-midway-fill {
+  transform: scaleX(clamp(0, var(--flux-scroll-midway-y, 0), 1));
 }
 
 .kanban-grid {

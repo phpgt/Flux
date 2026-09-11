@@ -39,8 +39,8 @@ describe("Flux directive parsing", () => {
 		expect(autoContainer).toHaveBeenCalledTimes(2);
 		expect(autoSubmit).toHaveBeenCalledOnce();
 	});
-	it("registers all fourteen CSS sources", () => {
-		expect(Object.keys(CSS_SOURCES)).toHaveLength(14);
+	it("registers all sixteen CSS sources", () => {
+		expect(Object.keys(CSS_SOURCES)).toHaveLength(16);
 		for(let name of Object.keys(CSS_SOURCES)) expect(DirectiveRegistry.DEFINITIONS[name].handler).toBe("cssProperties");
 	});
 });

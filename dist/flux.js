@@ -568,6 +568,84 @@ var PaletteSource = class _PaletteSource {
   }
 };
 
+// src/CssProperties/ScrollSource.es6
+var ScrollSource = class {
+  constructor(binding) {
+    this.binding = binding;
+    this.observed = /* @__PURE__ */ new Map();
+  }
+  refresh() {
+    let { element, runtime, name } = this.binding;
+    let { document: document2, window: window2 } = runtime;
+    let page = document2.scrollingElement ?? document2.documentElement;
+    let roots = /* @__PURE__ */ new Set([element]);
+    if (name === "flux-scroll") {
+      let container = element === document2.body || element === document2.documentElement ? page : element;
+      roots.add(container);
+      let style = window2.getComputedStyle(container);
+      let reversedX = style.direction === "rtl";
+      let reversedY = false;
+      if (style.display.includes("flex")) {
+        if (style.flexDirection === "row-reverse") reversedX = !reversedX;
+        reversedY = style.flexDirection === "column-reverse";
+      }
+      for (let [axis, offset, extent, viewport] of [
+        ["x", container.scrollLeft, container.scrollWidth, container.clientWidth],
+        ["y", container.scrollTop, container.scrollHeight, container.clientHeight]
+      ]) {
+        let range = extent - viewport;
+        let direction = (axis === "x" ? reversedX : reversedY) ? -1 : 1;
+        this.binding.set(axis, range > 0 ? Math.max(0, Math.min(1, direction * offset / range)) : 0);
+        this.binding.set(`${axis}-px`, offset);
+      }
+    } else {
+      let rectangle = element.getBoundingClientRect();
+      for (let [axis, start, size, border, client] of [
+        ["x", "left", "width", "clientLeft", "clientWidth"],
+        ["y", "top", "height", "clientTop", "clientHeight"]
+      ]) {
+        let container = this.scrollParent(axis);
+        let origin = 0;
+        let length = document2.documentElement[client] || window2[axis === "x" ? "innerWidth" : "innerHeight"];
+        if (container) {
+          let box = container.getBoundingClientRect();
+          origin = box[start] + container[border];
+          length = container[client];
+        }
+        roots.add(container ?? page);
+        let distance = length + rectangle[size];
+        let progress = distance > 0 ? (origin + length - rectangle[start]) / distance : 0;
+        this.binding.set(axis, progress);
+        this.binding.set(`${axis}-inverse`, 1 - progress);
+        this.binding.set(`${axis}-midway`, 1 - Math.abs(2 * progress - 1));
+      }
+    }
+    let wanted = new Set(roots);
+    for (let root of roots) for (let child of root.children) wanted.add(child);
+    for (let [element2, unsubscribe] of this.observed) {
+      if (wanted.has(element2)) continue;
+      unsubscribe();
+      this.observed.delete(element2);
+    }
+    for (let element2 of wanted) {
+      if (!this.observed.has(element2)) this.observed.set(element2, runtime.observeResize(element2, this.binding.requestRefresh));
+    }
+  }
+  scrollParent(axis) {
+    let { element, runtime } = this.binding;
+    for (let parent = element.parentElement; parent && parent !== runtime.document.documentElement; parent = parent.parentElement) {
+      if (parent === runtime.document.body) break;
+      let style = runtime.window.getComputedStyle(parent);
+      if (/^(auto|scroll|hidden|overlay)$/.test(style[axis === "x" ? "overflowX" : "overflowY"])) return parent;
+    }
+    return null;
+  }
+  dispose() {
+    for (let unsubscribe of this.observed.values()) unsubscribe();
+    this.observed.clear();
+  }
+};
+
 // src/CssProperties/SourceRegistry.es6
 var CSS_SOURCES = Object.freeze({
   "flux-time": { source: TimeSource },
@@ -577,6 +655,13 @@ var CSS_SOURCES = Object.freeze({
   "flux-size": { source: GeometrySource, resize: true },
   "flux-visible": { source: GeometrySource, always: true },
   "flux-first-visible": { source: GeometrySource, always: true },
+  "flux-scroll": { source: ScrollSource, scroll: true, always: true },
+  "flux-scroll-progress": {
+    source: ScrollSource,
+    scroll: true,
+    always: true,
+    properties: { "x-midway": "--flux-scroll-midway-x", "y-midway": "--flux-scroll-midway-y" }
+  },
   "flux-range": { source: ControlSource, always: true },
   "flux-select": { source: ControlSource, always: true },
   "flux-color": { source: ControlSource, always: true },
@@ -993,7 +1078,7 @@ var CssPropertyRuntime = class {
     this.listen(documentObject, "flux:before-render", this.beforeRender);
     this.listen(documentObject, "flux:after-render", this.synchronise);
     this.listen(this.window, "resize", this.refreshGeometry);
-    this.listen(documentObject, "scroll", this.refreshPointers, true);
+    this.listen(documentObject, "scroll", this.onScroll, true);
     this.document.fonts?.ready.then(() => {
       if (!this.disposed) this.refreshAll();
     });
@@ -1060,11 +1145,17 @@ var CssPropertyRuntime = class {
   }
   refreshAll = () => this.forEach((binding) => binding.requestRefresh());
   refreshGeometry = () => this.forEach((binding) => {
-    if (!binding.definition.always) binding.requestRefresh();
+    if (!binding.definition.always || binding.definition.scroll) binding.requestRefresh();
   });
   refreshPointers = () => this.forEach((binding) => {
     if (binding.definition.pointer && binding.active) binding.requestRefresh();
   });
+  onScroll = () => {
+    this.refreshPointers();
+    this.forEach((binding) => {
+      if (binding.definition.scroll) binding.requestRefresh();
+    });
+  };
   onVisibility = () => {
     if (this.document.hidden) this.forEach((binding) => binding.source.stop?.());
     else this.refreshAll();
@@ -1087,6 +1178,7 @@ var CssPropertyRuntime = class {
     }
   }
   onEvent = (event) => {
+    if (event.type === "load") this.refreshGeometry();
     if (event.type === "reset") {
       queueMicrotask(() => {
         if (!event.defaultPrevented && !this.disposed) this.forEach((binding) => binding.source.onEvent?.(event));

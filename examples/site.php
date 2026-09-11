@@ -9,6 +9,7 @@ $pages = [
 	'search' => ['Search', 'Preview results as you type, then follow a normal GET request.'],
 	'time' => ['Time and date', 'Display local time, dates and calendar progress using CSS properties.'],
 	'geometry' => ['Pointer and geometry', 'Read pointer coordinates, element dimensions and viewport visibility in CSS.'],
+	'scroll' => ['Scroll position', 'Measure scroll offsets and an element’s passage through its scroll container.'],
 	'controls' => ['Controls and validation', 'Read native input values and validation state in CSS.'],
 	'media' => ['Media palettes', 'Use colours sampled from images and video frames in CSS.'],
 	'reference' => ['Feature index', 'A working example for every public directive and attribute.'],

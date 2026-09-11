@@ -1,0 +1,43 @@
+@use "flair";
+
+.scroll-offset-box, .scroll-passage-box {
+	@extend %o-inset;
+	height: 18rem;
+	overflow: auto;
+	overscroll-behavior: contain;
+}
+.scroll-reading { min-height: 45rem; display: flex; flex-direction: column; }
+.scroll-reading-middle { margin-block: auto; }
+.scroll-meter { margin-block: var(--flair-space-6); }
+.scroll-offset-readout, .scroll-passage-readout { @extend %o-value; --flair-value-size: 2rem; text-align: center; }
+.scroll-offset-readout::after {
+	counter-reset: percent calc(var(--flux-scroll-y, 0) * 100) pixels calc(var(--flux-scroll-y-px, 0));
+	content: counter(percent) '% · ' counter(pixels) 'px';
+}
+.scroll-offset-fill { transform: scaleX(var(--flux-scroll-y, 0)); }
+.scroll-passage-spacer { height: 24rem; margin: 0; }
+.scroll-passage-marker {
+	@extend %o-inset;
+	height: 8rem;
+	display: grid;
+	align-content: center;
+	background: color-mix(in srgb, var(--flair-color-surface) calc((1 - clamp(0, var(--flux-scroll-progress-y, 0), 1)) * 100%), var(--flair-color-surface-disabled));
+	border-inline-start: var(--flair-space-2) solid var(--flair-color-accent);
+}
+.scroll-passage-readout::after {
+	counter-reset: progress calc(var(--flux-scroll-progress-y, 0) * 100);
+	content: counter(progress) '% through';
+}
+.scroll-passage-fill { transform: scaleX(clamp(0, var(--flux-scroll-progress-y, 0), 1)); }
+
+.scroll-passage-inverse-readout::after {
+	counter-reset: progress calc(var(--flux-scroll-progress-y-inverse, 1) * 100);
+	content: counter(progress) '% remaining';
+}
+.scroll-passage-inverse-fill { transform: scaleX(clamp(0, var(--flux-scroll-progress-y-inverse, 1), 1)); }
+
+.scroll-passage-midway-readout::after {
+	counter-reset: midway calc(var(--flux-scroll-midway-y, 0) * 100);
+	content: counter(midway) '% centred';
+}
+.scroll-passage-midway-fill { transform: scaleX(clamp(0, var(--flux-scroll-midway-y, 0), 1)); }

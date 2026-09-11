@@ -2,6 +2,7 @@
 @use "clock";
 @use "controls";
 @use "geometry";
+@use "scroll";
 @use "interactions";
 
 :root { @include flair.theme-base; --flair-font-body: system-ui, sans-serif; }

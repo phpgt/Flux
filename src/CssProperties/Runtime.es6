@@ -43,7 +43,7 @@ export class CssPropertyRuntime {
 		this.listen(documentObject, "flux:before-render", this.beforeRender);
 		this.listen(documentObject, "flux:after-render", this.synchronise);
 		this.listen(this.window, "resize", this.refreshGeometry);
-		this.listen(documentObject, "scroll", this.refreshPointers, true);
+		this.listen(documentObject, "scroll", this.onScroll, true);
 		this.document.fonts?.ready.then(() => { if(!this.disposed) this.refreshAll(); });
 		if(this.document.fonts) this.listen(this.document.fonts, "loadingdone", this.refreshAll);
 	}
@@ -106,8 +106,13 @@ export class CssPropertyRuntime {
 	}
 
 	refreshAll = () => this.forEach(binding => binding.requestRefresh());
-	refreshGeometry = () => this.forEach(binding => { if(!binding.definition.always) binding.requestRefresh(); });
+	refreshGeometry = () => this.forEach(binding => { if(!binding.definition.always || binding.definition.scroll) binding.requestRefresh(); });
 	refreshPointers = () => this.forEach(binding => { if(binding.definition.pointer && binding.active) binding.requestRefresh(); });
+	onScroll = () => {
+		this.refreshPointers();
+		// Passage progress deliberately continues outside the visible 0–1 interval.
+		this.forEach(binding => { if(binding.definition.scroll) binding.requestRefresh(); });
+	}
 
 	onVisibility = () => {
 		if(this.document.hidden) this.forEach(binding => binding.source.stop?.());
@@ -132,6 +137,7 @@ export class CssPropertyRuntime {
 	}
 
 	onEvent = event => {
+		if(event.type === "load") this.refreshGeometry();
 		// A reset can be cancelled by a later listener. Inspect it after dispatch finishes.
 		if(event.type === "reset") {
 			queueMicrotask(() => {

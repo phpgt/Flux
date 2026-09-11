@@ -17,6 +17,8 @@
 		'flux-time; flux-date' => ['time', 'clock-demo', 'A clock and calendar progress'],
 		'flux-pointer; flux-pointer-global' => ['geometry', 'pointer-demo', 'Local and viewport positions, scalars and pixels'],
 		'flux-size; flux-truncated' => ['geometry', 'geometry-demo', 'Resizing and clipping'],
+		'flux-scroll' => ['scroll', 'scroll-offset-demo', 'Container and page offsets in scalars and pixels'],
+		'flux-scroll-progress' => ['scroll', 'scroll-passage-demo', 'An element’s passage through its scrollport'],
 		'flux-visible; flux-first-visible' => ['geometry', 'geometry-demo', 'Intersection and entry history'],
 		'flux-range' => ['controls', 'gauge-demo', 'Radial gauge and five-step vertical range'],
 		'flux-select; flux-color' => ['controls', 'preferences-demo', 'Grid columns and connected colour'],
