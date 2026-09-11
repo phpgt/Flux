@@ -124,6 +124,12 @@ Feature: The Flux website
       """
       document.querySelector('#navigation-demo textarea').value === 'Keep this thought'
       """
+    # Let the reveal animation settle before the driver calculates click coordinates.
+    When I run this CSS example interaction:
+      """
+      document.querySelector('#updates-demo').scrollIntoView({block: 'center', behavior: 'instant'});
+      """
+    Then the CSS property "opacity" on "#updates-demo" should become "1"
     When I press "Toggle emphasis"
     Then the CSS example should satisfy:
       """
