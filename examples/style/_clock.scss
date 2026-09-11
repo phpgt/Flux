@@ -85,7 +85,7 @@
 		rotateY(var(--clock-tilt-y));
 	transition: transform 150ms ease-out;
 }
-.demo:not(:hover) .clock-dial { --clock-tilt-x: 0deg; --clock-tilt-y: 0deg; }
+.clock-stage:not(:hover) .clock-dial { --clock-tilt-x: 0deg; --clock-tilt-y: 0deg; }
 .clock-digital { font-size: 1.5rem; }
 .calendar-date, .calendar-short { font-size: .9rem; }
 .calendar-progress { margin-block: 2rem; }

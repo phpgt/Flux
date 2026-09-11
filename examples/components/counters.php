@@ -11,6 +11,6 @@
 	</form>
 	<?php endforeach; ?>
 	</div>
-	<p>A + B = <output id="counter-total" data-flux="update" aria-live="polite"><?= array_sum($_SESSION['counters'] ?? []) ?></output></p>
+	<p class="counter-sum">A + B = <output id="counter-total" data-flux="update" aria-live="polite"><?= array_sum($_SESSION['counters'] ?? []) ?></output></p>
 	<label class="field"><span>Your scratchpad</span><textarea placeholder="Enter text here, then change either counter."></textarea></label>
 </section>

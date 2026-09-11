@@ -5,7 +5,7 @@
 		<h2 id="city-dialog-title"><?= $city ? 'Selected city' : 'City not found' ?></h2>
 		<?php if($city): ?>
 		<p>You selected <strong><?= h($city['name']) ?>, <?= h($city['country']) ?></strong>.</p>
-		<dl><dt>City</dt><dd><?= h($city['name']) ?></dd><dt>Country or territory</dt><dd><?= h($city['country']) ?></dd><dt>Time zone</dt><dd><?= h($city['timezone']) ?></dd></dl>
+		<dl><div><dt>City</dt><dd><?= h($city['name']) ?></dd></div><div><dt>Country or territory</dt><dd><?= h($city['country']) ?></dd></div><div><dt>Time zone</dt><dd><?= h($city['timezone']) ?></dd></div></dl>
 		<?php else: ?><p>The selected city is not in this example's dataset.</p><?php endif; ?>
 		<form method="dialog"><button autofocus>Close</button></form>
 	</dialog>

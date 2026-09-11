@@ -7,8 +7,9 @@ function cities(): array {
 
 function matchingCities(string $query): array {
 	$query = trim($query);
+	if($query === '') return [];
 	return array_values(array_filter(cities(), static fn(array $city): bool =>
-		$query === '' || stripos($city['name'] . ' ' . $city['ascii'] . ' ' . $city['country'], $query) !== false
+		stripos($city['name'] . ' ' . $city['ascii'] . ' ' . $city['country'], $query) !== false
 	));
 }
 

@@ -14,6 +14,23 @@ function rectangle(element, rect = {left: 20, top: 40, width: 200, height: 100})
 function intersect(observer, element, visible) { observer.emit(element, {isIntersecting: visible, intersectionRatio: visible ? 0.5 : 0}); }
 
 describe("CSS runtime geometry and connections", () => {
+	it("updates local and global coordinates on contact without a preceding move", async () => {
+		let {flush, runtime} = start('<div data-flux="flux-pointer flux-pointer-global"></div>');
+		let element = document.querySelector("div");
+		rectangle(element);
+		await flush();
+		for(let [x, y, expectedX, expectedY] of [[70, 65, "0.25", "0.25"], [170, 115, "0.75", "0.75"]]) {
+			element.dispatchEvent(new MouseEvent("pointerdown", {bubbles: true, clientX: x, clientY: y}));
+			await flush();
+			expect(property("div", "pointer-x")).toBe(expectedX);
+			expect(property("div", "pointer-y")).toBe(expectedY);
+			expect(property("div", "pointer-global-x-px")).toBe(String(x));
+			expect(property("div", "pointer-global-y-px")).toBe(String(y));
+		}
+		runtime.dispose();
+		window.dispatchEvent(new MouseEvent("pointerdown", {clientX: 10, clientY: 20}));
+		expect(runtime.pointer).toEqual({x: 170, y: 115});
+	});
 	it("shares observers, batches pointer reads, and idles after writing", async () => {
 		let {flush, intersections, resizes, frames} = start('<div data-flux="flux-pointer flux-size flux-visible flux-first-visible"></div>', {observers: true});
 		let element = document.querySelector("div");

@@ -1,3 +1,5 @@
+@use "flair";
+
 @property --redline { syntax: '<integer>'; inherits: true; initial-value: 0; }
 .gauge-stage {
 	--load: var(--flux-range, .35);
@@ -8,7 +10,7 @@
 	text-align: center;
 }
 .radial-gauge { width: min(16rem, 100%); aspect-ratio: 1; margin-inline: auto; border-radius: 50%; padding: 1.1rem; background: conic-gradient(from 225deg, var(--gauge-colour) calc(var(--load) * 270deg), #e5e5e5 0deg 270deg, transparent 0); }
-.gauge-value { display: grid; place-items: center; height: 100%; border-radius: 50%; background: white; font-size: 3rem; font-variant-numeric: tabular-nums; }
+.gauge-value { @extend %o-value; display: grid; place-items: center; height: 100%; border-radius: 50%; background: var(--flair-color-surface); }
 .gauge-value::after { counter-reset: load calc(var(--load) * 100); content: counter(load) '%'; }
 .gauge-status { display: grid; color: var(--gauge-colour); font-weight: 700; }
 .gauge-status span { grid-area: 1 / 1; }
@@ -24,10 +26,10 @@
 .level-control input[type='range'] { writing-mode: vertical-lr; direction: rtl; width: 2rem; height: 15rem; accent-color: color-mix(in srgb, #777, #ce241c calc(var(--flux-range, 0) * 100%)); }
 .level-labels { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; justify-content: space-between; font-weight: 700; }
 .level-labels li { margin: 0; --lit: clamp(0, var(--level) - var(--step) + 1, 1); --step-colour: color-mix(in srgb, #d08000, #ce241c calc(max(0, var(--step) - 2) * 50%)); color: color-mix(in srgb, #aaa, var(--step-colour) calc(var(--lit) * min(1, var(--step)) * 100%)); transition: color 150ms; }
-.bar { display: block; height: .65rem; background: #eee; overflow: hidden; }
-.bar > span { display: block; height: 100%; background: #333; transform-origin: left; }
+.bar { display: block; height: .65rem; background: var(--flair-color-surface-disabled); overflow: hidden; }
+.bar > span { display: block; height: 100%; background: var(--flair-color-accent); transform-origin: left; }
 .column-preview { display: grid; grid-template-columns: repeat(var(--flux-select, 2), 1fr); gap: .5rem; margin-block: 1rem; }
-.column-preview span { background: #eee; padding: 1rem; }
+.column-preview span { background: var(--flair-color-surface-disabled); padding: 1rem; }
 .colour-preview {
 	--preview-background: color-mix(in srgb, var(--flux-color, #555) 20%, white);
 	border-left: .6rem solid var(--flux-color, #555);
@@ -37,8 +39,8 @@
 	margin-top: 1rem;
 }
 .field-budget::after { counter-reset: remaining var(--flux-field-remaining, 24); content: counter(remaining) ' characters remaining'; }
-.field-state { display: flex; flex-wrap: wrap; gap: .5rem; font-size: .75rem; }
-.field-state span { border: 1px solid; padding: .3rem; }
+.field-state { @extend %p-cluster; --flair-cluster-gap: var(--flair-space-2); }
+.field-state span { @extend %o-badge; }
 .field-state span:nth-child(1) { opacity: calc(.25 + var(--flux-field-dirty, 0) * .75); }
 .field-state span:nth-child(2) { opacity: calc(.25 + var(--flux-field-touched, 0) * .75); }
 .field-state span:nth-child(3) { opacity: calc(.25 + var(--flux-field-changed, 0) * .75); }

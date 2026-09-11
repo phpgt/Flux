@@ -389,8 +389,10 @@ describe("FocusStateManager", () => {
 
 		let matched = focusStateManager.capturePendingActiveElement(newDocument);
 		document.body.replaceWith(newDocument.body);
+		let restoredFocus = vi.spyOn(document.querySelector("input"), "focus");
 		focusStateManager.restorePendingActiveElement(document.querySelector("input"));
 
+		expect(restoredFocus).toHaveBeenCalledWith({preventScroll: true});
 		expect(document.activeElement).toBe(document.querySelector("input"));
 		expect(matched.getAttribute("value")).toBe("Two");
 	});
@@ -421,8 +423,10 @@ describe("FocusStateManager", () => {
 		`, "text/html");
 		document.body.replaceWith(newDocument.body);
 
+		let restoredFocus = vi.spyOn(document.querySelector("input"), "focus");
 		focusStateManager.restoreElementState(elementState);
 
+		expect(restoredFocus).toHaveBeenCalledWith({preventScroll: true});
 		let restoredInput = document.querySelector("input");
 		expect(restoredInput.value).toBe("One updated");
 		expect(document.activeElement).toBe(restoredInput);
@@ -538,6 +542,41 @@ describe("NavigationController", () => {
 		expect(pushState).toHaveBeenCalledWith({action: "submitForm"}, "", "https://example.com/next");
 		expect(callback).toHaveBeenCalledWith(expect.any(Document));
 		expect(form.classList.contains("flux-form-waiting")).toBe(false);
+	});
+
+	it.each(["form", "link"])("renders a %s response without updating history when disabled", async (kind) => {
+		document.body.innerHTML = `
+		<section data-flux-history="false">
+			<form action="/search"><input name="q" value="London"></form>
+			<a href="/city" data-flux-scroll="preserve">London</a>
+		</section>`;
+		let history = {pushState: vi.fn(), replaceState: vi.fn()};
+		let fetcher = vi.fn().mockResolvedValue({
+			ok: true,
+			url: "http://localhost:3000/city",
+			text: async () => "<html><body><dialog open>London</dialog></body></html>",
+		});
+		let controller = new NavigationController(new DOMParser(), fetcher, history);
+		let callback = vi.fn();
+		let element = document.querySelector(kind === "form" ? "form" : "a");
+		let request = () => kind === "form"
+			? controller.submitForm(element, new FormData(element), callback)
+			: controller.clickLink(element, callback);
+
+		await request();
+
+		expect(fetcher).toHaveBeenCalledTimes(1);
+		expect(callback.mock.calls[0][0].querySelector("dialog").textContent).toBe("London");
+		expect(history.pushState).not.toHaveBeenCalled();
+		expect(history.replaceState).not.toHaveBeenCalled();
+		if(kind === "link") {
+			expect(callback.mock.calls[0][1]).toMatchObject({action: "clickLink", fluxScrollPreserve: true});
+		}
+
+		element.dataset.fluxHistory = "true";
+		await request();
+		expect(history.pushState).toHaveBeenCalledTimes(1);
+		expect(history.replaceState).toHaveBeenCalledTimes(1);
 	});
 
 	it("dispatches before-request and uses mutated request details", async () => {

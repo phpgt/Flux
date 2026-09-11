@@ -7,13 +7,15 @@ Feature: The Flux website
     When I run this CSS example interaction:
       """
       document.querySelector('#clock-demo').scrollIntoView({block: 'center'});
-      var clockBounds = document.querySelector('#clock-demo').getBoundingClientRect();
+      var clockBounds = document.querySelector('#clock-demo .clock-stage').getBoundingClientRect();
       window.dispatchEvent(new PointerEvent('pointermove', {clientX: clockBounds.left + clockBounds.width / 2, clientY: clockBounds.top + clockBounds.height / 2}));
       """
     Then the CSS example should satisfy:
       """
       document.querySelector('#clock-demo').style.getPropertyValue('--flux-time-second') !== ''
-      && document.querySelector('#clock-demo').style.getPropertyValue('--flux-pointer-x') === '0.5'
+      && document.querySelector('#clock-demo .clock-stage').style.getPropertyValue('--flux-pointer-x') === '0.5'
+      && document.querySelector('#clock-demo .clock-stage').style.getPropertyValue('--flux-pointer-y') === '0.5'
+      && document.querySelector('#clock-demo').style.getPropertyValue('--flux-pointer-x') === ''
       && ['none', 'matrix(1, 0, 0, 1, 0, 0)'].includes(getComputedStyle(document.querySelector('.clock-face')).transform)
       """
     When I run this CSS example interaction:
@@ -51,6 +53,10 @@ Feature: The Flux website
       """
       getComputedStyle(document.querySelector('.radial-gauge')).animationName === 'none'
       """
+
+  Scenario: The controls page displays the selected power level
+    Given I am on "/?page=controls"
+    Then Flux should be ready
     When I run this CSS example interaction:
       """
       var range = document.querySelector('#power-level');
@@ -236,10 +242,6 @@ Feature: The Flux website
   Scenario: Every arrow points towards a pointer outside the grid
     Given I am on "/"
     Then Flux should be ready
-    And the CSS example should satisfy:
-      """
-      [...document.querySelectorAll('main > section.demo')].slice(0, 3).map(e => e.id).join() === 'clock-demo,counter-demo,arrows-demo'
-      """
     When I run this CSS example interaction:
       """
       document.querySelector('.arrow-grid').scrollIntoView({block: 'center'});

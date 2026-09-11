@@ -66,6 +66,26 @@ The earlier demonstration pages now live under `test/fixtures/example/` to retai
 
 ## City search and dialogs
 
-The search example reads 600 cities from `data/cities.json`. Names, ASCII names and country labels are searchable; the dataset and attribution are documented in `data/README.md`. No external search service is used.
+The search example reads 600 cities from `data/cities.json`. Names, ASCII names and country labels are searchable; the dataset and attribution are documented in `data/README.md`. Empty or whitespace-only queries show a search prompt without city results. No external search service is used.
 
-Result links request a full PHP page containing the selected city in `components/city-dialog.php`. A shared `update-link-inner` region receives that dialog. The result links use `data-flux-scroll="preserve"` to keep the page position. Flux's `modal` directive opens it after insertion, with native modal focus and Escape behaviour. The Close button uses `method="dialog"`. With JavaScript disabled, a normal link navigation displays the server-rendered selection through the dialog's `open` attribute.
+Result links request a full PHP page containing the selected city in `components/city-dialog.php`. A shared `update-link-inner` region receives that dialog. The search wrapper uses `data-flux-history="false"` to keep searches and city selections out of the URL, preventing refresh from reopening a selected city. The form combines `autocomplete`, a `submit` button, and an `update-inner` results target for background submission on Enter. The result links use `data-flux-scroll="preserve"` to keep the page position. Flux's `modal` directive opens it after insertion, with native modal focus and Escape behaviour. The Close button uses `method="dialog"`. With JavaScript disabled, a normal link navigation displays the server-rendered selection through the dialog's `open` attribute.
+
+## Flair presentation
+
+The website consumes Flair through the local npm dependency and `@use "flair"`.
+`style/site.scss` binds project selectors to Flair's page frame, header/footer,
+introduction, metric/output, actionable-list, search-result, description-list,
+form, code, and accessibility definitions. Theme values come from
+`flair.theme-base`; project overrides use Flair properties, including the metric
+alignment that centres values and buttons together on narrow screens.
+
+Flair's interactive library documents the shared patterns under Feedback,
+Surfaces, Navigation, Typography, Layouts and Code, with live examples and their
+HTML/Sass. Theme presets are reusable Sass mixins; importing the library does not
+load fonts, emit CSS or add a JavaScript dependency.
+
+Flux keeps the application bindings: `--flux-first-visible` supplies
+`--flair-reveal-progress`, and Flux waiting/dragging classes select Flair state
+decorations. Sortable lists disable browser scroll anchoring during DOM reordering.
+Clock geometry, pointer rotations and the illustrative gauge calculations remain
+in this project's example styles. Rebuild the example CSS after changing Flair.

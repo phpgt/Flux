@@ -114,6 +114,8 @@ export class NavigationController {
 			waitingElement?.classList?.add(className);
 		}
 
+		historyState.updateHistory = element?.closest?.("[data-flux-history]")?.dataset.fluxHistory !== "false";
+
 		try {
 			return await this.requestDocument(url, requestOptions, historyState, onDocument, true);
 		}
@@ -192,7 +194,7 @@ export class NavigationController {
 
 			let html = await response.text();
 			let document = this.parser.parseFromString(html, "text/html");
-			if(historyState.action) {
+			if(historyState.action && historyState.updateHistory !== false) {
 				this.storeScrollPositionForCurrentEntry(historyState);
 				this.historyObject.pushState(
 					this.createHistoryState(historyState),

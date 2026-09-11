@@ -10,6 +10,7 @@ Feature: City search and server-rendered dialogs
       """
     When I run this CSS example interaction:
       """
+      window.originalCityUrl = location.href;
       window.originalClock = document.querySelector('#clock-demo');
       document.querySelector('[data-flux-autocomplete-mounted] a[data-flux="link"]').scrollIntoView({block: 'center', behavior: 'instant'});
       window.cityScrollBefore = scrollY;
@@ -24,6 +25,7 @@ Feature: City search and server-rendered dialogs
       """
       document.querySelector('#city-dialog')?.matches(':modal')
       && document.querySelector('#city-dialog').textContent.includes('London, United Kingdom')
+      && location.href === originalCityUrl
       && document.querySelector('#clock-demo') === originalClock
       && cityScrollBefore > 0 && Math.abs(window.cityScrollAfter - cityScrollBefore) < 2
       && document.querySelector('#city-dialog').contains(document.activeElement)
@@ -52,12 +54,23 @@ Feature: City search and server-rendered dialogs
       && document.querySelectorAll('#city-dialog').length === 1
       """
 
-  Scenario: The search page filters existing results as you type and restores them when cleared
+    When I run this CSS example interaction:
+      """
+      location.reload();
+      """
+    Then Flux should be ready
+    And the CSS example should satisfy:
+      """
+      !document.querySelector('#city-dialog')
+      """
+
+  Scenario: The search page filters cities as you type and removes results when cleared
     Given I am on "/?page=search"
     Then Flux should be ready
     And the CSS example should satisfy:
       """
-      document.querySelectorAll('.city-results li').length === 600
+      document.querySelectorAll('.city-results li').length === 0
+      && document.querySelector('#search-results').textContent.includes('Enter a city or country name to search.')
       """
     When I fill the element "#search-demo input[name='q']" with "Canada"
     Then the CSS example should satisfy:
@@ -75,11 +88,12 @@ Feature: City search and server-rendered dialogs
     When I fill the element "#search-demo input[name='q']" with ""
     Then the CSS example should satisfy:
       """
-      document.querySelectorAll('.city-results li').length === 600
+      document.querySelectorAll('.city-results li').length === 0
+      && document.querySelector('#search-results').textContent.includes('Enter a city or country name to search.')
       && document.querySelectorAll('#search-results').length === 1
       """
 
-  Scenario: A bookmarked search can be refined by typing and submitted normally
+  Scenario: A bookmarked search can be refined and submitted without changing the URL
     Given I am on "/?page=search&q=London"
     Then Flux should be ready
     And the CSS example should satisfy:
@@ -100,7 +114,7 @@ Feature: City search and server-rendered dialogs
     Then Flux should be ready
     And the CSS example should satisfy:
       """
-      new URL(location.href).searchParams.get('q') === 'Tokyo'
+      new URL(location.href).searchParams.get('q') === 'London'
       && document.querySelector('#search-demo input[name="q"]').value === 'Tokyo'
       && document.querySelector('.city-results a')?.textContent === 'Tokyo, Japan'
       """
@@ -113,4 +127,47 @@ Feature: City search and server-rendered dialogs
       """
       document.querySelector('#city-dialog').matches(':modal')
       && document.querySelector('#city-search-content script') === null
+      """
+
+  Scenario: Clearing the homepage search removes suggestions and another query still works
+    Given I am on "/"
+    Then Flux should be ready
+    When I fill the element "#search-demo input[name='q']" with "London"
+    Then the CSS example should satisfy:
+      """
+      document.querySelector('.city-results a')?.textContent === 'London, United Kingdom'
+      """
+    When I fill the element "#search-demo input[name='q']" with ""
+    Then the CSS example should satisfy:
+      """
+      document.querySelector('#search-results')?.textContent.includes('Enter a city or country name to search.')
+      && document.querySelectorAll('.city-results li').length === 0
+      """
+    When I fill the element "#search-demo input[name='q']" with "   "
+    Then the CSS example should satisfy:
+      """
+      document.querySelector('#search-results')?.textContent.includes('Enter a city or country name to search.')
+      && document.querySelectorAll('.city-results li').length === 0
+      """
+    When I fill the element "#search-demo input[name='q']" with "Tokyo"
+    Then the CSS example should satisfy:
+      """
+      document.querySelector('.city-results a')?.textContent === 'Tokyo, Japan'
+      && document.querySelectorAll('#search-results').length === 1
+      """
+
+  Scenario: Submitting the homepage search keeps the URL and renders results
+    Given I am on "/"
+    Then Flux should be ready
+    When I run this CSS example interaction:
+      """
+      window.searchUrlBefore = location.href;
+      document.querySelector('#search-demo input[name="q"]').value = 'London';
+      document.querySelector('#search-demo form').requestSubmit();
+      """
+    Then the CSS example should satisfy:
+      """
+      location.href === searchUrlBefore
+      && document.querySelector('.city-results a')?.textContent === 'London, United Kingdom'
+      && document.querySelectorAll('#search-results').length === 1
       """

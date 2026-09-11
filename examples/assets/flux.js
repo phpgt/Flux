@@ -962,6 +962,7 @@ var Binding = class {
 // src/CssProperties/Runtime.es6
 var CONTROL_EVENTS = ["input", "change", "focusin", "reset", "invalid"];
 var MEDIA_EVENTS = ["load", "loadeddata", "timeupdate", "play", "pause", "seeked", "error", "emptied"];
+var POINTER_EVENTS = ["pointerdown", "pointermove"];
 var CssPropertyRuntime = class {
   constructor(documentObject = document, logger = console) {
     this.document = documentObject;
@@ -1080,8 +1081,10 @@ var CssPropertyRuntime = class {
     });
     if (needed === this.pointerAttached) return;
     this.pointerAttached = needed;
-    if (needed) this.window.addEventListener("pointermove", this.onPointer, { passive: true });
-    else this.window.removeEventListener("pointermove", this.onPointer);
+    for (let name of POINTER_EVENTS) {
+      if (needed) this.window.addEventListener(name, this.onPointer, { passive: true });
+      else this.window.removeEventListener(name, this.onPointer);
+    }
   }
   onEvent = (event) => {
     if (event.type === "reset") {
@@ -1130,7 +1133,7 @@ var CssPropertyRuntime = class {
     this.forEach((binding) => binding.dispose());
     this.bindings.clear();
     this.connections.begin();
-    this.window.removeEventListener("pointermove", this.onPointer);
+    for (let name of POINTER_EVENTS) this.window.removeEventListener(name, this.onPointer);
     for (let remove of this.listeners) remove();
     this.intersections?.dispose();
     this.resizes?.dispose();
@@ -1361,7 +1364,7 @@ var FocusStateManager = class {
     if ("checked" in elementState && elementToActivate instanceof HTMLInputElement) {
       elementToActivate.checked = elementState.checked;
     }
-    elementToActivate.focus();
+    elementToActivate.focus({ preventScroll: true });
     if (elementState.selection && elementToActivate.setSelectionRange) {
       elementToActivate.setSelectionRange(
         elementState.selection[0],
@@ -1402,7 +1405,7 @@ var FocusStateManager = class {
     if (!newActiveElement) {
       return;
     }
-    newActiveElement.focus();
+    newActiveElement.focus({ preventScroll: true });
   }
   focusMarkedAutofocusElements() {
     document.querySelectorAll("[data-flux-autofocus]").forEach((autofocusElement) => {
@@ -1515,6 +1518,7 @@ var NavigationController = class {
     for (let { element: waitingElement, className } of waitingTargets) {
       waitingElement?.classList?.add(className);
     }
+    historyState.updateHistory = element?.closest?.("[data-flux-history]")?.dataset.fluxHistory !== "false";
     try {
       return await this.requestDocument(url, requestOptions, historyState, onDocument, true);
     } catch (error) {
@@ -1581,7 +1585,7 @@ var NavigationController = class {
       }
       let html = await response.text();
       let document2 = this.parser.parseFromString(html, "text/html");
-      if (historyState.action) {
+      if (historyState.action && historyState.updateHistory !== false) {
         this.storeScrollPositionForCurrentEntry(historyState);
         this.historyObject.pushState(
           this.createHistoryState(historyState),

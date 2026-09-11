@@ -97,7 +97,8 @@ export class FocusStateManager {
 			elementToActivate.checked = elementState.checked;
 		}
 
-		elementToActivate.focus();
+		// Restoring focus must not pull an off-screen field back into view.
+		elementToActivate.focus({preventScroll: true});
 		if(elementState.selection && elementToActivate.setSelectionRange) {
 			elementToActivate.setSelectionRange(
 				elementState.selection[0],
@@ -162,7 +163,7 @@ export class FocusStateManager {
 			return;
 		}
 
-		newActiveElement.focus();
+		newActiveElement.focus({preventScroll: true});
 	}
 
 	focusMarkedAutofocusElements() {

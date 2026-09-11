@@ -9,6 +9,7 @@ import {CSS_SOURCES} from "./SourceRegistry.es6";
 
 const CONTROL_EVENTS = ["input", "change", "focusin", "reset", "invalid"];
 const MEDIA_EVENTS = ["load", "loadeddata", "timeupdate", "play", "pause", "seeked", "error", "emptied"];
+const POINTER_EVENTS = ["pointerdown", "pointermove"];
 
 
 /** Coordinates CSS bindings as Flux and other scripts change the document. */
@@ -124,8 +125,10 @@ export class CssPropertyRuntime {
 		this.forEach(binding => { if(binding.definition.pointer) needed = true; });
 		if(needed === this.pointerAttached) return;
 		this.pointerAttached = needed;
-		if(needed) this.window.addEventListener("pointermove", this.onPointer, {passive: true});
-		else this.window.removeEventListener("pointermove", this.onPointer);
+		for(let name of POINTER_EVENTS) {
+			if(needed) this.window.addEventListener(name, this.onPointer, {passive: true});
+			else this.window.removeEventListener(name, this.onPointer);
+		}
 	}
 
 	onEvent = event => {
@@ -180,7 +183,7 @@ export class CssPropertyRuntime {
 		this.forEach(binding => binding.dispose());
 		this.bindings.clear();
 		this.connections.begin();
-		this.window.removeEventListener("pointermove", this.onPointer);
+		for(let name of POINTER_EVENTS) this.window.removeEventListener(name, this.onPointer);
 		for(let remove of this.listeners) remove();
 		this.intersections?.dispose();
 		this.resizes?.dispose();

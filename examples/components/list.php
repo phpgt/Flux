@@ -7,8 +7,8 @@
 				<input type="hidden" name="id" value="<?= h($item['id']) ?>" />
 				<label><span>Position for <?= h($item['text']) ?> (from zero)</span><input type="number" name="order" min="0" max="<?= count($_SESSION['lists'][$listName]) - 1 ?>" value="<?= $position ?>" /><button name="do" value="move">Move</button></label>
 			</form>
-			<span class="item-text"><?= h($item['text']) ?></span>
-			<div class="item-actions">
+			<span class="item-text row-content"><?= h($item['text']) ?></span>
+			<div class="item-actions row-actions">
 				<?php if($listName === 'todo'): ?>
 				<form method="post"><?php formFields($listName); ?><input type="hidden" name="id" value="<?= h($item['id']) ?>" /><button name="do" value="toggle" data-flux="submit" aria-label="<?= h(($item['done'] ? 'Reopen ' : 'Complete ') . $item['text']) ?>"><?= $item['done'] ? '↶' : '✓' ?></button></form>
 				<?php endif; ?>
