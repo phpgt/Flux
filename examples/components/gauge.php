@@ -1,4 +1,4 @@
-<section id="gauge-demo" class="demo split" data-flux="flux-first-visible flux-range">
+<section id="gauge-demo" class="demo split" data-flux="flux-first-visible flux-visible flux-range">
 	<div class="demo-copy">
 		<h2>Radial gauge</h2>
 		<p>The container uses <code>data-flux="flux-range"</code> to expose the range input's value as <code>--flux-range</code>, normalised from zero to one.</p>

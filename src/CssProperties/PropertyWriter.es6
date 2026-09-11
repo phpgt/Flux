@@ -41,21 +41,23 @@ export class PropertyWriter {
 	}
 
 	flush = () => {
-		for(let property of this.pending) {
-			let value = property.owners.size ? property.owners.values().next().value : property.original;
-			let priority = property.owners.size ? "" : property.priority;
-			if(property.element.style.getPropertyValue(property.name) !== value
-				|| property.element.style.getPropertyPriority(property.name) !== priority) {
-				property.element.style.setProperty(property.name, value, priority);
-			}
-			property.written = value;
-			if(!property.owners.size) {
-				let properties = this.targets.get(property.element);
-				properties?.delete(property.name);
-				if(!properties?.size) this.targets.delete(property.element);
-			}
-		}
+		for(let property of this.pending) this.writeProperty(property);
 		this.pending.clear();
+	}
+
+	writeProperty(property) {
+		let value = property.owners.size ? property.owners.values().next().value : property.original;
+		let priority = property.owners.size ? "" : property.priority;
+		if(property.element.style.getPropertyValue(property.name) !== value
+			|| property.element.style.getPropertyPriority(property.name) !== priority) {
+			property.element.style.setProperty(property.name, value, priority);
+		}
+		property.written = value;
+		if(!property.owners.size) {
+			let properties = this.targets.get(property.element);
+			properties?.delete(property.name);
+			if(!properties?.size) this.targets.delete(property.element);
+		}
 	}
 
 	release(owner, element = null) {
@@ -65,10 +67,16 @@ export class PropertyWriter {
 			if(element && property.element !== element) continue;
 			property.owners.delete(owner);
 			owned.delete(property);
-			this.pending.add(property);
+			if(property.owners.size) this.pending.add(property);
+			else {
+				// Cleanup must not retain removed elements until a hidden tab paints again.
+				this.pending.delete(property);
+				this.writeProperty(property);
+			}
 		}
 		if(!owned.size) this.ownership.delete(owner);
 		if(this.pending.size) this.scheduler.write(this.flush);
+		else this.scheduler.forget(this.flush);
 	}
 
 	dispose() {

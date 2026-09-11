@@ -14,7 +14,7 @@
 .gauge-status span { grid-area: 1 / 1; }
 .gauge-status span:first-child { opacity: calc(1 - var(--redline)); }
 .gauge-status span:last-child { opacity: var(--redline); }
-@container style(--redline: 1) { .radial-gauge { animation: strain 90ms linear infinite alternate; } }
+@container style(--redline: 1) and style(--flux-visible: 1) { .radial-gauge { animation: strain 90ms linear infinite alternate; } }
 @keyframes strain { from { transform: translate(-1px, .5px) rotate(-.4deg); } to { transform: translate(1px, -.5px) rotate(.4deg); } }
 .level-stage { --level: calc(var(--flux-range, 0) * 4); width: min(18rem, 100%); margin-inline: auto; }
 .level-current { display: grid; text-align: center; font-size: 1.8rem; font-weight: 750; }

@@ -144,7 +144,8 @@ export class DocumentUpdater {
 	}
 
 	applyInnerUpdate(existingElement, newElement) {
-		this.prepareElementUpdate(existingElement, newElement);
+		// The existing root stays in place; only initialise children that will be inserted.
+		this.prepareElementUpdate(existingElement, newElement, false);
 
 		while(existingElement.firstChild) {
 			existingElement.removeChild(existingElement.firstChild);

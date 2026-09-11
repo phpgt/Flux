@@ -107,7 +107,7 @@ export class PaletteSource {
 			this.sampledSource = null;
 			this.binding.clear();
 		}
-		this.binding.requestRefresh();
+		if(this.binding.active) this.binding.requestRefresh();
 	}
 
 	stop() {

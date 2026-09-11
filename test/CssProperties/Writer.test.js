@@ -32,4 +32,18 @@ describe("Batched CSS writing", () => {
 		expect(element.style.getPropertyValue("--flux-range")).toBe("");
 		expect(context.runtime.writer.targets.size).toBe(0);
 	});
+	it("releases removed elements without waiting for a hidden tab to paint", async () => {
+		context = createRuntime('<input type="range" data-flux="flux-range" style="--flux-range: original">');
+		await context.flush();
+		let element = document.querySelector("input");
+		vi.spyOn(document, "hidden", "get").mockReturnValue(true);
+		document.dispatchEvent(new Event("visibilitychange"));
+		element.remove(); await Promise.resolve();
+		expect(context.frames.size).toBe(0);
+		expect(context.runtime.writer.targets.size).toBe(0);
+		expect(context.runtime.writer.pending.size).toBe(0);
+		expect(context.runtime.writer.ownership.size).toBe(0);
+		expect(element.style.getPropertyValue("--flux-range")).toBe("original");
+	});
+
 });

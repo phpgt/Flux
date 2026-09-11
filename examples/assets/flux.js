@@ -3,6 +3,7 @@ var DialogHandler = class {
   constructor(documentObject = globalThis.document) {
     this.documentObject = documentObject;
     this.opened = /* @__PURE__ */ new WeakSet();
+    this.returnFocus = /* @__PURE__ */ new WeakMap();
   }
   initModal = (dialog) => {
     if (!(dialog instanceof HTMLDialogElement)) {
@@ -15,12 +16,17 @@ var DialogHandler = class {
       if (!dialog.matches(":modal")) {
         dialog.removeAttribute("open");
         dialog.showModal();
-        dialog.addEventListener("close", () => {
-          if (returnFocus?.isConnected && !dialog.contains(returnFocus)) returnFocus.focus({ preventScroll: true });
-        }, { once: true });
+        this.returnFocus.set(dialog, returnFocus);
+        dialog.addEventListener("close", this.onClose, { once: true });
       }
       this.opened.add(dialog);
     });
+  };
+  onClose = (event) => {
+    let dialog = event.currentTarget;
+    let target = this.returnFocus.get(dialog);
+    this.returnFocus.delete(dialog);
+    if (target?.isConnected && !dialog.contains(target)) target.focus({ preventScroll: true });
   };
 };
 
@@ -549,7 +555,7 @@ var PaletteSource = class _PaletteSource {
       this.sampledSource = null;
       this.binding.clear();
     }
-    this.binding.requestRefresh();
+    if (this.binding.active) this.binding.requestRefresh();
   }
   stop() {
     if (this.frame !== null) this.media?.cancelVideoFrameCallback?.(this.frame);
@@ -784,21 +790,22 @@ var PropertyWriter = class {
     this.scheduler.write(this.flush);
   }
   flush = () => {
-    for (let property of this.pending) {
-      let value = property.owners.size ? property.owners.values().next().value : property.original;
-      let priority = property.owners.size ? "" : property.priority;
-      if (property.element.style.getPropertyValue(property.name) !== value || property.element.style.getPropertyPriority(property.name) !== priority) {
-        property.element.style.setProperty(property.name, value, priority);
-      }
-      property.written = value;
-      if (!property.owners.size) {
-        let properties = this.targets.get(property.element);
-        properties?.delete(property.name);
-        if (!properties?.size) this.targets.delete(property.element);
-      }
-    }
+    for (let property of this.pending) this.writeProperty(property);
     this.pending.clear();
   };
+  writeProperty(property) {
+    let value = property.owners.size ? property.owners.values().next().value : property.original;
+    let priority = property.owners.size ? "" : property.priority;
+    if (property.element.style.getPropertyValue(property.name) !== value || property.element.style.getPropertyPriority(property.name) !== priority) {
+      property.element.style.setProperty(property.name, value, priority);
+    }
+    property.written = value;
+    if (!property.owners.size) {
+      let properties = this.targets.get(property.element);
+      properties?.delete(property.name);
+      if (!properties?.size) this.targets.delete(property.element);
+    }
+  }
   release(owner, element = null) {
     let owned = this.ownership.get(owner);
     if (!owned) return;
@@ -806,10 +813,15 @@ var PropertyWriter = class {
       if (element && property.element !== element) continue;
       property.owners.delete(owner);
       owned.delete(property);
-      this.pending.add(property);
+      if (property.owners.size) this.pending.add(property);
+      else {
+        this.pending.delete(property);
+        this.writeProperty(property);
+      }
     }
     if (!owned.size) this.ownership.delete(owner);
     if (this.pending.size) this.scheduler.write(this.flush);
+    else this.scheduler.forget(this.flush);
   }
   dispose() {
     for (let properties of this.targets.values()) {
@@ -1783,7 +1795,7 @@ var DocumentUpdater = class {
     return newElement;
   }
   applyInnerUpdate(existingElement, newElement) {
-    this.prepareElementUpdate(existingElement, newElement);
+    this.prepareElementUpdate(existingElement, newElement, false);
     while (existingElement.firstChild) {
       existingElement.removeChild(existingElement.firstChild);
     }
@@ -1972,18 +1984,18 @@ var DomBridge = class {
     this.debug = debug;
     this.documentObject = documentObject;
   }
-  prepareElementUpdate = (oldElement, newElement) => {
+  prepareElementUpdate = (oldElement, newElement, includeRoot = true) => {
     if (!newElement) {
       return;
     }
-    this.reattachEventListeners(oldElement, newElement);
-    this.reattachFluxElements(oldElement, newElement);
+    this.reattachEventListeners(oldElement, newElement, includeRoot);
+    this.reattachFluxElements(oldElement, newElement, includeRoot);
   };
-  reattachEventListeners(oldElement, newElement) {
+  reattachEventListeners(oldElement, newElement, includeRoot = true) {
     if (!newElement) {
       return;
     }
-    this.reattachElementListeners(oldElement, newElement);
+    if (includeRoot) this.reattachElementListeners(oldElement, newElement);
     oldElement.querySelectorAll("*").forEach((oldChild) => {
       let xPath = this.domPath.getXPathForElement(oldChild, oldElement);
       let newChild = this.domPath.findInContext(newElement, xPath);
@@ -2006,11 +2018,11 @@ var DomBridge = class {
       }
     }
   }
-  reattachFluxElements(oldElement, newElement) {
+  reattachFluxElements(oldElement, newElement, includeRoot = true) {
     if (!newElement) {
       return;
     }
-    if (newElement.matches?.("[data-flux]")) {
+    if (includeRoot && newElement.matches?.("[data-flux]")) {
       this.initFluxElement(newElement);
     }
     newElement.querySelectorAll("[data-flux]").forEach(this.initFluxElement);
@@ -2381,13 +2393,60 @@ var ResponseHandler = class _ResponseHandler {
   }
 };
 
+// src/LiveVisibility.es6
+var LiveVisibility = class {
+  constructor(onChange, documentObject = globalThis.document) {
+    this.document = documentObject;
+    this.onChange = onChange;
+    this.elements = /* @__PURE__ */ new Set();
+    this.visible = /* @__PURE__ */ new WeakSet();
+    this.started = false;
+    let windowObject = documentObject.defaultView;
+    this.observer = windowObject.IntersectionObserver ? new windowObject.IntersectionObserver((entries) => {
+      for (let entry of entries) {
+        if (entry.isIntersecting && entry.intersectionRatio > 0) this.visible.add(entry.target);
+        else this.visible.delete(entry.target);
+      }
+      this.onChange();
+    }) : null;
+    this.mutations = new windowObject.MutationObserver(onChange);
+  }
+  observe(element) {
+    if (this.elements.has(element)) return;
+    if (!this.started) {
+      this.started = true;
+      this.document.addEventListener("visibilitychange", this.onChange);
+      this.mutations.observe(this.document.documentElement, { childList: true, subtree: true });
+    }
+    this.elements.add(element);
+    this.observer?.observe(element);
+  }
+  isActive(element) {
+    return !this.document.hidden && this.document.contains(element) && (!this.observer || this.visible.has(element));
+  }
+  prune() {
+    for (let element of this.elements) {
+      if (this.document.contains(element)) continue;
+      this.observer?.unobserve(element);
+      this.elements.delete(element);
+      this.visible.delete(element);
+    }
+  }
+  dispose() {
+    this.observer?.disconnect();
+    this.mutations.disconnect();
+    this.document.removeEventListener("visibilitychange", this.onChange);
+    this.elements.clear();
+  }
+};
+
 // src/LiveHandler.es6
 var LiveHandler = class _LiveHandler {
   static UPDATE_TYPES = Object.freeze([
     "live-outer",
     "live-inner"
   ]);
-  constructor(navigationController, updateTargetRegistry, onDocument, logger = console, debug = false, scheduler = globalThis.setTimeout.bind(globalThis), clearScheduler = globalThis.clearTimeout.bind(globalThis), locationObject = globalThis.location, intervalMs = 1e3, now = () => Date.now(), domPath = null) {
+  constructor(navigationController, updateTargetRegistry, onDocument, logger = console, debug = false, scheduler = globalThis.setTimeout.bind(globalThis), clearScheduler = globalThis.clearTimeout.bind(globalThis), locationObject = globalThis.location, intervalMs = 1e3, now = () => Date.now(), domPath = null, documentObject = globalThis.document) {
     this.navigationController = navigationController;
     this.updateTargetRegistry = updateTargetRegistry;
     this.onDocument = onDocument;
@@ -2402,6 +2461,8 @@ var LiveHandler = class _LiveHandler {
     this.timerId = null;
     this.inFlight = false;
     this.lastRefreshMap = /* @__PURE__ */ new Map();
+    this.visibility = new LiveVisibility(this.refreshSchedule, documentObject);
+    this.disposed = false;
   }
   register(updateType, element) {
     this.updateTargetRegistry.add(element, updateType);
@@ -2410,9 +2471,25 @@ var LiveHandler = class _LiveHandler {
     if (!this.lastRefreshMap.has(key)) {
       this.lastRefreshMap.set(key, this.now());
     }
-    this.ensureRunning();
+    this.visibility.observe(element);
+    if (this.visibility.document.contains(element)) this.ensureRunning();
+    else queueMicrotask(this.refreshSchedule);
   }
+  refreshSchedule = () => {
+    if (this.disposed) return;
+    this.visibility.prune();
+    let keys = /* @__PURE__ */ new Set();
+    for (let type of _LiveHandler.UPDATE_TYPES) {
+      for (let element of this.getConnectedElements(type)) keys.add(this.getTargetKey(type, element));
+    }
+    for (let key of this.lastRefreshMap.keys()) {
+      if (!keys.has(key)) this.lastRefreshMap.delete(key);
+    }
+    this.stop();
+    this.ensureRunning();
+  };
   ensureRunning() {
+    if (this.disposed || this.inFlight || this.visibility.document.hidden) return;
     let nextDelay = this.getNextPollDelay();
     if (this.timerId !== null || nextDelay === null) {
       return;
@@ -2428,12 +2505,9 @@ var LiveHandler = class _LiveHandler {
   }
   pollDocument = async () => {
     this.timerId = null;
+    if (this.disposed || this.inFlight) return;
     let dueTargets = this.getDueTargets();
     if (dueTargets.length === 0) {
-      this.ensureRunning();
-      return;
-    }
-    if (this.inFlight) {
       this.ensureRunning();
       return;
     }
@@ -2445,7 +2519,10 @@ var LiveHandler = class _LiveHandler {
         (newDocument) => {
           this.markTargetsRefreshed(dueTargets);
           targetsRefreshed = true;
-          this.onDocument(newDocument, dueTargets.map((target) => target.key));
+          let activeTargets = dueTargets.filter((target) => this.visibility.isActive(target.element));
+          if (!this.disposed && activeTargets.length) {
+            this.onDocument(newDocument, activeTargets.map((target) => target.key));
+          }
         }
       );
       if (!targetsRefreshed) {
@@ -2453,10 +2530,11 @@ var LiveHandler = class _LiveHandler {
       }
     } finally {
       this.inFlight = false;
-      this.ensureRunning();
+      this.refreshSchedule();
     }
   };
   markTargetsRefreshed(targets) {
+    if (this.disposed) return;
     let refreshedAt = this.now();
     for (let target of targets) {
       this.lastRefreshMap.set(target.key, refreshedAt);
@@ -2487,6 +2565,7 @@ var LiveHandler = class _LiveHandler {
     let dueTargets = [];
     for (let type of _LiveHandler.UPDATE_TYPES) {
       for (let element of this.getConnectedElements(type)) {
+        if (!this.visibility.isActive(element)) continue;
         let key = this.getTargetKey(type, element);
         let rateMs = this.getRateMs(element);
         let lastRefresh = this.lastRefreshMap.get(key) ?? -Infinity;
@@ -2503,6 +2582,7 @@ var LiveHandler = class _LiveHandler {
     let minDelay = Infinity;
     for (let type of _LiveHandler.UPDATE_TYPES) {
       for (let element of this.getConnectedElements(type)) {
+        if (!this.visibility.isActive(element)) continue;
         hasTargets = true;
         let key = this.getTargetKey(type, element);
         let rateMs = this.getRateMs(element);
@@ -2519,7 +2599,7 @@ var LiveHandler = class _LiveHandler {
   getConnectedElements(type) {
     let connected = [];
     for (let element of [...this.updateTargetRegistry.getElements(type)]) {
-      if (element?.isConnected) {
+      if (this.visibility.document.contains(element)) {
         connected.push(element);
         continue;
       }
@@ -2527,6 +2607,12 @@ var LiveHandler = class _LiveHandler {
       this.lastRefreshMap.delete(this.getTargetKey(type, element));
     }
     return connected;
+  }
+  dispose() {
+    this.disposed = true;
+    this.stop();
+    this.visibility.dispose();
+    this.lastRefreshMap.clear();
   }
   getRateMs(element) {
     let rateSeconds = Number.parseFloat(element.dataset["fluxRate"] ?? "");
@@ -3268,7 +3354,7 @@ var Flux = class _Flux {
     this.documentUpdater = documentUpdater ?? new DocumentUpdater(
       this.updateTargetRegistry,
       this.focusStateManager,
-      (oldElement, newElement) => this.domBridge.prepareElementUpdate(oldElement, newElement),
+      (oldElement, newElement, includeRoot) => this.domBridge.prepareElementUpdate(oldElement, newElement, includeRoot),
       (element) => this.domBridge.reviveScripts(element),
       DomPath,
       this.logger,
@@ -3569,7 +3655,7 @@ var Debug = class {
 };
 
 // src/main.es6
-RuntimeConfig.configure(globalThis.FluxConfig);
+RuntimeConfig.configure({ debug: false, ...globalThis.FluxConfig });
 new Flux();
 export {
   Debug,

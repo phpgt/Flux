@@ -28,6 +28,22 @@ Feature: The Flux website
       """
     When I run this CSS example interaction:
       """
+      document.querySelector('#search-demo').scrollIntoView({block: 'center'});
+      """
+    Then the CSS example should satisfy:
+      """
+      getComputedStyle(document.querySelector('.radial-gauge')).animationName === 'none'
+      """
+    When I run this CSS example interaction:
+      """
+      document.querySelector('#engine-load').scrollIntoView({block: 'center'});
+      """
+    Then the CSS example should satisfy:
+      """
+      getComputedStyle(document.querySelector('.radial-gauge')).animationName === 'strain'
+      """
+    When I run this CSS example interaction:
+      """
       var range = document.querySelector('#engine-load');
       range.value = '40'; range.dispatchEvent(new Event('input', {bubbles: true}));
       """
@@ -226,11 +242,13 @@ Feature: The Flux website
       """
     When I run this CSS example interaction:
       """
-      document.querySelector('#arrows-demo').scrollIntoView({block: 'center'});
+      document.querySelector('.arrow-grid').scrollIntoView({block: 'center'});
       """
     Then the CSS example should satisfy:
       """
-      getComputedStyle(document.querySelector('#arrows-demo')).opacity === '1'
+      document.querySelector('#arrows-demo').style.getPropertyValue('--flux-first-visible') === '1'
+      && getComputedStyle(document.querySelector('#arrows-demo')).opacity === '1'
+      && !document.querySelector('#arrows-demo').getAnimations().some(animation => animation.playState === 'running')
       """
     When I run this CSS example interaction:
       """

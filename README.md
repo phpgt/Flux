@@ -134,6 +134,8 @@ See the [CSS property reference](https://github.com/PhpGt/Flux/wiki/CSS-properti
 
 Run `npm test` for unit and integration tests, `npm run build` to rebuild `dist/flux.js`, and `composer behat` for real-browser examples. See [CONTRIBUTING.md](CONTRIBUTING.md) for component responsibilities and testing guidance.
 
+The [browser profiling guide](test/profile/README.md) covers CPU activity, tab visibility and retained memory during repeated updates.
+
 ## Design and scope
 
 Flux is designed for **progressive enhancement**: server-rendered HTML, links, and forms provide the application's core functionality, and Flux adds background requests and page updates. Build the core interactions to work independently of JavaScript and CSS so they remain available when those enhancements are unavailable.

@@ -3,6 +3,7 @@ export class DialogHandler {
 	constructor(documentObject = globalThis.document) {
 		this.documentObject = documentObject;
 		this.opened = new WeakSet();
+		this.returnFocus = new WeakMap();
 	}
 
 	initModal = dialog => {
@@ -18,12 +19,18 @@ export class DialogHandler {
 				// An open attribute supplies a visible non-modal fallback without JavaScript.
 				dialog.removeAttribute("open");
 				dialog.showModal();
-				dialog.addEventListener("close", () => {
-					// Autofocus on inserted markup may run before showModal captures its return target.
-					if(returnFocus?.isConnected && !dialog.contains(returnFocus)) returnFocus.focus({preventScroll: true});
-				}, {once: true});
+				this.returnFocus.set(dialog, returnFocus);
+				dialog.addEventListener("close", this.onClose, {once: true});
 			}
 			this.opened.add(dialog);
 		});
+	}
+
+	onClose = event => {
+		let dialog = event.currentTarget;
+		let target = this.returnFocus.get(dialog);
+		this.returnFocus.delete(dialog);
+		// A shared listener can be transferred without retaining a previous dialog.
+		if(target?.isConnected && !dialog.contains(target)) target.focus({preventScroll: true});
 	}
 }

@@ -66,6 +66,9 @@ describe("Palette extraction", () => {
 		time += 200; next(); await context.flush(); expect(drawing.getImageData).toHaveBeenCalledTimes(2);
 		context.intersections[0].emit(video, {isIntersecting: false, intersectionRatio: 0}); await context.flush();
 		expect(video.cancelVideoFrameCallback).toHaveBeenCalled();
+		for(let i = 0; i < 100; i++) video.dispatchEvent(new Event("timeupdate"));
+		expect(context.frames.size).toBe(0);
+		expect(drawing.getImageData).toHaveBeenCalledTimes(2);
 		context.intersections[0].emit(video, {isIntersecting: true, intersectionRatio: 1}); await context.flush();
 		video.cancelVideoFrameCallback.mockClear();
 		vi.spyOn(document, "hidden", "get").mockReturnValue(true);
