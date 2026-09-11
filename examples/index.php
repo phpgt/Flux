@@ -2,6 +2,7 @@
 // An allowlist keeps asset URLs identical under either supported web root.
 $assets = [
 	'site.css' => 'text/css; charset=utf-8',
+	'media.js' => 'text/javascript; charset=utf-8',
 	'flux.js' => 'text/javascript; charset=utf-8',
 	'palette.svg' => 'image/svg+xml',
 	'palette.webm' => 'video/webm',

@@ -1,6 +1,6 @@
 # The Flux website
 
-An interactive guide built with PHP templates, Flair's default monochrome styles and Flux attributes. There is no application JavaScript: the only script loaded is the built Flux library.
+An interactive guide built with PHP templates, Flair's default monochrome styles and Flux attributes. The media page also loads `assets/media.js` for local image selection and an optional remote video source. Flux handles the palette sampling and the other examples' interactions.
 
 ## Run it
 
