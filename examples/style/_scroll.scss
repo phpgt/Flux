@@ -16,9 +16,18 @@
 }
 .scroll-offset-fill { transform: scaleX(var(--flux-scroll-y, 0)); }
 .scroll-passage-spacer { height: 24rem; margin: 0; }
+@property --scroll-passage-wobble { syntax: '<integer>'; inherits: true; initial-value: 0; }
 .scroll-passage-marker {
-	@extend %o-inset;
+	// Measure this stable box; transforms belong to its artwork child.
 	height: 8rem;
+	--scroll-passage-reveal: clamp(0, var(--flux-scroll-midway-y, 0) / .8, 1);
+	--scroll-passage-wobble: clamp(0, (var(--flux-scroll-midway-y, 0) - .75) * 1000, 1);
+}
+.scroll-passage-artwork {
+	@extend %o-inset;
+	height: 100%;
+	opacity: var(--scroll-passage-reveal);
+	scale: var(--scroll-passage-reveal);
 	display: grid;
 	align-content: center;
 	background: color-mix(in srgb, var(--flair-color-surface) calc((1 - clamp(0, var(--flux-scroll-progress-y, 0), 1)) * 100%), var(--flair-color-surface-disabled));
@@ -41,3 +50,14 @@
 	content: counter(midway) '% centred';
 }
 .scroll-passage-midway-fill { transform: scaleX(clamp(0, var(--flux-scroll-midway-y, 0), 1)); }
+
+@container style(--scroll-passage-wobble: 1) {
+	.scroll-passage-artwork { animation: scroll-passage-wobble 350ms ease-in-out infinite alternate; }
+}
+@keyframes scroll-passage-wobble {
+	from { rotate: -3deg; }
+	to { rotate: 3deg; }
+}
+@media (prefers-reduced-motion: reduce) {
+	.scroll-passage-artwork { scale: none; animation: none; }
+}

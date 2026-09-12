@@ -5,7 +5,7 @@
 	<div id="scroll-passage-box" class="scroll-passage-box" tabindex="0" role="region" aria-label="Element passage example">
 		<div class="scroll-passage-track">
 			<p class="scroll-passage-spacer">Scroll down to find the marker ↓</p>
-			<div id="scroll-passage-marker" class="scroll-passage-marker" data-flux="(flux-scroll-progress@#scroll-passage-meter)"><strong>Follow my journey</strong><span>The measured box stays still within the document; its colour changes with progress.</span></div>
+			<div id="scroll-passage-marker" class="scroll-passage-marker" data-flux="(flux-scroll-progress@#scroll-passage-meter)"><div class="scroll-passage-artwork"><strong>Follow my journey</strong><span>I fade and grow towards the centre, then wobble before drifting away.</span></div></div>
 			<p class="scroll-passage-spacer">Keep scrolling until the marker has left the top ↑</p>
 		</div>
 	</div>
@@ -21,6 +21,6 @@
 		<span class="bar" aria-hidden="true"><span class="scroll-passage-midway-fill"></span></span>
 	</div>
 	<p><code>--flux-scroll-progress-y-inverse</code> is <code>1 − progress</code>: greater than 1 below the scrollport, 1 at entry, 0 at exit, and negative above it. The horizontal equivalent is <code>--flux-scroll-progress-x-inverse</code>.</p>
-	<p><code>--flux-scroll-midway-y</code> peaks at 1 when the marker and scrollport centres align (50% through). It is 0 at entry and exit, and negative outside. The horizontal equivalent is <code>--flux-scroll-midway-x</code>.</p>
+	<p><code>--flux-scroll-midway-y</code> peaks at 1 when the marker and scrollport centres align (50% through). It is 0 at entry and exit, and negative outside. The marker reaches full opacity and scale at 80% centred, and gently wobbles above 90%. It fades and shrinks again below 80% as it leaves. The horizontal equivalent is <code>--flux-scroll-midway-x</code>.</p>
 	<p>The readout stays visible through a CSS connection. It shows the full, unclamped progress as a percentage; only the bar uses <code>clamp(0, var(--flux-scroll-progress-y), 1)</code>. Horizontal progress follows the same rule, entering from the right and leaving through the left.</p>
 </section>
