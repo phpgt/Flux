@@ -1,11 +1,12 @@
 @use "flair";
+@use "theme";
 @use "clock";
 @use "controls";
 @use "geometry";
 @use "scroll";
 @use "interactions";
 
-:root { @include flair.theme-base; --flair-font-body: system-ui, sans-serif; }
+:root { @include theme.base; --flair-font-body: system-ui, sans-serif; }
 @include flair.typography;
 @include flair.controls;
 @include flair.base;
@@ -18,9 +19,9 @@ body { @extend %d-typography; background: var(--flair-color-surface); color: var
 .site-nav { @extend %p-side-navigation; }
 .sidebar-note { font-size: .8rem; color: var(--flair-color-muted); margin-block: 2rem; }
 .page-intro { @extend %p-page-intro; }
-.lead { @extend %d-lead; }
-.eyebrow { @extend %d-eyebrow; }
-.demo { @extend %o-card; @extend %d-reveal; --flair-reveal-progress: var(--flux-first-visible, 1); --flair-surface-padding: clamp(1.25rem, 3vw, 2.5rem); --flair-card-title-size: 1.8rem; margin-top: 3rem; scroll-margin-top: 1rem; }
+.lead { @extend %d-typography-lead; }
+.eyebrow { @extend %d-typography-eyebrow; }
+.demo { @extend %o-card; @extend %d-state-reveal; --flair-reveal-progress: var(--flux-first-visible, 1); --flair-surface-padding: clamp(1.25rem, 3vw, 2.5rem); --flair-card-title-size: 1.8rem; margin-top: 3rem; scroll-margin-top: 1rem; }
 .split, .demo-grid { @extend %p-grid; --flair-grid-columns: 2; --flair-grid-min: 17rem; align-items: start; }
 .demo-copy p { max-width: 45ch; }
 .demo h2 { --flair-heading-2: 1.8rem; }
@@ -39,7 +40,7 @@ pre { @extend %o-code-block; max-height: 30rem; overflow: auto; }
 .item-actions { --flair-button-padding-inline: var(--flair-space-2); }
 .drag-handle { width: 1.25rem; height: 2rem; cursor: grab; touch-action: none; display: grid; place-items: center; }
 .drag-handle::before { content: '⠿'; font-size: 1.5rem; }
-.flux-drag-order-dragging { @extend %d-dragging; }
+.flux-drag-order-dragging { @extend %d-state-dragging; }
 .drag-form { margin: 0; }
 .list-demo .fields { margin-top: 1rem; }
 .big-number { @extend %o-value; }
@@ -53,7 +54,7 @@ pre { @extend %o-code-block; max-height: 30rem; overflow: auto; }
 .next-steps { padding-block: var(--flair-space-8); }
 .skip-link { @extend %o-skip-link; }
 .visually-hidden { @extend %d-visually-hidden; }
-.flux-form-waiting button { @extend %d-busy; }
+.flux-form-waiting button { @extend %d-state-busy; }
 @media (min-width: 70rem) { #single-counter { --flair-metric-align: end; } }
 @media print { .site-nav, .source, .site-header > p { display: none; } .demo { opacity: 1; translate: none; break-inside: avoid; } }
 

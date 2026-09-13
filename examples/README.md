@@ -76,7 +76,7 @@ The website consumes Flair through the local npm dependency and `@use "flair"`.
 `style/site.scss` binds project selectors to Flair's page frame, header/footer,
 introduction, metric/output, actionable-list, search-result, description-list,
 form, code, and accessibility definitions. Theme values come from
-`flair.theme-base`; project overrides use Flair properties, including the metric
+`theme.base` from `@use "theme";`; project overrides use Flair properties, including the metric
 alignment that centres values and buttons together on narrow screens.
 
 Flair's interactive library documents the shared patterns under Feedback,
