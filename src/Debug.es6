@@ -1,9 +1,9 @@
 import {RuntimeConfig} from "./RuntimeConfig.es6";
 
 /**
- * Enables Flux debug logging when imported before the main browser bundle.
- * This flips the shared runtime flag that Flux passes into each
- * handler during startup.
+ * Legacy opt-in for applications constructing Flux directly from source.
+ * The browser entry point applies FluxConfig.debug explicitly so re-exporting
+ * this helper does not enable logging in the normal bundle.
  */
 export class Debug {
 	static {

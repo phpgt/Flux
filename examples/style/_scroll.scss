@@ -1,0 +1,63 @@
+@use "flair";
+
+.scroll-offset-box, .scroll-passage-box {
+	@extend %o-inset;
+	height: 18rem;
+	overflow: auto;
+	overscroll-behavior: contain;
+}
+.scroll-reading { min-height: 45rem; display: flex; flex-direction: column; }
+.scroll-reading-middle { margin-block: auto; }
+.scroll-meter { margin-block: var(--flair-space-6); }
+.scroll-offset-readout, .scroll-passage-readout { @extend %o-value; --flair-value-size: 2rem; text-align: center; }
+.scroll-offset-readout::after {
+	counter-reset: percent calc(var(--flux-scroll-y, 0) * 100) pixels calc(var(--flux-scroll-y-px, 0));
+	content: counter(percent) '% · ' counter(pixels) 'px';
+}
+.scroll-offset-fill { transform: scaleX(var(--flux-scroll-y, 0)); }
+.scroll-passage-spacer { height: 24rem; margin: 0; }
+@property --scroll-passage-wobble { syntax: '<integer>'; inherits: true; initial-value: 0; }
+.scroll-passage-marker {
+	// Measure this stable box; transforms belong to its artwork child.
+	height: 8rem;
+	--scroll-passage-reveal: clamp(0, var(--flux-scroll-midway-y, 0) / .8, 1);
+	--scroll-passage-wobble: clamp(0, (var(--flux-scroll-midway-y, 0) - .75) * 1000, 1);
+}
+.scroll-passage-artwork {
+	@extend %o-inset;
+	height: 100%;
+	opacity: var(--scroll-passage-reveal);
+	scale: var(--scroll-passage-reveal);
+	display: grid;
+	align-content: center;
+	background: color-mix(in srgb, var(--flair-color-surface) calc((1 - clamp(0, var(--flux-scroll-progress-y, 0), 1)) * 100%), var(--flair-color-surface-disabled));
+	border-inline-start: var(--flair-space-2) solid var(--flair-color-accent);
+}
+.scroll-passage-readout::after {
+	counter-reset: progress calc(var(--flux-scroll-progress-y, 0) * 100);
+	content: counter(progress) '% through';
+}
+.scroll-passage-fill { transform: scaleX(clamp(0, var(--flux-scroll-progress-y, 0), 1)); }
+
+.scroll-passage-inverse-readout::after {
+	counter-reset: progress calc(var(--flux-scroll-progress-y-inverse, 1) * 100);
+	content: counter(progress) '% remaining';
+}
+.scroll-passage-inverse-fill { transform: scaleX(clamp(0, var(--flux-scroll-progress-y-inverse, 1), 1)); }
+
+.scroll-passage-midway-readout::after {
+	counter-reset: midway calc(var(--flux-scroll-midway-y, 0) * 100);
+	content: counter(midway) '% centred';
+}
+.scroll-passage-midway-fill { transform: scaleX(clamp(0, var(--flux-scroll-midway-y, 0), 1)); }
+
+@container style(--scroll-passage-wobble: 1) {
+	.scroll-passage-artwork { animation: scroll-passage-wobble 350ms ease-in-out infinite alternate; }
+}
+@keyframes scroll-passage-wobble {
+	from { rotate: -3deg; }
+	to { rotate: 3deg; }
+}
+@media (prefers-reduced-motion: reduce) {
+	.scroll-passage-artwork { scale: none; animation: none; }
+}

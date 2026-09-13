@@ -1,0 +1,21 @@
+.pointer-pad { position: relative; min-height: 12rem; padding: 1rem; border: 1px solid; overflow: hidden; }
+.pointer-marker { position: absolute; left: calc(var(--flux-pointer-x, .5) * 100%); top: calc(var(--flux-pointer-y, .5) * 100%); width: 1rem; height: 1rem; border-radius: 50%; background: #111; transform: translate(-50%, -50%); pointer-events: none; }
+.pointer-preview { margin-top: 1rem; width: min(14rem, 100%); min-height: 8rem; }
+.pointer-readout::after { counter-reset: x calc(var(--flux-pointer-x-px, 0)) y calc(var(--flux-pointer-y-px, 0)); content: counter(x) 'px, ' counter(y) 'px'; }
+.viewport-pointer-readout::after { counter-reset: x calc(var(--flux-pointer-global-x-px, 0)) y calc(var(--flux-pointer-global-y-px, 0)); content: counter(x) 'px, ' counter(y) 'px'; }
+.size-box { resize: both; overflow: auto; width: 23rem; max-width: 100%; min-width: 8rem; min-height: 7rem; padding: 1rem; border: 1px solid; }
+.size-readout::after { counter-reset: width calc(var(--flux-size-x, 0)) height calc(var(--flux-size-y, 0)); content: counter(width) ' × ' counter(height) ' CSS pixels'; }
+.truncated-text { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.truncation-note { opacity: var(--flux-truncated, 0); color: #ce241c; }
+.visibility-preview { margin-top: 2rem; padding: 1rem; border: 3px solid rgb(0 0 0 / var(--flux-visible, 1)); }
+.palette-preview { margin: 0; box-shadow: 0 1rem 3rem .5rem var(--flux-palette, #333); padding: .5rem; }
+.palette-preview img, .palette-preview video { display: block; width: 100%; height: auto; }
+.palette-preview figcaption { padding-block: 1rem; }
+.swatches { display: flex; height: 2rem; }
+.swatches span { flex: 1; }
+.swatches .accent { background: var(--flux-palette-accent, #777); }
+.swatches .dark { background: var(--flux-palette-dark, #222); }
+.swatches .light { background: var(--flux-palette-light, #ddd); }
+.swatches .average { background: var(--flux-palette-average, #888); }
+.temperature { position: relative; height: .5rem; margin-top: 1rem; background: linear-gradient(to right, #aaa, white, #555); }
+.temperature span { position: absolute; left: calc((var(--flux-palette-temp, 0) + 1) * 50%); height: 1rem; width: .25rem; top: -.25rem; background: #111; }

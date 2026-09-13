@@ -23,7 +23,7 @@ export class Style {
 }
 
 const CSS_CONTENT = `
-[data-flux="autosave"] {
+[data-flux~="autosave"] {
 	display: none;
 }
 

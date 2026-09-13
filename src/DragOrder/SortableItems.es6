@@ -1,3 +1,4 @@
+import {DirectiveParser} from "../DirectiveParser.es6";
 export const LEGACY_SORTABLE_ITEM_ATTRIBUTE = "data-flux-drag-order-item";
 
 /**
@@ -11,7 +12,7 @@ export class SortableItems {
 	}
 
 	isSortable(child) {
-		return child.dataset["flux"] === "drag-order"
+		return DirectiveParser.has(child, "drag-order")
 			|| child.hasAttribute(LEGACY_SORTABLE_ITEM_ATTRIBUTE);
 	}
 

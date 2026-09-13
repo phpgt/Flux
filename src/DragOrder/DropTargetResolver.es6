@@ -42,7 +42,7 @@ export class DropTargetResolver {
 			return null;
 		}
 
-		let host = element.closest("[data-flux='drag-order']");
+		let host = element.closest("[data-flux~='drag-order']");
 		if(!host || host === dragState.item) {
 			return null;
 		}

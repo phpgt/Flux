@@ -2,15 +2,15 @@
 
 Flux is a minimalist JavaScript library that's shipped by default with [WebEngine]. 
 
-Its purpose is to give server-rendered applications a _fluid user experience_: instead of every link click and form submission causing a harsh full-page refresh, navigation and updates feel continuous, more like an SPA where the user never really leaves the page.
+Flux gives server-rendered applications a _fluid user experience_ by handling navigation and form submissions in the background, performing background updates to content within the page, and enriching CSS variables with live information from JavaScript.
 
-The difference is that your application still uses the same straightforward server-rendered code, so it stays readable and predictable, while Flux adds the client-side layer for smooth updates without requiring you to write any JavaScript yourself.
+All of Flux's functionality is done by adding `data-flux` attributes to the page, rather than writing JavaScript. 
 
 [Read the documentation](https://www.php.gt/flux/).
 
 ## Behat browser tests
 
-This repository includes Behat end-to-end tests for the examples in `example/`.
+This repository includes Behat end-to-end tests for the website in `examples/` and regression fixtures in `test/fixtures/example/`.
 
 Install PHP dependencies with:
 
@@ -42,7 +42,7 @@ Useful overrides:
 - `BEHAT_APP_PORT=8080 composer behat`
 - `BEHAT_CHROME_PORT=9333 composer behat`
 
-To use Flux, convert a "regular" HTML form into a _flux form_ by adding the `data-flux` attribute:
+To enable Flux on an HTML form, add the `data-flux` attribute:
 
 ```html
 <form method="post" data-flux>
@@ -58,7 +58,7 @@ To use Flux, convert a "regular" HTML form into a _flux form_ by adding the `dat
 </form>
 ```
 
-When the above form submits, because it has been marked with the `data-flux` attribute, the default submit behaviour will be suppressed, and a [background fetch][fetch] will be emitted instead, submitting the POST data in the background. When the fetch completes, the default behaviour is to replace the form with the form's counterpart on the new HTML document (after submitting the page), but other behaviours can be configured.
+When this form submits, Flux sends its POST data using a [background fetch][fetch]. By default, Flux then replaces the form with its counterpart in the returned HTML document. Other update behaviours can be configured.
 
 Flux also supports polling-based live regions:
 
@@ -89,20 +89,110 @@ Flux can also turn a server-ordered form into a drag handle:
 
 Use `data-flux-drag-handle` on the draggable item or its parent container to change the generated handle text. If it is omitted, the handle text is `Drag`.
 
+Use `data-flux-drag-axis="y"` or `data-flux-drag-axis="x"` on the draggable item or its container to constrain dragging vertically or horizontally within its original container. The generated handle uses the corresponding directional cursor.
+
 Drag ordering can be nested: the board can sort list containers, and each list can sort its own cards. Flux uses horizontal ordering when sortable siblings are laid out side by side and vertical ordering for normal lists.
 
-## Limitations compared to other libraries
+## CSS properties
 
-Flux is designed as a **progressive enhancement** tool that encourages plain HTTP techniques. Your web applications should function fully even without any JavaScript or CSS, ensuring simplicity and accessibility. This approach simplifies development by focusing on straightforward, reliable techniques, making the entire development experience more manageable.
+Combine directives with spaces to expose browser state to your stylesheet:
 
-This design decision leads to several limitations compared to other libraries:
+```html
+<label data-flux="flux-field">
+	<span>Short description</span>
+	<textarea name="description" maxlength="200"></textarea>
+	<span class="remaining" aria-hidden="true"></span>
+</label>
+```
 
-- GET and POST are the only methods available to you as a web developer. This library doesn't change that.
-- Flux is only triggered by actions like clicking a link or submitting a form. While forms can update in the background and elements can refresh automatically, all Flux actions are powered by server-side responses tied to links or buttons, which can be hidden by Flux for better usability.
-- Fetched page responses are expected to be full-page responses by default. Partial page renders are not the norm and go against the principles of plain HTTP usage.
-- State management is not included, as HTTP is a stateless protocol. Any state must be managed on the server side, similar to how it would be handled without client-side code.
-- Client-side routing is not supported. Features like dynamic routes, code-splitting, or navigation guards must be handled entirely on the server.
-- WebSocket and Server-Sent Events are not supported. Live updates with `data-flux="live"` rely on regular GET requests with polling.
+```css
+.remaining::after {
+	counter-reset: characters var(--flux-field-remaining, 200);
+	content: counter(characters) " characters remaining";
+}
+```
+
+CSS sources cover local and viewport pointer positions, element size, visibility and first appearance, range/select/colour controls, field history, form validity, image/video palettes, content truncation, and local time/date. Numeric values have no unit suffix, ready for `calc()`.
+
+Pointer sources also expose `--flux-pointer-x-raw-px` and `--flux-pointer-y-raw-px` (or `--flux-pointer-global-x-raw-px` and `--flux-pointer-global-y-raw-px`). These retain coordinates outside the element or viewport, while the existing scalar and pixel properties stay clamped. Combine the local raw coordinates with `flux-size` and CSS `atan2()` to point an arrow towards the pointer.
+
+Use `auto` to combine background form submission with CSS sources: `<form data-flux="auto flux-form">`. Connections share a source's properties with other regions:
+
+```html
+<section data-flux="flux-visible (flux-pointer,flux-size@footer > .preview, #summary)">
+	<p>This element supplies the measurements.</p>
+</section>
+```
+
+Flux batches measurements and changed CSS writes, shares observers, and pauses expensive work while neither a source nor its connected destinations are visible.
+
+See the [CSS property reference](https://github.com/PhpGt/Flux/wiki/CSS-properties), or try the [geometry](examples/pages/geometry.php), [control](examples/pages/controls.php), [palette](examples/pages/media.php), and [clock](examples/pages/time.php) examples.
+
+`flux-time` supplies seconds, minutes, and twelve-hour values, plus scalars for positioning clock hands. `flux-date` supplies calendar numbers, localised day/month names, and year/month/week/day progress. They share a timer that updates once a second and pauses off-screen. See the [time and date reference](https://github.com/PhpGt/Flux/wiki/Time-and-date).
+
+### Scroll position
+
+`flux-scroll` measures the declaring element’s own scroll area. On `<body>` or `<html>` it measures the document’s scrolling element, making page offsets available through CSS inheritance.
+
+| Directive | CSS properties | Meaning |
+| --- | --- | --- |
+| `flux-scroll` | `--flux-scroll-x`, `--flux-scroll-y` | Scroll offset divided by the available scroll range, clamped to 0–1. Zero when that axis has no scroll range. |
+| `flux-scroll` | `--flux-scroll-x-px`, `--flux-scroll-y-px` | Native signed scroll offsets in unitless CSS pixels, retaining fractional pixels. |
+| `flux-scroll-progress` | `--flux-scroll-progress-x`, `--flux-scroll-progress-y` | Unclamped passage through the nearest ancestor scrollport on each axis, falling back to the page viewport. |
+
+```html
+<body data-flux="flux-scroll">
+  <div class="reading-progress"></div>
+  <article data-flux="flux-scroll-progress">
+    <div class="illustration">Scroll to reveal this story.</div>
+  </article>
+</body>
+```
+
+```css
+.reading-progress {
+  position: fixed;
+  inset: 0 0 auto;
+  height: 4px;
+  background: currentColor;
+  transform-origin: left;
+  transform: scaleX(var(--flux-scroll-y, 0));
+}
+.illustration {
+  opacity: clamp(0.2, var(--flux-scroll-progress-y, 0), 1);
+}
+```
+
+`--flux-scroll-progress-x-inverse` and `--flux-scroll-progress-y-inverse` expose **1 − progress**, without clamping. The vertical inverse is greater than 1 before entry from below, 1 at entry, between 1 and 0 during passage, 0 at exit, and negative after leaving above. A zero-length passage has forward progress 0 and inverse progress 1. Both values are included in CSS connections.
+
+`flux-scroll-progress` also supplies `--flux-scroll-midway-x` and `--flux-scroll-midway-y`: **1 − abs(2 × progress − 1)**. Midway is negative outside the scrollport, 0 at entry, 0.5 at quarter passage, 1 at centre alignment, 0.5 at three-quarter passage, and 0 at exit. It is unclamped below zero and included in CSS connections. A zero-length passage returns midway 0.
+
+For vertical passage, **0** is when the element’s top edge reaches the scrollport’s bottom edge. **1** is when its bottom edge reaches the scrollport’s top edge. Halfway is when their centres align. Values are negative before entry and greater than one after exit, including while the element is off-screen. Horizontal passage enters from the right and exits through the left. This works for elements taller or wider than their scrollport too.
+
+Passage uses `(scrollport end − element start) / (scrollport size + element size)`, accounting for container borders and scrollbar space. An ancestor with `overflow: auto`, `scroll`, or `hidden` establishes the scrollport even before its content overflows; `overflow: clip` does not. Nested scrollports are measured independently of whether an outer ancestor currently clips them. These are physical X/Y coordinates, rather than writing-mode-relative axes. RTL/reversed scroll offsets retain their native negative pixel values while their scalar measures progress from the scroll origin to the opposite end.
+
+Use `(flux-scroll@#meter)` or `(flux-scroll-progress@#meter)` to copy measurements to another element. Properties are refreshed on scroll, viewport and observed container/content resizes, DOM changes, and media loads. Updates are batched per animation frame and suspend while the tab is hidden. There is no continuous animation loop: CSS-only movement or transforms need another measurement event. Passage measures the current bounding rectangle; animate a child if you want to avoid changing the measured element’s own geometry. A zero-length passage returns zero.
+
+The `data-flux-scroll` attribute still controls navigation scroll restoration; it is separate from these CSS source directives. Try both [interactive scroll examples](examples/pages/scroll.php), including a connected meter that stays visible before and after the measured element passes through a nested scroll area.
+
+## Development
+
+Run `npm test` for unit and integration tests, `npm run build` to rebuild `dist/flux.js`, and `composer behat` for real-browser examples. See [CONTRIBUTING.md](CONTRIBUTING.md) for component responsibilities and testing guidance.
+
+The [browser profiling guide](test/profile/README.md) covers CPU activity, tab visibility and retained memory during repeated updates.
+
+## Design and scope
+
+Flux is designed for **progressive enhancement**: server-rendered HTML, links, and forms provide the application's core functionality, and Flux adds background requests and page updates. Build the core interactions to work independently of JavaScript and CSS so they remain available when those enhancements are unavailable.
+
+The following conventions and boundaries define how Flux works:
+
+- Flux uses GET and POST for link navigation and form submissions.
+- Page updates use HTML responses from the server. Links and forms trigger requests through user interaction, and live regions refresh automatically through polling.
+- Fetched responses are expected to contain full HTML pages by default. Flux selects the relevant content from each response to update the current page.
+- Application data is managed on the server. Flux tracks local interaction history and measurements for its CSS properties.
+- Routing is handled by the server. Flux does not provide client-side routing.
+- Live updates with `data-flux="live"` use regular GET requests with polling. WebSocket and Server-Sent Events are outside Flux's scope.
 
 [WebEngine]: https://www.php.gt/webengine/
 [fetch]: https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API
@@ -112,3 +202,9 @@ This design decision leads to several limitations compared to other libraries:
 [JetBrains Open Source sponsorship program](https://www.jetbrains.com/community/opensource/)
 
 [![JetBrains logo.](https://resources.jetbrains.com/storage/products/company/brand/logos/jetbrains.svg)](https://www.jetbrains.com/community/opensource/)
+
+## Interactive website
+
+Run `php -S localhost:8080` from this repository and visit [localhost:8080](http://localhost:8080/). The site uses PHP, Flair's default styling and Flux attributes, with feature pages and source disclosures for the examples.
+
+You can also serve `examples/` directly as the web root. See [the website README](examples/README.md) for the local Flair symlink, stylesheet build and deployment details.

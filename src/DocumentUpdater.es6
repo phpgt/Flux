@@ -24,7 +24,7 @@ export class DocumentUpdater {
 		this.debug = debug;
 	}
 
-	apply(newDocument, allowedTypes = undefined, allowedTargetKeys = undefined, requestElementState = null) {
+	apply(newDocument, allowedTypes = undefined, allowedTargetKeys = undefined, requestElementState = null, navigation = false) {
 		this.focusStateManager.markAutofocus(newDocument);
 		let newActiveElement = this.focusStateManager.capturePendingActiveElement(newDocument);
 		let allowedTypeSet = allowedTypes ? new Set(allowedTypes) : null;
@@ -58,7 +58,7 @@ export class DocumentUpdater {
 
 		updates = this.withoutTargetsDisconnectedByOuterUpdates(updates);
 		if(updates.length > 0) {
-			this.dispatchFluxEvent("flux:before-render", {updates});
+			this.dispatchFluxEvent("flux:before-render", {updates, navigation});
 			updates.forEach(update => this.applyUpdate(update, requestElementState));
 			this.dispatchFluxEvent("flux:after-render", {updates});
 		}
@@ -144,7 +144,8 @@ export class DocumentUpdater {
 	}
 
 	applyInnerUpdate(existingElement, newElement) {
-		this.prepareElementUpdate(existingElement, newElement);
+		// The existing root stays in place; only initialise children that will be inserted.
+		this.prepareElementUpdate(existingElement, newElement, false);
 
 		while(existingElement.firstChild) {
 			existingElement.removeChild(existingElement.firstChild);

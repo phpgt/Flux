@@ -83,8 +83,9 @@ export class NavigationController {
 			{
 				action: "clickLink",
 				errorPrefix: "Link fetch error",
-				scrollX: 0,
-				scrollY: 0,
+				scrollX: scrollState.preserve ? scrollState.x : 0,
+				scrollY: scrollState.preserve ? scrollState.y : 0,
+				preserveScroll: scrollState.preserve,
 				scrollBehavior: scrollState.behavior,
 				scrollPath: scrollState.path,
 			},
@@ -112,6 +113,8 @@ export class NavigationController {
 		for(let {element: waitingElement, className} of waitingTargets) {
 			waitingElement?.classList?.add(className);
 		}
+
+		historyState.updateHistory = element?.closest?.("[data-flux-history]")?.dataset.fluxHistory !== "false";
 
 		try {
 			return await this.requestDocument(url, requestOptions, historyState, onDocument, true);
@@ -191,7 +194,7 @@ export class NavigationController {
 
 			let html = await response.text();
 			let document = this.parser.parseFromString(html, "text/html");
-			if(historyState.action) {
+			if(historyState.action && historyState.updateHistory !== false) {
 				this.storeScrollPositionForCurrentEntry(historyState);
 				this.historyObject.pushState(
 					this.createHistoryState(historyState),
@@ -218,6 +221,8 @@ export class NavigationController {
 		let state = {
 			action: historyState.action,
 		};
+
+		if(historyState.preserveScroll) state.fluxScrollPreserve = true;
 
 		if(Number.isFinite(historyState.scrollY)) {
 			state.fluxScrollX = Number.isFinite(historyState.scrollX) ? historyState.scrollX : 0;
@@ -264,6 +269,11 @@ export class NavigationController {
 
 	getScrollStateForElement(element) {
 		let scrollElement = element?.closest?.("[data-flux-scroll]");
+		let preserve = scrollElement?.dataset?.fluxScroll === "preserve";
+		// A preserve marker changes navigation policy, not the scrolling element.
+		while(scrollElement?.dataset?.fluxScroll === "preserve") {
+			scrollElement = scrollElement.parentElement?.closest("[data-flux-scroll]");
+		}
 		let behavior = scrollElement?.dataset?.fluxScroll;
 		if(behavior !== "smooth" && behavior !== "auto") {
 			behavior = null;
@@ -271,6 +281,7 @@ export class NavigationController {
 
 		if(scrollElement && scrollElement !== this.documentObject?.body && scrollElement !== this.documentObject?.documentElement) {
 			return {
+				...(preserve ? {preserve: true} : {}),
 				x: scrollElement.scrollLeft,
 				y: scrollElement.scrollTop,
 				behavior,
@@ -279,6 +290,7 @@ export class NavigationController {
 		}
 
 		return {
+			...(preserve ? {preserve: true} : {}),
 			x: this.windowObject?.scrollX ?? 0,
 			y: this.windowObject?.scrollY ?? 0,
 			behavior,

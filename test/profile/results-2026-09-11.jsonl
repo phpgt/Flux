@@ -1,0 +1,30 @@
+{"browser":{"protocolVersion":"1.3","product":"Chrome/151.0.7922.108","revision":"@4744b886309d987d292e43232776d2206cccb13d","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/151.0.0.0 Safari/537.36","jsVersion":"15.1.206.16"},"base":"http://127.0.0.1:8082/","sampleMs":6200,"batches":10,"batchSize":100}
+{"label":"Clock visible","seconds":6.2,"hidden":false,"timers":6,"frames":6,"videoFrames":0,"fetches":0,"scriptMs":1.32,"taskMs":34.51}
+{"label":"Clock off-screen","seconds":6.2,"hidden":false,"timers":0,"frames":0,"videoFrames":0,"fetches":0,"scriptMs":0,"taskMs":0.87}
+{"label":"Gauge redlining","seconds":6.2,"hidden":false,"timers":0,"frames":0,"videoFrames":0,"fetches":0,"scriptMs":0,"taskMs":2.82}
+{"label":"Gauge off-screen","seconds":6.2,"hidden":false,"timers":0,"frames":0,"videoFrames":0,"fetches":0,"scriptMs":0,"taskMs":0.48}
+{"label":"Off-screen gauge animation","animation":"none"}
+{"label":"Live regions visible","seconds":6.2,"hidden":false,"timers":8,"frames":7,"videoFrames":0,"fetches":1,"scriptMs":3.16,"taskMs":14.17}
+{"label":"Live regions off-screen","seconds":6.2,"hidden":false,"timers":6,"frames":6,"videoFrames":0,"fetches":0,"scriptMs":1.36,"taskMs":30.77}
+{"label":"Live regions in background tab","seconds":6.2,"hidden":true,"timers":0,"frames":0,"videoFrames":0,"fetches":0,"scriptMs":0,"taskMs":0.34}
+{"label":"Live regions resumed","seconds":6.2,"hidden":false,"timers":8,"frames":7,"videoFrames":0,"fetches":1,"scriptMs":1.85,"taskMs":6.63}
+{"label":"Video playing","seconds":6.2,"hidden":false,"timers":0,"frames":166,"videoFrames":150,"fetches":0,"scriptMs":35.44,"taskMs":95.42}
+{"label":"Video off-screen","seconds":6.2,"hidden":false,"timers":0,"frames":0,"videoFrames":0,"fetches":0,"scriptMs":0.54,"taskMs":5.97}
+{"label":"Video in background tab","seconds":6.2,"hidden":true,"timers":0,"frames":0,"videoFrames":0,"fetches":0,"scriptMs":0,"taskMs":0.59}
+{"label":"forms page idle","seconds":3,"hidden":false,"timers":0,"frames":0,"videoFrames":0,"fetches":0,"scriptMs":0,"taskMs":2.31}
+{"label":"navigation page idle","seconds":3,"hidden":false,"timers":0,"frames":0,"videoFrames":0,"fetches":0,"scriptMs":0,"taskMs":1.29}
+{"label":"search page idle","seconds":3,"hidden":false,"timers":0,"frames":0,"videoFrames":0,"fetches":0,"scriptMs":0,"taskMs":1.29}
+{"label":"geometry page idle","seconds":3,"hidden":false,"timers":0,"frames":0,"videoFrames":0,"fetches":0,"scriptMs":0,"taskMs":1.66}
+{"label":"controls page idle","seconds":3,"hidden":false,"timers":0,"frames":0,"videoFrames":0,"fetches":0,"scriptMs":0,"taskMs":15.56}
+{"label":"reference page idle","seconds":3,"hidden":false,"timers":0,"frames":0,"videoFrames":0,"fetches":0,"scriptMs":0,"taskMs":1.41}
+{"label":"Dialog replacements","updates":0,"withInspectorEntries":{"documents":8,"nodes":286,"jsEventListeners":26},"documents":8,"nodes":286,"jsEventListeners":26,"heap":{"usedSize":1201284,"totalSize":1572864,"embedderHeapUsedSize":1444744,"backingStorageSize":132476}}
+{"label":"Dialog replacements","updates":100,"withInspectorEntries":{"documents":8,"nodes":317,"jsEventListeners":27},"documents":8,"nodes":317,"jsEventListeners":27,"heap":{"usedSize":1383260,"totalSize":1835008,"embedderHeapUsedSize":1607568,"backingStorageSize":132581}}
+{"label":"Dialog replacements","updates":200,"withInspectorEntries":{"documents":8,"nodes":317,"jsEventListeners":27},"documents":8,"nodes":317,"jsEventListeners":27,"heap":{"usedSize":1402412,"totalSize":1835008,"embedderHeapUsedSize":1586272,"backingStorageSize":132581}}
+{"label":"Dialog replacements","updates":300,"withInspectorEntries":{"documents":8,"nodes":317,"jsEventListeners":27},"documents":8,"nodes":317,"jsEventListeners":27,"heap":{"usedSize":1423388,"totalSize":1835008,"embedderHeapUsedSize":1602848,"backingStorageSize":132581}}
+{"label":"Dialog replacements","updates":400,"withInspectorEntries":{"documents":8,"nodes":317,"jsEventListeners":27},"documents":8,"nodes":317,"jsEventListeners":27,"heap":{"usedSize":1478188,"totalSize":2097152,"embedderHeapUsedSize":1602848,"backingStorageSize":132581}}
+{"label":"Dialog replacements","updates":500,"withInspectorEntries":{"documents":8,"nodes":317,"jsEventListeners":27},"documents":8,"nodes":317,"jsEventListeners":27,"heap":{"usedSize":1467056,"totalSize":2097152,"embedderHeapUsedSize":1602848,"backingStorageSize":132581}}
+{"label":"Dialog replacements","updates":600,"withInspectorEntries":{"documents":8,"nodes":317,"jsEventListeners":27},"documents":8,"nodes":317,"jsEventListeners":27,"heap":{"usedSize":1493440,"totalSize":2097152,"embedderHeapUsedSize":1602848,"backingStorageSize":132581}}
+{"label":"Dialog replacements","updates":700,"withInspectorEntries":{"documents":8,"nodes":317,"jsEventListeners":27},"documents":8,"nodes":317,"jsEventListeners":27,"heap":{"usedSize":1493440,"totalSize":2097152,"embedderHeapUsedSize":1602848,"backingStorageSize":132581}}
+{"label":"Dialog replacements","updates":800,"withInspectorEntries":{"documents":8,"nodes":317,"jsEventListeners":27},"documents":8,"nodes":317,"jsEventListeners":27,"heap":{"usedSize":1493440,"totalSize":2097152,"embedderHeapUsedSize":1602848,"backingStorageSize":132581}}
+{"label":"Dialog replacements","updates":900,"withInspectorEntries":{"documents":8,"nodes":317,"jsEventListeners":27},"documents":8,"nodes":317,"jsEventListeners":27,"heap":{"usedSize":1498200,"totalSize":2097152,"embedderHeapUsedSize":1602848,"backingStorageSize":132581}}
+{"label":"Dialog replacements","updates":1000,"withInspectorEntries":{"documents":8,"nodes":317,"jsEventListeners":27},"documents":8,"nodes":317,"jsEventListeners":27,"heap":{"usedSize":1496740,"totalSize":2097152,"embedderHeapUsedSize":1602848,"backingStorageSize":132581}}

@@ -1,3 +1,5 @@
+import {LiveVisibility} from "./LiveVisibility.es6";
+
 /**
  * Runs recurring background refreshes for live Flux regions.
  * Registers live update targets, schedules polling based on
@@ -21,6 +23,7 @@ export class LiveHandler {
 		intervalMs = 1000,
 		now = () => Date.now(),
 		domPath = null,
+		documentObject = globalThis.document,
 	) {
 		this.navigationController = navigationController;
 		this.updateTargetRegistry = updateTargetRegistry;
@@ -36,6 +39,8 @@ export class LiveHandler {
 		this.timerId = null;
 		this.inFlight = false;
 		this.lastRefreshMap = new Map();
+		this.visibility = new LiveVisibility(this.refreshSchedule, documentObject);
+		this.disposed = false;
 	}
 
 	register(updateType, element) {
@@ -46,10 +51,28 @@ export class LiveHandler {
 			this.lastRefreshMap.set(key, this.now());
 		}
 
+		this.visibility.observe(element);
+		// Replacement elements are initialised before adoption into the current document.
+		if(this.visibility.document.contains(element)) this.ensureRunning();
+		else queueMicrotask(this.refreshSchedule);
+	}
+
+	refreshSchedule = () => {
+		if(this.disposed) return;
+		this.visibility.prune();
+		let keys = new Set();
+		for(let type of LiveHandler.UPDATE_TYPES) {
+			for(let element of this.getConnectedElements(type)) keys.add(this.getTargetKey(type, element));
+		}
+		for(let key of this.lastRefreshMap.keys()) {
+			if(!keys.has(key)) this.lastRefreshMap.delete(key);
+		}
+		this.stop();
 		this.ensureRunning();
 	}
 
 	ensureRunning() {
+		if(this.disposed || this.inFlight || this.visibility.document.hidden) return;
 		let nextDelay = this.getNextPollDelay();
 		if(this.timerId !== null || nextDelay === null) {
 			return;
@@ -69,13 +92,9 @@ export class LiveHandler {
 
 	pollDocument = async() => {
 		this.timerId = null;
+		if(this.disposed || this.inFlight) return;
 		let dueTargets = this.getDueTargets();
 		if(dueTargets.length === 0) {
-			this.ensureRunning();
-			return;
-		}
-
-		if(this.inFlight) {
 			this.ensureRunning();
 			return;
 		}
@@ -88,7 +107,10 @@ export class LiveHandler {
 				newDocument => {
 					this.markTargetsRefreshed(dueTargets);
 					targetsRefreshed = true;
-					this.onDocument(newDocument, dueTargets.map(target => target.key));
+					let activeTargets = dueTargets.filter(target => this.visibility.isActive(target.element));
+					if(!this.disposed && activeTargets.length) {
+						this.onDocument(newDocument, activeTargets.map(target => target.key));
+					}
 				},
 			);
 
@@ -98,11 +120,12 @@ export class LiveHandler {
 		}
 		finally {
 			this.inFlight = false;
-			this.ensureRunning();
+			this.refreshSchedule();
 		}
 	}
 
 	markTargetsRefreshed(targets) {
+		if(this.disposed) return;
 		let refreshedAt = this.now();
 		for(let target of targets) {
 			this.lastRefreshMap.set(target.key, refreshedAt);
@@ -140,6 +163,7 @@ export class LiveHandler {
 
 		for(let type of LiveHandler.UPDATE_TYPES) {
 			for(let element of this.getConnectedElements(type)) {
+				if(!this.visibility.isActive(element)) continue;
 				let key = this.getTargetKey(type, element);
 				let rateMs = this.getRateMs(element);
 				let lastRefresh = this.lastRefreshMap.get(key) ?? -Infinity;
@@ -159,6 +183,7 @@ export class LiveHandler {
 
 		for(let type of LiveHandler.UPDATE_TYPES) {
 			for(let element of this.getConnectedElements(type)) {
+				if(!this.visibility.isActive(element)) continue;
 				hasTargets = true;
 				let key = this.getTargetKey(type, element);
 				let rateMs = this.getRateMs(element);
@@ -178,7 +203,7 @@ export class LiveHandler {
 	getConnectedElements(type) {
 		let connected = [];
 		for(let element of [...this.updateTargetRegistry.getElements(type)]) {
-			if(element?.isConnected) {
+			if(this.visibility.document.contains(element)) {
 				connected.push(element);
 				continue;
 			}
@@ -188,6 +213,13 @@ export class LiveHandler {
 		}
 
 		return connected;
+	}
+
+	dispose() {
+		this.disposed = true;
+		this.stop();
+		this.visibility.dispose();
+		this.lastRefreshMap.clear();
 	}
 
 	getRateMs(element) {

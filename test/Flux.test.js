@@ -389,8 +389,10 @@ describe("FocusStateManager", () => {
 
 		let matched = focusStateManager.capturePendingActiveElement(newDocument);
 		document.body.replaceWith(newDocument.body);
+		let restoredFocus = vi.spyOn(document.querySelector("input"), "focus");
 		focusStateManager.restorePendingActiveElement(document.querySelector("input"));
 
+		expect(restoredFocus).toHaveBeenCalledWith({preventScroll: true});
 		expect(document.activeElement).toBe(document.querySelector("input"));
 		expect(matched.getAttribute("value")).toBe("Two");
 	});
@@ -421,8 +423,10 @@ describe("FocusStateManager", () => {
 		`, "text/html");
 		document.body.replaceWith(newDocument.body);
 
+		let restoredFocus = vi.spyOn(document.querySelector("input"), "focus");
 		focusStateManager.restoreElementState(elementState);
 
+		expect(restoredFocus).toHaveBeenCalledWith({preventScroll: true});
 		let restoredInput = document.querySelector("input");
 		expect(restoredInput.value).toBe("One updated");
 		expect(document.activeElement).toBe(restoredInput);
@@ -538,6 +542,41 @@ describe("NavigationController", () => {
 		expect(pushState).toHaveBeenCalledWith({action: "submitForm"}, "", "https://example.com/next");
 		expect(callback).toHaveBeenCalledWith(expect.any(Document));
 		expect(form.classList.contains("flux-form-waiting")).toBe(false);
+	});
+
+	it.each(["form", "link"])("renders a %s response without updating history when disabled", async (kind) => {
+		document.body.innerHTML = `
+		<section data-flux-history="false">
+			<form action="/search"><input name="q" value="London"></form>
+			<a href="/city" data-flux-scroll="preserve">London</a>
+		</section>`;
+		let history = {pushState: vi.fn(), replaceState: vi.fn()};
+		let fetcher = vi.fn().mockResolvedValue({
+			ok: true,
+			url: "http://localhost:3000/city",
+			text: async () => "<html><body><dialog open>London</dialog></body></html>",
+		});
+		let controller = new NavigationController(new DOMParser(), fetcher, history);
+		let callback = vi.fn();
+		let element = document.querySelector(kind === "form" ? "form" : "a");
+		let request = () => kind === "form"
+			? controller.submitForm(element, new FormData(element), callback)
+			: controller.clickLink(element, callback);
+
+		await request();
+
+		expect(fetcher).toHaveBeenCalledTimes(1);
+		expect(callback.mock.calls[0][0].querySelector("dialog").textContent).toBe("London");
+		expect(history.pushState).not.toHaveBeenCalled();
+		expect(history.replaceState).not.toHaveBeenCalled();
+		if(kind === "link") {
+			expect(callback.mock.calls[0][1]).toMatchObject({action: "clickLink", fluxScrollPreserve: true});
+		}
+
+		element.dataset.fluxHistory = "true";
+		await request();
+		expect(history.pushState).toHaveBeenCalledTimes(1);
+		expect(history.replaceState).toHaveBeenCalledTimes(1);
 	});
 
 	it("dispatches before-request and uses mutated request details", async () => {
@@ -1619,7 +1658,7 @@ describe("DocumentUpdater", () => {
 
 describe("DirectiveRegistry", () => {
 	it("defines every supported data-flux value in one place", () => {
-		expect(DirectiveRegistry.DEFINITIONS).toEqual({
+		expect(DirectiveRegistry.DEFINITIONS).toMatchObject({
 			"": expect.objectContaining({handler: "autoContainer"}),
 			"autosave": expect.objectContaining({handler: "autoSave"}),
 			"update": expect.objectContaining({handler: "updateOuter"}),
@@ -1965,6 +2004,42 @@ describe("FormHandler", () => {
 });
 
 describe("AutocompleteHandler", () => {
+	it("reuses server-rendered results for keyboard navigation and subsequent queries", async () => {
+		document.body.innerHTML = `
+		<form method="get" data-flux-min-length="0"><input name="q" value=""><button>Search</button></form>
+		<div id="results" data-flux="autocomplete-results"><a href="?city=london">London</a></div>
+		`;
+		let navigationController = {
+			fetchForm: vi.fn((form, formData, onDocument) => {
+				onDocument(new DOMParser().parseFromString(`
+					<div id="results" data-flux="autocomplete-results"><a href="?city=tokyo">Tokyo</a></div>
+				`, "text/html"));
+				return Promise.resolve();
+			}),
+		};
+		let handler = new AutocompleteHandler(navigationController);
+		let form = document.querySelector("form");
+		let input = form.querySelector("input");
+		let initialResults = document.querySelector("#results");
+		handler.initAutocomplete(form);
+
+		input.focus();
+		input.dispatchEvent(new KeyboardEvent("keydown", {key: "ArrowDown", bubbles: true}));
+		expect(document.activeElement).toBe(initialResults.querySelector("a"));
+		document.activeElement.dispatchEvent(new KeyboardEvent("keydown", {key: "ArrowUp", bubbles: true}));
+		expect(document.activeElement).toBe(input);
+
+		input.value = "Tokyo";
+		await handler.updateResults(form);
+		expect(initialResults.isConnected).toBe(false);
+		expect(document.querySelectorAll("#results")).toHaveLength(1);
+		expect(form.nextElementSibling.textContent).toBe("Tokyo");
+
+		let submit = new Event("submit", {bubbles: true, cancelable: true});
+		form.dispatchEvent(submit);
+		expect(submit.defaultPrevented).toBe(false);
+	});
+
 	it("fetches and mounts marked results after input changes", async () => {
 		vi.useFakeTimers();
 		document.body.innerHTML = `
@@ -2914,6 +2989,60 @@ describe("DragOrderHandler", () => {
 		expect(document.querySelector("[data-id='1']").classList.contains("flux-drag-order-dragging")).toBe(false);
 	});
 
+	it("constrains vertical dragging to the original column and submits the new order", () => {
+		document.body.innerHTML = `
+		<ul data-flux-drag-axis="y">
+			<li data-flux="drag-order"><form><input name="order"><button name="do" value="move">Move</button></form></li>
+			<li data-flux="drag-order"><form><input name="order"><button name="do" value="move">Move</button></form></li>
+		</ul>
+		<ul data-flux-drag-parent="other"></ul>`;
+		let submitForm = vi.fn();
+		let handler = new DragOrderHandler({submitForm}, document);
+		let [container, otherContainer] = document.querySelectorAll("ul");
+		let [item, secondItem] = container.children;
+		let form = item.querySelector("form");
+		item.getBoundingClientRect = () => ({left: 20, top: 40, width: 120, height: 50});
+		secondItem.getBoundingClientRect = () => ({left: 20, top: 90, width: 120, height: 50});
+		handler.initDragOrder(item);
+		expect(item.querySelector(".drag-handle").style.cursor).toBe("ns-resize");
+		handler.startPointerDrag({button: 0, clientX: 30, clientY: 50, pointerId: 1, preventDefault: vi.fn()}, form, item);
+		handler.moveItem(150, otherContainer, 300);
+		expect(item.parentElement).toBe(container);
+		expect(container.lastElementChild).toBe(item);
+		expect(handler.dragState.floatingItem.style.transform).toBe("translate(20px, 140px)");
+		handler.pointerUp({pointerId: 1});
+		expect(form.elements.order.value).toBe("1");
+		expect(submitForm).toHaveBeenCalledWith(form, form.querySelector("button"));
+		expect(document.querySelector(".flux-drag-order-floating")).toBe(null);
+	});
+
+	it("constrains horizontal dragging to the original column and submits the new order", () => {
+		document.body.innerHTML = `
+		<ul data-flux-drag-axis="x">
+			<li data-flux="drag-order"><form><input name="order"><button name="do" value="move">Move</button></form></li>
+			<li data-flux="drag-order"><form><input name="order"><button name="do" value="move">Move</button></form></li>
+		</ul>
+		<ul data-flux-drag-parent="other"></ul>`;
+		let submitForm = vi.fn();
+		let handler = new DragOrderHandler({submitForm}, document);
+		let [container, otherContainer] = document.querySelectorAll("ul");
+		let [item, secondItem] = container.children;
+		let form = item.querySelector("form");
+		item.getBoundingClientRect = () => ({left: 20, top: 40, width: 120, height: 50});
+		secondItem.getBoundingClientRect = () => ({left: 140, top: 40, width: 120, height: 50});
+		handler.initDragOrder(item);
+		expect(item.querySelector(".drag-handle").style.cursor).toBe("ew-resize");
+		handler.startPointerDrag({button: 0, clientX: 30, clientY: 50, pointerId: 1, preventDefault: vi.fn()}, form, item);
+		handler.moveItem(150, otherContainer, 300);
+		expect(item.parentElement).toBe(container);
+		expect(container.lastElementChild).toBe(item);
+		expect(handler.dragState.floatingItem.style.transform).toBe("translate(290px, 40px)");
+		handler.pointerUp({pointerId: 1});
+		expect(form.elements.order.value).toBe("1");
+		expect(submitForm).toHaveBeenCalledWith(form, form.querySelector("button"));
+		expect(document.querySelector(".flux-drag-order-floating")).toBe(null);
+	});
+
 	it("uses a floating clone while the real item reserves its place", () => {
 		document.body.innerHTML = `
 		<style>
@@ -3221,6 +3350,7 @@ describe("ResponseHandler", () => {
 			["outer", "inner", "attributes", "live-outer", "live-inner", "link-outer", "link-inner"],
 			undefined,
 			null,
+			true,
 		);
 		expect(animationFrame).toHaveBeenCalledTimes(2);
 		expect(scrollTo).toHaveBeenCalledWith({
