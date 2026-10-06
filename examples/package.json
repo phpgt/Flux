@@ -1,0 +1,14 @@
+{
+  "name": "flux-website",
+  "private": true,
+  "scripts": {
+    "build": "sass --load-path=node_modules/flair/style style/site.scss assets/site.css --no-source-map && cp ../dist/flux.js assets/flux.js",
+    "watch": "sass --load-path=node_modules/flair/style --watch style/site.scss:assets/site.css --no-source-map"
+  },
+  "dependencies": {
+    "flair": "file:../../../BrightFlair/flair"
+  },
+  "devDependencies": {
+    "sass": "^1.104.0"
+  }
+}

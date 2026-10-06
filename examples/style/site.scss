@@ -1,0 +1,66 @@
+@use "flair";
+@use "theme";
+@use "clock";
+@use "controls";
+@use "geometry";
+@use "scroll";
+@use "interactions";
+
+:root { @include theme.base; --flair-font-body: system-ui, sans-serif; }
+@include flair.typography;
+@include flair.controls;
+@include flair.base;
+body { @extend %d-typography; background: var(--flair-color-surface); color: var(--flair-color-text); }
+.site-header, .site-footer, .site-layout { @extend %l-page-frame; }
+.site-header { @extend %p-page-header; }
+.wordmark { color: inherit; font-size: 2.8rem; font-weight: 850; letter-spacing: -.08em; text-decoration: none; display: flex; align-items: baseline; gap: 1rem; }
+.wordmark span { font-size: .7rem; letter-spacing: .1em; }
+.site-layout { @extend %l-sidebar; --flair-sidebar-width: 13rem; --flair-content-min: 22rem; --flair-layout-gap: 3rem; --flair-page-padding-block: 3rem; @include flair.sticky-sidebar; }
+.site-nav { @extend %p-side-navigation; }
+.sidebar-note { font-size: .8rem; color: var(--flair-color-muted); margin-block: 2rem; }
+.page-intro { @extend %p-page-intro; }
+.lead { @extend %d-typography-lead; }
+.eyebrow { @extend %d-typography-eyebrow; }
+.demo { @extend %o-card; @extend %d-state-reveal; --flair-reveal-progress: var(--flux-first-visible, 1); --flair-surface-padding: clamp(1.25rem, 3vw, 2.5rem); --flair-card-title-size: 1.8rem; margin-top: 3rem; scroll-margin-top: 1rem; }
+.split, .demo-grid { @extend %p-grid; --flair-grid-columns: 2; --flair-grid-min: 17rem; align-items: start; }
+.demo-copy p { max-width: 45ch; }
+.demo h2 { --flair-heading-2: 1.8rem; }
+.demo h3 { --flair-heading-3: 1.2rem; --flair-card-title-size: 1.2rem; }
+.source { @extend %o-disclosure; margin-top: .6rem; font-size: .85rem; }
+pre { @extend %o-code-block; max-height: 30rem; overflow: auto; }
+.fields { @extend %p-form-fields; }
+.field { @extend %o-form-field; }
+.actions { @extend %p-form-actions; }
+.chapter-nav { @extend %p-navigation; }
+.table-scroll { @extend %p-table-scroll; }
+.notice { @extend %o-notice; }
+// DOM reordering must not make the browser scroll to follow an anchored row.
+.sortable-list { overflow-anchor: none; @extend %p-action-list; --flair-list-padding: var(--flair-space-3); margin-block-end: var(--flair-space-6); }
+.complete .item-text { text-decoration: line-through; color: var(--flair-color-muted); }
+.item-actions { --flair-button-padding-inline: var(--flair-space-2); }
+.drag-handle { width: 1.25rem; height: 2rem; cursor: grab; touch-action: none; display: grid; place-items: center; }
+.drag-handle::before { content: '⠿'; font-size: 1.5rem; }
+.flux-drag-order-dragging { @extend %d-state-dragging; }
+.drag-form { margin: 0; }
+.list-demo .fields { margin-top: 1rem; }
+.big-number { @extend %o-value; }
+#single-counter, #counter-a, #counter-b { @extend %p-metric; }
+.counter-sum { @extend %p-output-row; --flair-value-size: 4rem; margin-block: var(--flair-space-8); }
+.search-results { @extend %p-search-results; --flair-list-padding: var(--flair-space-3); }
+.chapter { border-block: var(--flair-border-width) solid var(--flair-color-border); padding-block: var(--flair-space-4); margin-block: var(--flair-space-6); }
+#updates-demo .demo-grid > p { @extend %o-inset; }
+.emphasised { color: var(--flair-color-on-accent); background: var(--flair-color-accent); }
+.site-footer { @extend %p-page-footer; }
+.next-steps { padding-block: var(--flair-space-8); }
+.skip-link { @extend %o-skip-link; }
+.visually-hidden { @extend %d-visually-hidden; }
+.flux-form-waiting button { @extend %d-state-busy; }
+@media (min-width: 70rem) { #single-counter { --flair-metric-align: end; } }
+@media print { .site-nav, .source, .site-header > p { display: none; } .demo { opacity: 1; translate: none; break-inside: avoid; } }
+
+.board-column { min-height: 10rem; border: 1px dashed var(--flair-color-border); padding: .75rem; }
+
+.city-dialog { @extend %o-dialog; }
+.city-dialog dl { @extend %p-data-list; --flair-data-min: 100%; }
+.city-results { --flair-results-max-height: 22rem; }
+code { @extend %o-code; }

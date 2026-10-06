@@ -77,9 +77,10 @@ export class ResponseHandler {
 				ResponseHandler.LINK_UPDATE_TYPES,
 				undefined,
 				elementState,
+				true,
 			);
 			this.onLiveDocumentUsed();
-			this.scrollToTopAfterPaint(scrollState);
+			this.scrollAfterPaint(scrollState);
 		}, 0);
 	}
 
@@ -113,11 +114,14 @@ export class ResponseHandler {
 			&& (Number.isFinite(state.fluxScrollY) || state.action === "clickLink");
 	}
 
-	scrollToTopImmediately(scrollState = null) {
+	applyScrollPosition(scrollState = null) {
 		let scrollTarget = this.getScrollTarget(scrollState);
-		let behavior = scrollState?.fluxScrollBehavior ?? RuntimeConfig.scrollToTopBehavior;
+		let preserve = scrollState?.fluxScrollPreserve;
+		let top = preserve ? scrollState.fluxScrollY : 0;
+		let left = preserve ? scrollState.fluxScrollX : 0;
+		let behavior = preserve ? "instant" : scrollState?.fluxScrollBehavior ?? RuntimeConfig.scrollToTopBehavior;
 		if(scrollTarget?.element) {
-			this.scrollElementTo(scrollTarget.element, 0, 0, behavior);
+			this.scrollElementTo(scrollTarget.element, top, left, behavior);
 			return;
 		}
 
@@ -126,8 +130,8 @@ export class ResponseHandler {
 		}
 
 		this.windowObject.scrollTo({
-			top: 0,
-			left: 0,
+			top,
+			left,
 			behavior,
 		});
 	}
@@ -156,10 +160,10 @@ export class ResponseHandler {
 		};
 	}
 
-	scrollToTopAfterPaint(scrollState = null) {
+	scrollAfterPaint(scrollState = null) {
 		if(typeof this.animationFrame !== "function") {
 			this.scheduler(() => {
-				this.scrollToTopImmediately(scrollState);
+				this.applyScrollPosition(scrollState);
 			}, 0);
 			return;
 		}
@@ -169,7 +173,7 @@ export class ResponseHandler {
 		// scroll animation against the new layout.
 		this.animationFrame(() => {
 			this.animationFrame(() => {
-				this.scrollToTopImmediately(scrollState);
+				this.applyScrollPosition(scrollState);
 			});
 		});
 	}

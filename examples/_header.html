@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<meta name="description" content="Flux examples for background form submissions, page updates and live CSS properties." />
+	<title><?= h($pages[$page][0] ?? 'Page not found') ?> · PHP.GT / Flux</title>
+	<link rel="stylesheet" href="?asset=site.css" />
+	<script type="module" src="?asset=flux.js"></script>
+</head>
+<body data-flux="flux-pointer-global flux-scroll" data-flux-scroll="smooth">
+<a class="skip-link" href="#content">Skip to examples</a>
+<header class="site-header">
+	<a class="wordmark" href="?page=home" aria-label="Flux home">FLUX<span>by PHP.GT</span></a>
+	<p>Progressive enhancement<br />for HTML pages.</p>
+	<a href="https://github.com/PhpGt/Flux">Source on GitHub ↗</a>
+</header>
+<div class="site-layout">
+	<aside>
+		<nav class="site-nav" aria-label="Example pages"><ul>
+		<?php foreach($pages as $name => [$title]): ?>
+			<li><a href="<?= pageUrl($name) ?>" <?= $page === $name ? 'aria-current="page"' : '' ?>><?= h($title) ?></a></li>
+		<?php endforeach; ?>
+		</ul></nav>
+		<p class="sidebar-note">Built with the base <a href="https://flair.brightflair.com/">Flair</a> theme.</p>
+	</aside>
+	<main id="content" class="layout-content">
+		<header class="page-intro">
+			<p class="eyebrow">The interactive field guide</p>
+			<h1><?= h($pages[$page][0] ?? 'Page not found') ?></h1>
+			<p><?= h($pages[$page][1] ?? 'The requested page was not found.') ?></p>
+		</header>
+		<noscript><p class="notice">The forms still work with full-page submissions. JavaScript is required for Flux's live CSS values and background updates.</p></noscript>

@@ -1,0 +1,25 @@
+.kanban-grid { display: grid; grid-template-columns: repeat(3, minmax(15rem, 1fr)); gap: 1rem; overflow-x: auto; }
+.order-horizontal { display: flex; gap: 1rem; overflow-x: auto; padding-block: .5rem; }
+.order-list > li { border: 1px solid #ccc; padding: 1rem; }
+.order-horizontal > li { flex: 1 0 5rem; }
+.order-vertical { max-width: 28rem; }
+.order-vertical > li + li { margin-top: .5rem; }
+.arrow-grid { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); width: 100%; }
+.arrow-cell { display: grid; place-items: center; aspect-ratio: 1; }
+@property --arrow-sin { syntax: '<number>'; inherits: false; initial-value: 0; }
+@property --arrow-cos { syntax: '<number>'; inherits: false; initial-value: 1; }
+.pointer-arrow {
+	display: block;
+	font-size: clamp(1rem, 3vw, 2rem);
+	line-height: 1;
+	--arrow-angle: atan2(calc(var(--flux-pointer-y-raw-px, 0) - var(--flux-size-y, 0) / 2), calc(var(--flux-pointer-x-raw-px, 1) - var(--flux-size-x, 0) / 2));
+	/* Smooth direction components so crossing ±180deg does not cause a full spin. */
+	--arrow-sin: sin(var(--arrow-angle));
+	--arrow-cos: cos(var(--arrow-angle));
+	transform: rotate(atan2(var(--arrow-sin), var(--arrow-cos)));
+	transition: --arrow-sin 0.25s ease-out, --arrow-cos 0.25s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.pointer-arrow { transition: none; }
+}

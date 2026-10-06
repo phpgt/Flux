@@ -1,3 +1,5 @@
+import {DialogHandler} from "./DialogHandler.es6";
+import {CssPropertyRuntime} from "./CssProperties/Runtime.es6";
 import {Style} from "./Style.es6";
 import {ElementEventMapper} from "./ElementEventMapper.es6";
 import {DomPath} from "./DomPath.es6";
@@ -86,7 +88,7 @@ export class Flux {
 		this.documentUpdater = documentUpdater ?? new DocumentUpdater(
 			this.updateTargetRegistry,
 			this.focusStateManager,
-			(oldElement, newElement) => this.domBridge.prepareElementUpdate(oldElement, newElement),
+			(oldElement, newElement, includeRoot) => this.domBridge.prepareElementUpdate(oldElement, newElement, includeRoot),
 			element => this.domBridge.reviveScripts(element),
 			DomPath,
 			this.logger,
@@ -127,6 +129,10 @@ export class Flux {
 			this.navigationController,
 			this.logger,
 			Flux.DEBUG,
+			undefined,
+			undefined,
+			undefined,
+			this.initAutocompleteResultElements,
 		);
 		this.dragOrderHandler = dragOrderHandler ?? new DragOrderHandler(
 			this.formHandler,
@@ -134,8 +140,10 @@ export class Flux {
 			this.logger,
 			Flux.DEBUG,
 		);
+		this.dialogHandler = new DialogHandler();
 		this.directiveRegistry = directiveRegistry ?? new DirectiveRegistry({
 			autoContainer: this.initAutoContainer,
+			cssProperties: this.initCssProperties,
 			autoSave: this.formHandler.initAutoSave,
 			updateOuter: this.storeOuterUpdateElement,
 			updateInner: this.storeInnerUpdateElement,
@@ -149,9 +157,11 @@ export class Flux {
 			autocompleteResults: this.autocompleteHandler.initAutocompleteResults,
 			autoLink: this.linkHandler.initAutoLink,
 			dragOrder: this.dragOrderHandler.initDragOrder,
+			modal: this.dialogHandler.initModal,
 		});
 
 		document.querySelectorAll("[data-flux]").forEach(this.initFluxElementSafely);
+		if(!this.cssPropertyRuntime) document.addEventListener("flux:after-render", this.initRenderedCssProperties);
 	}
 
 	/**
@@ -172,6 +182,29 @@ export class Flux {
 				error,
 			);
 		}
+	}
+
+	initAutocompleteResultElements = element => {
+		if(element.matches("[data-flux]")) this.initFluxElementSafely(element);
+		element.querySelectorAll("[data-flux]").forEach(this.initFluxElementSafely);
+	}
+
+	initRenderedCssProperties = event => {
+		if(this.cssPropertyRuntime) return;
+		for(let update of event.detail.updates) this.initCssPropertiesInTree(update.element);
+	}
+
+	initCssPropertiesInTree = element => {
+		if(this.cssPropertyRuntime || !element) return;
+		let selector = '[data-flux*="flux-"]';
+		if(element.matches(selector) || element.querySelector(selector)) this.initCssProperties();
+	}
+
+	initCssProperties = () => {
+		if(this.cssPropertyRuntime) return;
+		document.removeEventListener("flux:after-render", this.initRenderedCssProperties);
+		this.cssPropertyRuntime = new CssPropertyRuntime(document, this.logger);
+		queueMicrotask(() => this.cssPropertyRuntime.synchronise());
 	}
 
 	initAutoContainer = (fluxElement) => {

@@ -1,7 +1,7 @@
 @javascript
 Feature: Multiple forms example
   Scenario: Independent counters update without clearing textarea content
-    Given I am on "/example/03-multiple-forms.php"
+    Given I am on "/test/fixtures/example/03-multiple-forms.php"
     Then Flux should be ready
     And I should see "0" in the "main" element
     When I fill the element "textarea" with "Keep this note"

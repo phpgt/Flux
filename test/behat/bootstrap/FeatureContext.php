@@ -423,6 +423,11 @@ class FeatureContext extends MinkContext {
 	 * @Then Flux should be ready
 	 */
 	public function fluxShouldBeReady():void {
+		// Some headless Chrome targets start without a viewport. Visibility-based
+		// sources cannot run until the test has a real rendering area.
+		if($this->getSession()->evaluateScript('innerWidth === 0 || innerHeight === 0')) {
+			$this->getSession()->resizeWindow(1280, 900);
+		}
 		$this->waitForCondition(
 			'document.getElementById("flux-style") !== null',
 			'Timed out waiting for Flux to initialise on the page.',

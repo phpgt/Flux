@@ -67,6 +67,12 @@ export class Handler {
 		handle.tabIndex = 0;
 		handle.ariaLabel = "Drag to reorder";
 		handle.dataset["fluxTitle"] = handleTitle;
+		if(this.getDragAxis(form, item) === "y") {
+			handle.style.cursor = "ns-resize";
+		}
+		else if(this.getDragAxis(form, item) === "x") {
+			handle.style.cursor = "ew-resize";
+		}
 		form.prepend(handle);
 
 		handle.addEventListener("dragstart", e => this.startNativeDrag(e, form, item));
@@ -86,6 +92,11 @@ export class Handler {
 			?? dragElement.parentElement?.dataset["fluxDragHandle"]
 			?? item.parentElement?.dataset["fluxDragHandle"]
 			?? "Drag";
+	}
+
+	getDragAxis(form, item) {
+		return form.closest("[data-flux-drag-axis]")?.dataset["fluxDragAxis"]
+			?? item.closest("[data-flux-drag-axis]")?.dataset["fluxDragAxis"];
 	}
 
 	initContainer(container) {
@@ -152,6 +163,9 @@ export class Handler {
 		this.dragState = {
 			form,
 			item,
+			axis: this.getDragAxis(form, item),
+			initialClientX: clientX,
+			initialClientY: clientY,
 			floatingItem: this.preview.create(item, rect),
 			initialContainer: item.parentElement,
 			container: item.parentElement,
@@ -212,6 +226,14 @@ export class Handler {
 	}
 
 	moveItem(clientY, container = this.dragState.container, clientX = null) {
+		if(this.dragState.axis === "y") {
+			container = this.dragState.initialContainer;
+			clientX = this.dragState.initialClientX;
+		}
+		else if(this.dragState.axis === "x") {
+			container = this.dragState.initialContainer;
+			clientY = this.dragState.initialClientY;
+		}
 		if(!(container instanceof HTMLElement)) {
 			container = this.dragState.container;
 		}
@@ -219,7 +241,8 @@ export class Handler {
 		let {item, pointerOffsetX, pointerOffsetY} = this.dragState;
 		let sortableItems = this.sortableItems.getSiblings(container);
 		let siblings = sortableItems.filter(child => child !== item);
-		let horizontal = this.sortableItems.isHorizontal(sortableItems);
+		let horizontal = this.dragState.axis === "x"
+			|| (this.dragState.axis !== "y" && this.sortableItems.isHorizontal(sortableItems));
 		let itemCenter = horizontal
 			? (clientX ?? 0) + pointerOffsetX
 			: clientY + pointerOffsetY;

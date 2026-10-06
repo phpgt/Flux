@@ -5,6 +5,7 @@ default:
         - "%paths.base%/test/behat"
       contexts:
         - FeatureContext
+        - CssPropertiesContext
   extensions:
     DMore\ChromeExtension\Behat\ServiceContainer\ChromeExtension: ~
     Behat\MinkExtension:

@@ -22,21 +22,21 @@ export class DomBridge {
 		this.documentObject = documentObject;
 	}
 
-	prepareElementUpdate = (oldElement, newElement) => {
+	prepareElementUpdate = (oldElement, newElement, includeRoot = true) => {
 		if(!newElement) {
 			return;
 		}
 
-		this.reattachEventListeners(oldElement, newElement);
-		this.reattachFluxElements(oldElement, newElement);
+		this.reattachEventListeners(oldElement, newElement, includeRoot);
+		this.reattachFluxElements(oldElement, newElement, includeRoot);
 	}
 
-	reattachEventListeners(oldElement, newElement) {
+	reattachEventListeners(oldElement, newElement, includeRoot = true) {
 		if(!newElement) {
 			return;
 		}
 
-		this.reattachElementListeners(oldElement, newElement);
+		if(includeRoot) this.reattachElementListeners(oldElement, newElement);
 
 		oldElement.querySelectorAll("*").forEach(oldChild => {
 			let xPath = this.domPath.getXPathForElement(oldChild, oldElement);
@@ -64,12 +64,12 @@ export class DomBridge {
 		}
 	}
 
-	reattachFluxElements(oldElement, newElement) {
+	reattachFluxElements(oldElement, newElement, includeRoot = true) {
 		if(!newElement) {
 			return;
 		}
 
-		if(newElement.matches?.("[data-flux]")) {
+		if(includeRoot && newElement.matches?.("[data-flux]")) {
 			this.initFluxElement(newElement);
 		}
 
