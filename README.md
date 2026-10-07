@@ -60,6 +60,8 @@ To enable Flux on an HTML form, add the `data-flux` attribute:
 
 When this form submits, Flux sends its POST data using a [background fetch][fetch]. By default, Flux then replaces the form with its counterpart in the returned HTML document. Other update behaviours can be configured.
 
+For local link updates within a page, add `data-flux-target` to the link or an ancestor. Its CSS selector limits the response to matching registered update regions, for example `data-flux-target="#chapter-outer, #chapter-inner"`. Those regions still need an update directive such as `data-flux="update-link"`. Links without this attribute update all registered link targets.
+
 Flux also supports polling-based live regions:
 
 ```html

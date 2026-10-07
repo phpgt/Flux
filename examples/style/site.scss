@@ -15,7 +15,8 @@ body { @extend %d-typography; background: var(--flair-color-surface); color: var
 .site-header { @extend %p-page-header; }
 .wordmark { color: inherit; font-size: 2.8rem; font-weight: 850; letter-spacing: -.08em; text-decoration: none; display: flex; align-items: baseline; gap: 1rem; }
 .wordmark span { font-size: .7rem; letter-spacing: .1em; }
-.site-layout { @extend %l-sidebar; --flair-sidebar-width: 13rem; --flair-content-min: 22rem; --flair-layout-gap: 3rem; --flair-page-padding-block: 3rem; @include flair.sticky-sidebar; }
+.site-layout { @extend %l-sidebar; --flair-sidebar-width: 13rem; --flair-content-min: 22rem; --flair-layout-gap: 3rem; --flair-page-padding-block: 3rem; }
+.site-layout > aside { position: sticky; top: 0; align-self: flex-start; max-block-size: 100dvh; overflow-y: auto; background: var(--flair-color-surface); z-index: 1; }
 .site-nav { @extend %p-side-navigation; }
 .sidebar-note { font-size: .8rem; color: var(--flair-color-muted); margin-block: 2rem; }
 .page-intro { @extend %p-page-intro; }

@@ -1586,7 +1586,8 @@ var NavigationController = class {
         scrollY: scrollState.preserve ? scrollState.y : 0,
         preserveScroll: scrollState.preserve,
         scrollBehavior: scrollState.behavior,
-        scrollPath: scrollState.path
+        scrollPath: scrollState.path,
+        targetSelector: link.closest("[data-flux-target]")?.dataset.fluxTarget
       },
       onDocument,
       this.getLinkWaitingTargets(link)
@@ -1700,6 +1701,7 @@ var NavigationController = class {
     let state = {
       action: historyState.action
     };
+    if (historyState.targetSelector) state.fluxTargetSelector = historyState.targetSelector;
     if (historyState.preserveScroll) state.fluxScrollPreserve = true;
     if (Number.isFinite(historyState.scrollY)) {
       state.fluxScrollX = Number.isFinite(historyState.scrollX) ? historyState.scrollX : 0;
@@ -1747,7 +1749,7 @@ var NavigationController = class {
     if (behavior !== "smooth" && behavior !== "auto") {
       behavior = null;
     }
-    if (scrollElement && scrollElement !== this.documentObject?.body && scrollElement !== this.documentObject?.documentElement) {
+    if (scrollElement && scrollElement !== this.documentObject?.body && scrollElement !== this.documentObject?.documentElement && this.isScrollContainer(scrollElement)) {
       return {
         ...preserve ? { preserve: true } : {},
         x: scrollElement.scrollLeft,
@@ -1763,6 +1765,11 @@ var NavigationController = class {
       behavior,
       path: null
     };
+  }
+  isScrollContainer(element) {
+    if (element.scrollTop || element.scrollLeft) return true;
+    let style = this.documentObject?.defaultView?.getComputedStyle(element);
+    return [style?.overflow, style?.overflowX, style?.overflowY].some((value) => ["auto", "scroll", "hidden"].includes(value));
   }
   getScrollElementFromPath(path) {
     if (!path || !this.documentObject) {
@@ -1921,6 +1928,17 @@ var DocumentUpdater = class {
     }
     let xPath = this.domPath.getXPathForElement(existingElement, document);
     return this.domPath.findInDocument(newDocument, xPath);
+  }
+  getTargetKeysForSelector(selector, allowedTypes) {
+    let keys = [];
+    for (let type of allowedTypes) {
+      for (let element of this.updateTargetRegistry.getElements(type)) {
+        if (element?.isConnected && element.matches(selector)) {
+          keys.push(this.getTargetKey(type, element));
+        }
+      }
+    }
+    return keys;
   }
   getTargetKey(type, element) {
     if (element?.id) {
@@ -2402,10 +2420,11 @@ var ResponseHandler = class _ResponseHandler {
     let scrollState = this.isScrollState(requestElementState) ? requestElementState : null;
     let elementState = scrollState ? null : requestElementState;
     this.scheduler(() => {
+      let targetKeys = scrollState?.fluxTargetSelector ? this.documentUpdater.getTargetKeysForSelector(scrollState.fluxTargetSelector, _ResponseHandler.LINK_UPDATE_TYPES) : void 0;
       this.documentUpdater.apply(
         newDocument,
         _ResponseHandler.LINK_UPDATE_TYPES,
-        void 0,
+        targetKeys,
         elementState,
         true
       );

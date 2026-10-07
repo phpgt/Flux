@@ -1959,12 +1959,14 @@ body {
   --flair-layout-gap: 3rem;
   --flair-page-padding-block: 3rem;
 }
-@media (min-width: 70rem) {
-  .site-layout > aside {
-    position: sticky;
-    top: var(--flair-sticky-offset, var(--flair-space-6));
-    align-self: flex-start;
-  }
+.site-layout > aside {
+  position: sticky;
+  top: 0;
+  align-self: flex-start;
+  max-block-size: 100dvh;
+  overflow-y: auto;
+  background: var(--flair-color-surface);
+  z-index: 1;
 }
 
 .sidebar-note {

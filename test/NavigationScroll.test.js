@@ -5,6 +5,14 @@ import {ResponseHandler} from "../src/ResponseHandler.es6";
 afterEach(() => { document.body.innerHTML = ""; });
 
 describe("Preserving scroll on link navigation", () => {
+	it.each(["visible", "auto"])("uses the viewport unless the marked region scrolls (overflow: %s)", overflow => {
+		document.body.innerHTML = `<main data-flux-scroll="smooth" style="overflow: ${overflow}"><a href="/selection" data-flux-scroll="preserve">Select</a></main>`;
+		let controller = new NavigationController(new DOMParser(), vi.fn(), {}, console, document, {scrollX: 10, scrollY: 900});
+		let state = controller.getScrollStateForElement(document.querySelector("a"));
+		expect(state).toMatchObject({preserve: true, behavior: "smooth", x: overflow === "auto" ? 0 : 10, y: overflow === "auto" ? 0 : 900});
+		expect(state.path !== null).toBe(overflow === "auto");
+	});
+
 	it.each([false, true])("retains history coordinates and restores the original position (scoped: %s)", async scoped => {
 		document.body.innerHTML = scoped
 			? '<section data-flux-scroll="smooth"><a href="/selection" data-flux-scroll="preserve">Select</a></section>'

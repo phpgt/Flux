@@ -12,7 +12,7 @@ if(!in_array($returnPage, ['home', 'forms', 'search'], true)) $returnPage = 'sea
 	<?php if($matches): ?>
 	<ul class="search-results city-results">
 		<?php foreach($matches as $city): ?>
-		<li><a href="<?= h(cityUrl($city['id'], $query, $returnPage)) ?>" data-flux="link" data-flux-scroll="preserve" aria-haspopup="dialog"><?= h($city['name']) ?>, <?= h($city['country']) ?></a></li>
+		<li><a href="<?= h(cityUrl($city['id'], $query, $returnPage)) ?>" data-flux="link" data-flux-target="#city-dialog-region" data-flux-scroll="preserve" aria-haspopup="dialog"><?= h($city['name']) ?>, <?= h($city['country']) ?></a></li>
 		<?php endforeach; ?>
 	</ul>
 	<?php else: ?><p>No cities matched. Enter another city or country name.</p><?php endif; ?>

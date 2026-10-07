@@ -1,5 +1,28 @@
 @javascript
 Feature: The Flux website
+  Scenario: Page links replace the content and mark the selected navigation link
+    Given I am on "/"
+    Then Flux should be ready
+    When I run this CSS example interaction:
+      """
+      window.pageNavigationMarker = true;
+      document.querySelector('.site-nav a[href="?page=navigation"]').click();
+      """
+    Then the CSS example should satisfy:
+      """
+      document.querySelector('#navigation-demo') !== null
+      && document.querySelector('#clock-demo') === null
+      && document.querySelector('.site-nav [aria-current="page"]').textContent === 'Navigation and updates'
+      && new URL(location.href).searchParams.get('page') === 'navigation'
+      && window.pageNavigationMarker === true
+      """
+    When I follow "Chapter two"
+    Then the CSS example should satisfy:
+      """
+      document.querySelector('.chapter-nav [aria-current="page"]').textContent === 'Chapter two'
+      && document.querySelector('#chapter-outer h3').textContent === 'Chapter two: CSS properties'
+      """
+
   Scenario: The homepage renders the clock and CSS-only controls
     Given I am on "/"
     Then Flux should be ready
@@ -117,12 +140,17 @@ Feature: The Flux website
   Scenario: Link navigation preserves the surrounding scratchpad
     Given I am on "/?page=navigation"
     Then Flux should be ready
+    And the CSS example should satisfy:
+      """
+      document.querySelector('.chapter-nav [aria-current="page"]').textContent === 'Chapter one'
+      """
     When I fill in "Your scratchpad" with "Keep this thought"
     And I follow "Chapter two"
     Then I should see "Chapter two: CSS properties"
     And the CSS example should satisfy:
       """
       document.querySelector('#navigation-demo textarea').value === 'Keep this thought'
+      && document.querySelector('.chapter-nav [aria-current="page"]').textContent === 'Chapter two'
       """
     # Let the reveal animation settle before the driver calculates click coordinates.
     When I run this CSS example interaction:

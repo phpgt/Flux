@@ -72,10 +72,13 @@ export class ResponseHandler {
 		let scrollState = this.isScrollState(requestElementState) ? requestElementState : null;
 		let elementState = scrollState ? null : requestElementState;
 		this.scheduler(() => {
+			let targetKeys = scrollState?.fluxTargetSelector
+				? this.documentUpdater.getTargetKeysForSelector(scrollState.fluxTargetSelector, ResponseHandler.LINK_UPDATE_TYPES)
+				: undefined;
 			this.documentUpdater.apply(
 				newDocument,
 				ResponseHandler.LINK_UPDATE_TYPES,
-				undefined,
+				targetKeys,
 				elementState,
 				true,
 			);

@@ -88,6 +88,7 @@ export class NavigationController {
 				preserveScroll: scrollState.preserve,
 				scrollBehavior: scrollState.behavior,
 				scrollPath: scrollState.path,
+				targetSelector: link.closest("[data-flux-target]")?.dataset.fluxTarget,
 			},
 			onDocument,
 			this.getLinkWaitingTargets(link),
@@ -221,6 +222,7 @@ export class NavigationController {
 		let state = {
 			action: historyState.action,
 		};
+		if(historyState.targetSelector) state.fluxTargetSelector = historyState.targetSelector;
 
 		if(historyState.preserveScroll) state.fluxScrollPreserve = true;
 
@@ -279,7 +281,8 @@ export class NavigationController {
 			behavior = null;
 		}
 
-		if(scrollElement && scrollElement !== this.documentObject?.body && scrollElement !== this.documentObject?.documentElement) {
+		if(scrollElement && scrollElement !== this.documentObject?.body && scrollElement !== this.documentObject?.documentElement
+			&& this.isScrollContainer(scrollElement)) {
 			return {
 				...(preserve ? {preserve: true} : {}),
 				x: scrollElement.scrollLeft,
@@ -296,6 +299,13 @@ export class NavigationController {
 			behavior,
 			path: null,
 		};
+	}
+
+	isScrollContainer(element) {
+		if(element.scrollTop || element.scrollLeft) return true;
+		let style = this.documentObject?.defaultView?.getComputedStyle(element);
+		return [style?.overflow, style?.overflowX, style?.overflowY]
+			.some(value => ["auto", "scroll", "hidden"].includes(value));
 	}
 
 	getScrollElementFromPath(path) {

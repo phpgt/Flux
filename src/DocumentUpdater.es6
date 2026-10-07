@@ -183,6 +183,18 @@ export class DocumentUpdater {
 		return this.domPath.findInDocument(newDocument, xPath);
 	}
 
+	getTargetKeysForSelector(selector, allowedTypes) {
+		let keys = [];
+		for(let type of allowedTypes) {
+			for(let element of this.updateTargetRegistry.getElements(type)) {
+				if(element?.isConnected && element.matches(selector)) {
+					keys.push(this.getTargetKey(type, element));
+				}
+			}
+		}
+		return keys;
+	}
+
 	getTargetKey(type, element) {
 		if(element?.id) {
 			return `${type}:#${element.id}`;
