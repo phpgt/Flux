@@ -1,20 +1,25 @@
 @charset "UTF-8";
-.table-scroll:focus-visible, .source > summary:focus-visible, .site-nav > ul > li > a:focus-visible, .chapter-nav > ul > li > a:focus-visible, :focus-visible:where(a), :focus-visible:where(input[type=checkbox], input[type=radio]), .field > :focus-visible:where(input[type=checkbox], input[type=radio]), .fields > :where(.field, label:not(.choice)) > :focus-visible:where(input[type=checkbox], input[type=radio]), .fields > .field-row > :where(.field, label) > :focus-visible:where(input[type=checkbox], input[type=radio]), .fields > .choice > :focus-visible:where(input[type=checkbox], input[type=radio]), .fields > fieldset > :where(.field, label:not(.choice)) > :focus-visible:where(input[type=checkbox], input[type=radio]), .fields > fieldset > .choice > :focus-visible:where(input[type=checkbox], input[type=radio]), :focus-visible:where(input[type=range]), .field > :focus-visible:where(input[type=range]), .fields > :where(.field, label:not(.choice)) > :focus-visible:where(input[type=range]), .fields > .field-row > :where(.field, label) > :focus-visible:where(input[type=range]), .fields > fieldset > :where(.field, label:not(.choice)) > :focus-visible:where(input[type=range]), :focus-visible:where(button,
+.table-scroll:focus-visible, .source > summary:focus-visible, .chapter-nav > :where(ul, menu) > li > a:focus-visible, .site-nav > :where(ul, menu) > li > a:focus-visible, :focus-visible:where(a), :focus-visible:where(input[type=range]), .field > :focus-visible:where(input[type=range]), .fields > :where(.field, label:not(.choice)) > :focus-visible:where(input[type=range]), .fields > .field-row > :where(.field, label) > :focus-visible:where(input[type=range]), .fields > fieldset > :where(.field, label:not(.choice)) > :focus-visible:where(input[type=range]), :focus-visible:where(input[type=checkbox], input[type=radio]), .fields > .choice > :focus-visible:where(input[type=checkbox], input[type=radio]), .fields > fieldset > .choice > :focus-visible:where(input[type=checkbox], input[type=radio]), .field > :focus-visible:where(input[type=checkbox], input[type=radio]), .fields > :where(.field, label:not(.choice)) > :focus-visible:where(input[type=checkbox], input[type=radio]), .fields > .field-row > :where(.field, label) > :focus-visible:where(input[type=checkbox], input[type=radio]), .fields > fieldset > :where(.field, label:not(.choice)) > :focus-visible:where(input[type=checkbox], input[type=radio]) {
+  outline: var(--theme-focus-width) solid var(--theme-focus-color, var(--theme-color-accent));
+  outline-offset: var(--theme-focus-offset);
+}
+
+:where(input[type=color]), .field > :where(input[type=color]), .fields > :where(.field, label:not(.choice)) > :where(input[type=color]), .fields > .field-row > :where(.field, label) > :where(input[type=color]), .fields > fieldset > :where(.field, label:not(.choice)) > :where(input[type=color]), :where(button,
 input[type=button],
 input[type=submit],
-input[type=reset]), .actions > :focus-visible:where(button, input[type=submit], input[type=reset]), .sortable-list > li > .row-actions > :focus-visible:where(button, input[type=submit], input[type=reset]), #single-counter > .actions > :focus-visible:where(button, input[type=submit], input[type=reset]), #counter-a > .actions > :focus-visible:where(button, input[type=submit], input[type=reset]), #counter-b > .actions > :focus-visible:where(button, input[type=submit], input[type=reset]), .field > :focus-visible:where(button,
+input[type=reset]), .actions > :where(button, input[type=submit], input[type=reset]), .sortable-list > li > .row-actions > :where(button, input[type=submit], input[type=reset]), #single-counter > .actions > :where(button, input[type=submit], input[type=reset]), #counter-a > .actions > :where(button, input[type=submit], input[type=reset]), #counter-b > .actions > :where(button, input[type=submit], input[type=reset]), .fields > .actions > :where(button, input[type=submit], input[type=reset]), .field > :where(button,
 input[type=button],
 input[type=submit],
-input[type=reset]), .fields > :where(.field, label:not(.choice)) > :focus-visible:where(button,
+input[type=reset]), .fields > :where(.field, label:not(.choice)) > :where(button,
 input[type=button],
 input[type=submit],
-input[type=reset]), .fields > .field-row > :where(.field, label) > :focus-visible:where(button,
+input[type=reset]), .fields > .field-row > :where(.field, label) > :where(button,
 input[type=button],
 input[type=submit],
-input[type=reset]), .fields > fieldset > :where(.field, label:not(.choice)) > :focus-visible:where(button,
+input[type=reset]), .fields > fieldset > :where(.field, label:not(.choice)) > :where(button,
 input[type=button],
 input[type=submit],
-input[type=reset]), .actions > .primary:focus-visible, .sortable-list > li > .row-actions > .primary:focus-visible, #single-counter > .actions > .primary:focus-visible, #counter-a > .actions > .primary:focus-visible, #counter-b > .actions > .primary:focus-visible, :focus-visible:where(input:not([type=hidden],
+input[type=reset]), .actions > .primary, .sortable-list > li > .row-actions > .primary, #single-counter > .actions > .primary, #counter-a > .actions > .primary, #counter-b > .actions > .primary, :where(input:not([type=hidden],
 [type=checkbox],
 [type=radio],
 [type=range],
@@ -24,7 +29,7 @@ input[type=reset]), .actions > .primary:focus-visible, .sortable-list > li > .ro
 [type=reset],
 [type=image]),
 select,
-textarea), .field > :focus-visible:where(input:not([type=hidden],
+textarea), .field > :where(input:not([type=hidden],
 [type=checkbox],
 [type=radio],
 [type=range],
@@ -34,7 +39,7 @@ textarea), .field > :focus-visible:where(input:not([type=hidden],
 [type=reset],
 [type=image]),
 select,
-textarea), .fields > :where(.field, label:not(.choice)) > :focus-visible:where(input:not([type=hidden],
+textarea), .fields > :where(.field, label:not(.choice)) > :where(input:not([type=hidden],
 [type=checkbox],
 [type=radio],
 [type=range],
@@ -44,7 +49,7 @@ textarea), .fields > :where(.field, label:not(.choice)) > :focus-visible:where(i
 [type=reset],
 [type=image]),
 select,
-textarea), .fields > .field-row > :where(.field, label) > :focus-visible:where(input:not([type=hidden],
+textarea), .fields > .field-row > :where(.field, label) > :where(input:not([type=hidden],
 [type=checkbox],
 [type=radio],
 [type=range],
@@ -54,7 +59,7 @@ textarea), .fields > .field-row > :where(.field, label) > :focus-visible:where(i
 [type=reset],
 [type=image]),
 select,
-textarea), .fields > fieldset > :where(.field, label:not(.choice)) > :focus-visible:where(input:not([type=hidden],
+textarea), .fields > fieldset > :where(.field, label:not(.choice)) > :where(input:not([type=hidden],
 [type=checkbox],
 [type=radio],
 [type=range],
@@ -64,9 +69,382 @@ textarea), .fields > fieldset > :where(.field, label:not(.choice)) > :focus-visi
 [type=reset],
 [type=image]),
 select,
-textarea), :focus-visible:where(input[type=color]), .field > :focus-visible:where(input[type=color]), .fields > :where(.field, label:not(.choice)) > :focus-visible:where(input[type=color]), .fields > .field-row > :where(.field, label) > :focus-visible:where(input[type=color]), .fields > fieldset > :where(.field, label:not(.choice)) > :focus-visible:where(input[type=color]) {
-  outline: var(--flair-focus-width) solid var(--flair-focus-color, var(--flair-color-accent));
-  outline-offset: var(--flair-focus-offset);
+textarea) {
+  outline: 0 solid var(--theme-focus-color, var(--theme-color-accent));
+  outline-offset: var(--theme-focus-offset);
+  transition: var(--theme-focus-transition);
+}
+:is(:focus, :active):not(:disabled, [aria-disabled=true]):where(input[type=color]), :is(:focus, :active):not(:disabled, [aria-disabled=true]):where(button,
+input[type=button],
+input[type=submit],
+input[type=reset]), #single-counter > .actions > :is(:focus, :active):not(:disabled, [aria-disabled=true]):where(button, input[type=submit], input[type=reset]), #counter-a > .actions > :is(:focus, :active):not(:disabled, [aria-disabled=true]):where(button, input[type=submit], input[type=reset]), #counter-b > .actions > :is(:focus, :active):not(:disabled, [aria-disabled=true]):where(button, input[type=submit], input[type=reset]), .actions > .primary:is(:focus, :active):not(:disabled, [aria-disabled=true]), .sortable-list > li > .row-actions > .primary:is(:focus, :active):not(:disabled, [aria-disabled=true]), #single-counter > .actions > .primary:is(:focus, :active):not(:disabled, [aria-disabled=true]), #counter-a > .actions > .primary:is(:focus, :active):not(:disabled, [aria-disabled=true]), #counter-b > .actions > .primary:is(:focus, :active):not(:disabled, [aria-disabled=true]), :is(:focus, :active):not(:disabled, [aria-disabled=true]):where(input:not([type=hidden],
+[type=checkbox],
+[type=radio],
+[type=range],
+[type=color],
+[type=button],
+[type=submit],
+[type=reset],
+[type=image]),
+select,
+textarea) {
+  outline: var(--theme-focus-outline);
+}
+:active:not(:disabled, [aria-disabled=true]):where(input[type=color]), :active:not(:disabled, [aria-disabled=true]):where(button,
+input[type=button],
+input[type=submit],
+input[type=reset]), #single-counter > .actions > :active:not(:disabled, [aria-disabled=true]):where(button, input[type=submit], input[type=reset]), #counter-a > .actions > :active:not(:disabled, [aria-disabled=true]):where(button, input[type=submit], input[type=reset]), #counter-b > .actions > :active:not(:disabled, [aria-disabled=true]):where(button, input[type=submit], input[type=reset]), .actions > .primary:active:not(:disabled, [aria-disabled=true]), .sortable-list > li > .row-actions > .primary:active:not(:disabled, [aria-disabled=true]), #single-counter > .actions > .primary:active:not(:disabled, [aria-disabled=true]), #counter-a > .actions > .primary:active:not(:disabled, [aria-disabled=true]), #counter-b > .actions > .primary:active:not(:disabled, [aria-disabled=true]), :active:not(:disabled, [aria-disabled=true]):where(input:not([type=hidden],
+[type=checkbox],
+[type=radio],
+[type=range],
+[type=color],
+[type=button],
+[type=submit],
+[type=reset],
+[type=image]),
+select,
+textarea) {
+  outline-width: var(--theme-focus-active-width);
+}
+@media (prefers-reduced-motion: reduce) {
+  :where(input[type=color]), .field > :where(input[type=color]), .fields > :where(.field, label:not(.choice)) > :where(input[type=color]), .fields > .field-row > :where(.field, label) > :where(input[type=color]), .fields > fieldset > :where(.field, label:not(.choice)) > :where(input[type=color]), :where(button,
+  input[type=button],
+  input[type=submit],
+  input[type=reset]), .actions > :where(button, input[type=submit], input[type=reset]), .sortable-list > li > .row-actions > :where(button, input[type=submit], input[type=reset]), #single-counter > .actions > :where(button, input[type=submit], input[type=reset]), #counter-a > .actions > :where(button, input[type=submit], input[type=reset]), #counter-b > .actions > :where(button, input[type=submit], input[type=reset]), .fields > .actions > :where(button, input[type=submit], input[type=reset]), .field > :where(button,
+  input[type=button],
+  input[type=submit],
+  input[type=reset]), .fields > :where(.field, label:not(.choice)) > :where(button,
+  input[type=button],
+  input[type=submit],
+  input[type=reset]), .fields > .field-row > :where(.field, label) > :where(button,
+  input[type=button],
+  input[type=submit],
+  input[type=reset]), .fields > fieldset > :where(.field, label:not(.choice)) > :where(button,
+  input[type=button],
+  input[type=submit],
+  input[type=reset]), .actions > .primary, .sortable-list > li > .row-actions > .primary, #single-counter > .actions > .primary, #counter-a > .actions > .primary, #counter-b > .actions > .primary, :where(input:not([type=hidden],
+  [type=checkbox],
+  [type=radio],
+  [type=range],
+  [type=color],
+  [type=button],
+  [type=submit],
+  [type=reset],
+  [type=image]),
+  select,
+  textarea), .field > :where(input:not([type=hidden],
+  [type=checkbox],
+  [type=radio],
+  [type=range],
+  [type=color],
+  [type=button],
+  [type=submit],
+  [type=reset],
+  [type=image]),
+  select,
+  textarea), .fields > :where(.field, label:not(.choice)) > :where(input:not([type=hidden],
+  [type=checkbox],
+  [type=radio],
+  [type=range],
+  [type=color],
+  [type=button],
+  [type=submit],
+  [type=reset],
+  [type=image]),
+  select,
+  textarea), .fields > .field-row > :where(.field, label) > :where(input:not([type=hidden],
+  [type=checkbox],
+  [type=radio],
+  [type=range],
+  [type=color],
+  [type=button],
+  [type=submit],
+  [type=reset],
+  [type=image]),
+  select,
+  textarea), .fields > fieldset > :where(.field, label:not(.choice)) > :where(input:not([type=hidden],
+  [type=checkbox],
+  [type=radio],
+  [type=range],
+  [type=color],
+  [type=button],
+  [type=submit],
+  [type=reset],
+  [type=image]),
+  select,
+  textarea) {
+    transition: none;
+    --theme-motion-duration: 0s;
+  }
+}
+
+:where(input[type=color]), .field > :where(input[type=color]), .fields > :where(.field, label:not(.choice)) > :where(input[type=color]), .fields > .field-row > :where(.field, label) > :where(input[type=color]), .fields > fieldset > :where(.field, label:not(.choice)) > :where(input[type=color]), :where(button,
+input[type=button],
+input[type=submit],
+input[type=reset]), .actions > :where(button, input[type=submit], input[type=reset]), .sortable-list > li > .row-actions > :where(button, input[type=submit], input[type=reset]), #single-counter > .actions > :where(button, input[type=submit], input[type=reset]), #counter-a > .actions > :where(button, input[type=submit], input[type=reset]), #counter-b > .actions > :where(button, input[type=submit], input[type=reset]), .fields > .actions > :where(button, input[type=submit], input[type=reset]), .field > :where(button,
+input[type=button],
+input[type=submit],
+input[type=reset]), .fields > :where(.field, label:not(.choice)) > :where(button,
+input[type=button],
+input[type=submit],
+input[type=reset]), .fields > .field-row > :where(.field, label) > :where(button,
+input[type=button],
+input[type=submit],
+input[type=reset]), .fields > fieldset > :where(.field, label:not(.choice)) > :where(button,
+input[type=button],
+input[type=submit],
+input[type=reset]), .actions > .primary, .sortable-list > li > .row-actions > .primary, #single-counter > .actions > .primary, #counter-a > .actions > .primary, #counter-b > .actions > .primary, :where(input:not([type=hidden],
+[type=checkbox],
+[type=radio],
+[type=range],
+[type=color],
+[type=button],
+[type=submit],
+[type=reset],
+[type=image]),
+select,
+textarea), .field > :where(input:not([type=hidden],
+[type=checkbox],
+[type=radio],
+[type=range],
+[type=color],
+[type=button],
+[type=submit],
+[type=reset],
+[type=image]),
+select,
+textarea), .fields > :where(.field, label:not(.choice)) > :where(input:not([type=hidden],
+[type=checkbox],
+[type=radio],
+[type=range],
+[type=color],
+[type=button],
+[type=submit],
+[type=reset],
+[type=image]),
+select,
+textarea), .fields > .field-row > :where(.field, label) > :where(input:not([type=hidden],
+[type=checkbox],
+[type=radio],
+[type=range],
+[type=color],
+[type=button],
+[type=submit],
+[type=reset],
+[type=image]),
+select,
+textarea), .fields > fieldset > :where(.field, label:not(.choice)) > :where(input:not([type=hidden],
+[type=checkbox],
+[type=radio],
+[type=range],
+[type=color],
+[type=button],
+[type=submit],
+[type=reset],
+[type=image]),
+select,
+textarea) {
+  border: var(--theme-border-width) solid var(--theme-control-border, var(--theme-color-border));
+  border-radius: var(--theme-control-radius, var(--theme-radius));
+  background-color: var(--theme-control-background, var(--theme-color-surface));
+  color: var(--theme-control-text, var(--theme-color-text));
+  font-family: var(--theme-control-font, var(--theme-font-body));
+  box-shadow: var(--theme-control-shadow);
+  transition: var(--theme-control-transition, none);
+  font-size: var(--theme-font-size);
+  font-weight: var(--theme-font-weight);
+  line-height: var(--theme-line-height);
+}
+:hover:not(:disabled, [aria-disabled=true]):where(input[type=color]), :hover:not(:disabled, [aria-disabled=true]):where(button,
+input[type=button],
+input[type=submit],
+input[type=reset]), #single-counter > .actions > :hover:not(:disabled, [aria-disabled=true]):where(button, input[type=submit], input[type=reset]), #counter-a > .actions > :hover:not(:disabled, [aria-disabled=true]):where(button, input[type=submit], input[type=reset]), #counter-b > .actions > :hover:not(:disabled, [aria-disabled=true]):where(button, input[type=submit], input[type=reset]), .actions > .primary:hover:not(:disabled, [aria-disabled=true]), .sortable-list > li > .row-actions > .primary:hover:not(:disabled, [aria-disabled=true]), #single-counter > .actions > .primary:hover:not(:disabled, [aria-disabled=true]), #counter-a > .actions > .primary:hover:not(:disabled, [aria-disabled=true]), #counter-b > .actions > .primary:hover:not(:disabled, [aria-disabled=true]), :hover:not(:disabled, [aria-disabled=true]):where(input:not([type=hidden],
+[type=checkbox],
+[type=radio],
+[type=range],
+[type=color],
+[type=button],
+[type=submit],
+[type=reset],
+[type=image]),
+select,
+textarea) {
+  border-color: var(--theme-control-border-hover, var(--theme-color-text));
+}
+:active:not(:disabled, [aria-disabled=true]):where(input[type=color]), :active:not(:disabled, [aria-disabled=true]):where(button,
+input[type=button],
+input[type=submit],
+input[type=reset]), #single-counter > .actions > :active:not(:disabled, [aria-disabled=true]):where(button, input[type=submit], input[type=reset]), #counter-a > .actions > :active:not(:disabled, [aria-disabled=true]):where(button, input[type=submit], input[type=reset]), #counter-b > .actions > :active:not(:disabled, [aria-disabled=true]):where(button, input[type=submit], input[type=reset]), .actions > .primary:active:not(:disabled, [aria-disabled=true]), .sortable-list > li > .row-actions > .primary:active:not(:disabled, [aria-disabled=true]), #single-counter > .actions > .primary:active:not(:disabled, [aria-disabled=true]), #counter-a > .actions > .primary:active:not(:disabled, [aria-disabled=true]), #counter-b > .actions > .primary:active:not(:disabled, [aria-disabled=true]), :active:not(:disabled, [aria-disabled=true]):where(input:not([type=hidden],
+[type=checkbox],
+[type=radio],
+[type=range],
+[type=color],
+[type=button],
+[type=submit],
+[type=reset],
+[type=image]),
+select,
+textarea) {
+  background-color: var(--theme-control-background-active, var(--theme-color-surface-disabled));
+}
+[aria-invalid=true]:where(input[type=color]), .fields > .field-row > :where(.field, label) > [aria-invalid=true]:where(input[type=color]), .fields > fieldset > :where(.field, label:not(.choice)) > [aria-invalid=true]:where(input[type=color]), [aria-invalid=true]:where(button,
+input[type=button],
+input[type=submit],
+input[type=reset]), .sortable-list > li > .row-actions > [aria-invalid=true]:where(button, input[type=submit], input[type=reset]), #single-counter > .actions > [aria-invalid=true]:where(button, input[type=submit], input[type=reset]), #counter-a > .actions > [aria-invalid=true]:where(button, input[type=submit], input[type=reset]), #counter-b > .actions > [aria-invalid=true]:where(button, input[type=submit], input[type=reset]), .fields > .field-row > :where(.field, label) > [aria-invalid=true]:where(button,
+input[type=button],
+input[type=submit],
+input[type=reset]), .fields > fieldset > :where(.field, label:not(.choice)) > [aria-invalid=true]:where(button,
+input[type=button],
+input[type=submit],
+input[type=reset]), .actions > [aria-invalid=true].primary, .sortable-list > li > .row-actions > [aria-invalid=true].primary, #single-counter > .actions > [aria-invalid=true].primary, #counter-a > .actions > [aria-invalid=true].primary, #counter-b > .actions > [aria-invalid=true].primary, [aria-invalid=true]:where(input:not([type=hidden],
+[type=checkbox],
+[type=radio],
+[type=range],
+[type=color],
+[type=button],
+[type=submit],
+[type=reset],
+[type=image]),
+select,
+textarea), .fields > .field-row > :where(.field, label) > [aria-invalid=true]:where(input:not([type=hidden],
+[type=checkbox],
+[type=radio],
+[type=range],
+[type=color],
+[type=button],
+[type=submit],
+[type=reset],
+[type=image]),
+select,
+textarea), .fields > fieldset > :where(.field, label:not(.choice)) > [aria-invalid=true]:where(input:not([type=hidden],
+[type=checkbox],
+[type=radio],
+[type=range],
+[type=color],
+[type=button],
+[type=submit],
+[type=reset],
+[type=image]),
+select,
+textarea) {
+  border-color: var(--theme-color-danger);
+  border-style: var(--theme-control-invalid-border-style, dashed);
+}
+:is(:disabled, [aria-disabled=true]):where(input[type=color]), .fields > .field-row > :where(.field, label) > :is(:disabled, [aria-disabled=true]):where(input[type=color]), .fields > fieldset > :where(.field, label:not(.choice)) > :is(:disabled, [aria-disabled=true]):where(input[type=color]), :is(:disabled, [aria-disabled=true]):where(button,
+input[type=button],
+input[type=submit],
+input[type=reset]), .sortable-list > li > .row-actions > :is(:disabled, [aria-disabled=true]):where(button, input[type=submit], input[type=reset]), #single-counter > .actions > :is(:disabled, [aria-disabled=true]):where(button, input[type=submit], input[type=reset]), #counter-a > .actions > :is(:disabled, [aria-disabled=true]):where(button, input[type=submit], input[type=reset]), #counter-b > .actions > :is(:disabled, [aria-disabled=true]):where(button, input[type=submit], input[type=reset]), .fields > .field-row > :where(.field, label) > :is(:disabled, [aria-disabled=true]):where(button,
+input[type=button],
+input[type=submit],
+input[type=reset]), .fields > fieldset > :where(.field, label:not(.choice)) > :is(:disabled, [aria-disabled=true]):where(button,
+input[type=button],
+input[type=submit],
+input[type=reset]), .actions > .primary:is(:disabled, [aria-disabled=true]), .sortable-list > li > .row-actions > .primary:is(:disabled, [aria-disabled=true]), #single-counter > .actions > .primary:is(:disabled, [aria-disabled=true]), #counter-a > .actions > .primary:is(:disabled, [aria-disabled=true]), #counter-b > .actions > .primary:is(:disabled, [aria-disabled=true]), :is(:disabled, [aria-disabled=true]):where(input:not([type=hidden],
+[type=checkbox],
+[type=radio],
+[type=range],
+[type=color],
+[type=button],
+[type=submit],
+[type=reset],
+[type=image]),
+select,
+textarea), .fields > .field-row > :where(.field, label) > :is(:disabled, [aria-disabled=true]):where(input:not([type=hidden],
+[type=checkbox],
+[type=radio],
+[type=range],
+[type=color],
+[type=button],
+[type=submit],
+[type=reset],
+[type=image]),
+select,
+textarea), .fields > fieldset > :where(.field, label:not(.choice)) > :is(:disabled, [aria-disabled=true]):where(input:not([type=hidden],
+[type=checkbox],
+[type=radio],
+[type=range],
+[type=color],
+[type=button],
+[type=submit],
+[type=reset],
+[type=image]),
+select,
+textarea) {
+  background: var(--theme-control-background-disabled, var(--theme-color-surface-disabled));
+  color: var(--theme-control-text-disabled, var(--theme-color-muted));
+  cursor: not-allowed;
+  opacity: var(--theme-disabled-opacity, 1);
+}
+@media (prefers-reduced-motion: reduce) {
+  :where(input[type=color]), .field > :where(input[type=color]), .fields > :where(.field, label:not(.choice)) > :where(input[type=color]), .fields > .field-row > :where(.field, label) > :where(input[type=color]), .fields > fieldset > :where(.field, label:not(.choice)) > :where(input[type=color]), :where(button,
+  input[type=button],
+  input[type=submit],
+  input[type=reset]), .actions > :where(button, input[type=submit], input[type=reset]), .sortable-list > li > .row-actions > :where(button, input[type=submit], input[type=reset]), #single-counter > .actions > :where(button, input[type=submit], input[type=reset]), #counter-a > .actions > :where(button, input[type=submit], input[type=reset]), #counter-b > .actions > :where(button, input[type=submit], input[type=reset]), .fields > .actions > :where(button, input[type=submit], input[type=reset]), .field > :where(button,
+  input[type=button],
+  input[type=submit],
+  input[type=reset]), .fields > :where(.field, label:not(.choice)) > :where(button,
+  input[type=button],
+  input[type=submit],
+  input[type=reset]), .fields > .field-row > :where(.field, label) > :where(button,
+  input[type=button],
+  input[type=submit],
+  input[type=reset]), .fields > fieldset > :where(.field, label:not(.choice)) > :where(button,
+  input[type=button],
+  input[type=submit],
+  input[type=reset]), .actions > .primary, .sortable-list > li > .row-actions > .primary, #single-counter > .actions > .primary, #counter-a > .actions > .primary, #counter-b > .actions > .primary, :where(input:not([type=hidden],
+  [type=checkbox],
+  [type=radio],
+  [type=range],
+  [type=color],
+  [type=button],
+  [type=submit],
+  [type=reset],
+  [type=image]),
+  select,
+  textarea), .field > :where(input:not([type=hidden],
+  [type=checkbox],
+  [type=radio],
+  [type=range],
+  [type=color],
+  [type=button],
+  [type=submit],
+  [type=reset],
+  [type=image]),
+  select,
+  textarea), .fields > :where(.field, label:not(.choice)) > :where(input:not([type=hidden],
+  [type=checkbox],
+  [type=radio],
+  [type=range],
+  [type=color],
+  [type=button],
+  [type=submit],
+  [type=reset],
+  [type=image]),
+  select,
+  textarea), .fields > .field-row > :where(.field, label) > :where(input:not([type=hidden],
+  [type=checkbox],
+  [type=radio],
+  [type=range],
+  [type=color],
+  [type=button],
+  [type=submit],
+  [type=reset],
+  [type=image]),
+  select,
+  textarea), .fields > fieldset > :where(.field, label:not(.choice)) > :where(input:not([type=hidden],
+  [type=checkbox],
+  [type=radio],
+  [type=range],
+  [type=color],
+  [type=button],
+  [type=submit],
+  [type=reset],
+  [type=image]),
+  select,
+  textarea) {
+    transition: none;
+    --theme-motion-duration: 0s;
+  }
 }
 
 :where(button,
@@ -134,125 +512,83 @@ textarea), .fields > fieldset > :where(.field, label:not(.choice)) > :where(inpu
 [type=reset],
 [type=image]),
 select,
-textarea), :where(input[type=color]), .field > :where(input[type=color]), .fields > :where(.field, label:not(.choice)) > :where(input[type=color]), .fields > .field-row > :where(.field, label) > :where(input[type=color]), .fields > fieldset > :where(.field, label:not(.choice)) > :where(input[type=color]) {
+textarea) {
   box-sizing: border-box;
   min-inline-size: 0;
   max-inline-size: 100%;
-  min-block-size: var(--flair-control-min-height);
+  min-block-size: max(44px, var(--theme-control-min-height));
   margin: 0;
-  padding: var(--flair-control-padding-block, var(--flair-space-2)) var(--flair-control-padding-inline, var(--flair-space-3));
-  border: var(--flair-border-width) solid var(--flair-control-border, var(--flair-color-border));
-  border-radius: var(--flair-control-radius, var(--flair-radius));
-  background: var(--flair-control-background, var(--flair-color-surface));
-  color: var(--flair-control-text, var(--flair-color-text));
-  font-family: var(--flair-font-body);
-  font-size: var(--flair-font-size);
-  font-weight: var(--flair-font-weight);
-  line-height: var(--flair-line-height);
+  padding: var(--theme-control-padding-block, var(--theme-space-2)) var(--theme-control-padding-inline, var(--theme-space-3));
 }
-:hover:not(:disabled):where(button,
-input[type=button],
-input[type=submit],
-input[type=reset]), #single-counter > .actions > :hover:not(:disabled):where(button, input[type=submit], input[type=reset]), #counter-a > .actions > :hover:not(:disabled):where(button, input[type=submit], input[type=reset]), #counter-b > .actions > :hover:not(:disabled):where(button, input[type=submit], input[type=reset]), .actions > .primary:hover:not(:disabled), .sortable-list > li > .row-actions > .primary:hover:not(:disabled), #single-counter > .actions > .primary:hover:not(:disabled), #counter-a > .actions > .primary:hover:not(:disabled), #counter-b > .actions > .primary:hover:not(:disabled), :hover:not(:disabled):where(input:not([type=hidden],
-[type=checkbox],
-[type=radio],
-[type=range],
-[type=color],
-[type=button],
-[type=submit],
-[type=reset],
-[type=image]),
-select,
-textarea), :hover:not(:disabled):where(input[type=color]) {
-  border-color: var(--flair-control-border-hover, var(--flair-color-text));
-}
-[aria-invalid=true]:where(button,
-input[type=button],
-input[type=submit],
-input[type=reset]), .sortable-list > li > .row-actions > [aria-invalid=true]:where(button, input[type=submit], input[type=reset]), #single-counter > .actions > [aria-invalid=true]:where(button, input[type=submit], input[type=reset]), #counter-a > .actions > [aria-invalid=true]:where(button, input[type=submit], input[type=reset]), #counter-b > .actions > [aria-invalid=true]:where(button, input[type=submit], input[type=reset]), .fields > .field-row > :where(.field, label) > [aria-invalid=true]:where(button,
-input[type=button],
-input[type=submit],
-input[type=reset]), .fields > fieldset > :where(.field, label:not(.choice)) > [aria-invalid=true]:where(button,
-input[type=button],
-input[type=submit],
-input[type=reset]), .actions > [aria-invalid=true].primary, .sortable-list > li > .row-actions > [aria-invalid=true].primary, #single-counter > .actions > [aria-invalid=true].primary, #counter-a > .actions > [aria-invalid=true].primary, #counter-b > .actions > [aria-invalid=true].primary, [aria-invalid=true]:where(input:not([type=hidden],
-[type=checkbox],
-[type=radio],
-[type=range],
-[type=color],
-[type=button],
-[type=submit],
-[type=reset],
-[type=image]),
-select,
-textarea), .fields > .field-row > :where(.field, label) > [aria-invalid=true]:where(input:not([type=hidden],
-[type=checkbox],
-[type=radio],
-[type=range],
-[type=color],
-[type=button],
-[type=submit],
-[type=reset],
-[type=image]),
-select,
-textarea), .fields > fieldset > :where(.field, label:not(.choice)) > [aria-invalid=true]:where(input:not([type=hidden],
-[type=checkbox],
-[type=radio],
-[type=range],
-[type=color],
-[type=button],
-[type=submit],
-[type=reset],
-[type=image]),
-select,
-textarea), [aria-invalid=true]:where(input[type=color]), .fields > .field-row > :where(.field, label) > [aria-invalid=true]:where(input[type=color]), .fields > fieldset > :where(.field, label:not(.choice)) > [aria-invalid=true]:where(input[type=color]) {
-  border-color: var(--flair-color-danger);
-  border-style: var(--flair-control-invalid-border-style, dashed);
-}
-:disabled:where(button,
-input[type=button],
-input[type=submit],
-input[type=reset]), .sortable-list > li > .row-actions > :disabled:where(button, input[type=submit], input[type=reset]), #single-counter > .actions > :disabled:where(button, input[type=submit], input[type=reset]), #counter-a > .actions > :disabled:where(button, input[type=submit], input[type=reset]), #counter-b > .actions > :disabled:where(button, input[type=submit], input[type=reset]), .fields > .field-row > :where(.field, label) > :disabled:where(button,
-input[type=button],
-input[type=submit],
-input[type=reset]), .fields > fieldset > :where(.field, label:not(.choice)) > :disabled:where(button,
-input[type=button],
-input[type=submit],
-input[type=reset]), .actions > .primary:disabled, .sortable-list > li > .row-actions > .primary:disabled, #single-counter > .actions > .primary:disabled, #counter-a > .actions > .primary:disabled, #counter-b > .actions > .primary:disabled, :disabled:where(input:not([type=hidden],
-[type=checkbox],
-[type=radio],
-[type=range],
-[type=color],
-[type=button],
-[type=submit],
-[type=reset],
-[type=image]),
-select,
-textarea), .fields > .field-row > :where(.field, label) > :disabled:where(input:not([type=hidden],
-[type=checkbox],
-[type=radio],
-[type=range],
-[type=color],
-[type=button],
-[type=submit],
-[type=reset],
-[type=image]),
-select,
-textarea), .fields > fieldset > :where(.field, label:not(.choice)) > :disabled:where(input:not([type=hidden],
-[type=checkbox],
-[type=radio],
-[type=range],
-[type=color],
-[type=button],
-[type=submit],
-[type=reset],
-[type=image]),
-select,
-textarea), :disabled:where(input[type=color]), .fields > .field-row > :where(.field, label) > :disabled:where(input[type=color]), .fields > fieldset > :where(.field, label:not(.choice)) > :disabled:where(input[type=color]) {
-  background: var(--flair-control-background-disabled, var(--flair-color-surface-disabled));
-  color: var(--flair-control-text-disabled, var(--flair-color-muted));
-  cursor: not-allowed;
-  opacity: var(--flair-disabled-opacity, 1);
+@media (min-width: 40rem) {
+  :where(button,
+  input[type=button],
+  input[type=submit],
+  input[type=reset]), .actions > :where(button, input[type=submit], input[type=reset]), .sortable-list > li > .row-actions > :where(button, input[type=submit], input[type=reset]), #single-counter > .actions > :where(button, input[type=submit], input[type=reset]), #counter-a > .actions > :where(button, input[type=submit], input[type=reset]), #counter-b > .actions > :where(button, input[type=submit], input[type=reset]), .fields > .actions > :where(button, input[type=submit], input[type=reset]), .field > :where(button,
+  input[type=button],
+  input[type=submit],
+  input[type=reset]), .fields > :where(.field, label:not(.choice)) > :where(button,
+  input[type=button],
+  input[type=submit],
+  input[type=reset]), .fields > .field-row > :where(.field, label) > :where(button,
+  input[type=button],
+  input[type=submit],
+  input[type=reset]), .fields > fieldset > :where(.field, label:not(.choice)) > :where(button,
+  input[type=button],
+  input[type=submit],
+  input[type=reset]), .actions > .primary, .sortable-list > li > .row-actions > .primary, #single-counter > .actions > .primary, #counter-a > .actions > .primary, #counter-b > .actions > .primary, :where(input:not([type=hidden],
+  [type=checkbox],
+  [type=radio],
+  [type=range],
+  [type=color],
+  [type=button],
+  [type=submit],
+  [type=reset],
+  [type=image]),
+  select,
+  textarea), .field > :where(input:not([type=hidden],
+  [type=checkbox],
+  [type=radio],
+  [type=range],
+  [type=color],
+  [type=button],
+  [type=submit],
+  [type=reset],
+  [type=image]),
+  select,
+  textarea), .fields > :where(.field, label:not(.choice)) > :where(input:not([type=hidden],
+  [type=checkbox],
+  [type=radio],
+  [type=range],
+  [type=color],
+  [type=button],
+  [type=submit],
+  [type=reset],
+  [type=image]),
+  select,
+  textarea), .fields > .field-row > :where(.field, label) > :where(input:not([type=hidden],
+  [type=checkbox],
+  [type=radio],
+  [type=range],
+  [type=color],
+  [type=button],
+  [type=submit],
+  [type=reset],
+  [type=image]),
+  select,
+  textarea), .fields > fieldset > :where(.field, label:not(.choice)) > :where(input:not([type=hidden],
+  [type=checkbox],
+  [type=radio],
+  [type=range],
+  [type=color],
+  [type=button],
+  [type=submit],
+  [type=reset],
+  [type=image]),
+  select,
+  textarea) {
+    min-block-size: var(--theme-control-min-height);
+  }
 }
 
 :where(input:not([type=hidden],
@@ -319,7 +655,7 @@ textarea) {
 [type=image]),
 select,
 textarea) {
-  background: var(--flair-control-background-focus, var(--flair-control-background, var(--flair-color-surface)));
+  background-color: var(--theme-control-background-focus, var(--theme-control-background, var(--theme-color-surface)));
 }
 :focus-visible:where(input:not([type=hidden],
 [type=checkbox],
@@ -352,7 +688,7 @@ textarea), .fields > fieldset > :where(.field, label:not(.choice)) > :focus-visi
 [type=image]),
 select,
 textarea) {
-  outline-offset: var(--flair-control-focus-offset, var(--flair-focus-offset));
+  outline-offset: var(--theme-control-focus-offset, var(--theme-focus-offset));
 }
 :where(input:not([type=hidden],
 [type=checkbox],
@@ -405,7 +741,7 @@ textarea)::placeholder, .fields > fieldset > :where(.field, label:not(.choice)) 
 [type=image]),
 select,
 textarea)::placeholder {
-  color: var(--flair-color-muted);
+  color: var(--theme-color-muted);
   opacity: 1;
 }
 :where(textarea):where(input:not([type=hidden],
@@ -459,7 +795,7 @@ textarea), .fields > fieldset > :where(.field, label:not(.choice)) > :where(text
 [type=image]),
 select,
 textarea) {
-  min-block-size: var(--flair-textarea-min-height);
+  min-block-size: var(--theme-textarea-min-height);
   resize: vertical;
 }
 [readonly]:where(input:not([type=hidden],
@@ -496,31 +832,31 @@ textarea) {
   border-style: dotted;
 }
 
-:where(input[type=checkbox], input[type=radio]), .field > :where(input[type=checkbox], input[type=radio]), .fields > :where(.field, label:not(.choice)) > :where(input[type=checkbox], input[type=radio]), .fields > .field-row > :where(.field, label) > :where(input[type=checkbox], input[type=radio]), .fields > .choice > :where(input[type=checkbox], input[type=radio]), .fields > fieldset > :where(.field, label:not(.choice)) > :where(input[type=checkbox], input[type=radio]), .fields > fieldset > .choice > :where(input[type=checkbox], input[type=radio]) {
+:where(input[type=checkbox], input[type=radio]), .fields > .choice > :where(input[type=checkbox], input[type=radio]), .fields > fieldset > .choice > :where(input[type=checkbox], input[type=radio]), .field > :where(input[type=checkbox], input[type=radio]), .fields > :where(.field, label:not(.choice)) > :where(input[type=checkbox], input[type=radio]), .fields > .field-row > :where(.field, label) > :where(input[type=checkbox], input[type=radio]), .fields > fieldset > :where(.field, label:not(.choice)) > :where(input[type=checkbox], input[type=radio]) {
   box-sizing: border-box;
-  inline-size: var(--flair-choice-size);
-  block-size: var(--flair-choice-size);
+  inline-size: var(--theme-choice-size);
+  block-size: var(--theme-choice-size);
   margin: 0;
-  accent-color: var(--flair-color-accent);
+  accent-color: var(--theme-color-accent);
 }
-:disabled:where(input[type=checkbox], input[type=radio]), .fields > .field-row > :where(.field, label) > :disabled:where(input[type=checkbox], input[type=radio]), .fields > .choice > :disabled:where(input[type=checkbox], input[type=radio]), .fields > fieldset > :where(.field, label:not(.choice)) > :disabled:where(input[type=checkbox], input[type=radio]), .fields > fieldset > .choice > :disabled:where(input[type=checkbox], input[type=radio]) {
+:disabled:where(input[type=checkbox], input[type=radio]), .fields > .choice > :disabled:where(input[type=checkbox], input[type=radio]), .fields > fieldset > .choice > :disabled:where(input[type=checkbox], input[type=radio]), .fields > .field-row > :where(.field, label) > :disabled:where(input[type=checkbox], input[type=radio]), .fields > fieldset > :where(.field, label:not(.choice)) > :disabled:where(input[type=checkbox], input[type=radio]) {
   cursor: not-allowed;
 }
 
 :where(input[type=range]), .field > :where(input[type=range]), .fields > :where(.field, label:not(.choice)) > :where(input[type=range]), .fields > .field-row > :where(.field, label) > :where(input[type=range]), .fields > fieldset > :where(.field, label:not(.choice)) > :where(input[type=range]) {
   inline-size: 100%;
   min-inline-size: 0;
-  min-block-size: var(--flair-control-min-height);
+  min-block-size: var(--theme-control-min-height);
   margin: 0;
-  accent-color: var(--flair-color-accent);
+  accent-color: var(--theme-color-accent);
 }
 :disabled:where(input[type=range]), .fields > .field-row > :where(.field, label) > :disabled:where(input[type=range]), .fields > fieldset > :where(.field, label:not(.choice)) > :disabled:where(input[type=range]) {
   cursor: not-allowed;
 }
 
 :where(input[type=color]), .field > :where(input[type=color]), .fields > :where(.field, label:not(.choice)) > :where(input[type=color]), .fields > .field-row > :where(.field, label) > :where(input[type=color]), .fields > fieldset > :where(.field, label:not(.choice)) > :where(input[type=color]) {
-  inline-size: var(--flair-color-control-width, 4rem);
-  padding: var(--flair-space-1);
+  inline-size: var(--theme-color-control-width, 4rem);
+  padding: var(--theme-space-1);
 }
 
 :where(button,
@@ -542,170 +878,225 @@ input[type=reset]), .actions > .primary, .sortable-list > li > .row-actions > .p
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: var(--flair-space-2);
+  gap: var(--theme-space-2);
   inline-size: auto;
-  min-block-size: var(--flair-button-min-height, var(--flair-control-min-height));
-  padding-block: var(--flair-button-padding-block, var(--flair-control-padding-block, var(--flair-space-2)));
-  padding-inline: var(--flair-button-padding-inline, var(--flair-control-padding-inline, var(--flair-space-3)));
-  border-radius: var(--flair-button-radius, var(--flair-control-radius, var(--flair-radius)));
-  border-color: var(--flair-button-border, var(--flair-control-border, var(--flair-color-border)));
-  font-size: var(--flair-button-font-size, var(--flair-font-size));
+  min-inline-size: var(--theme-button-min-width, auto);
+  min-block-size: max(44px, var(--theme-button-min-height, var(--theme-control-min-height)));
+  padding-block: var(--theme-button-padding-block, var(--theme-control-padding-block, var(--theme-space-2)));
+  padding-inline: var(--theme-button-padding-inline, var(--theme-control-padding-inline, var(--theme-space-3)));
+  border-radius: var(--theme-button-radius, var(--theme-control-radius, var(--theme-radius)));
+  border-color: var(--theme-button-border, var(--theme-control-border, var(--theme-color-border)));
+  font-size: var(--theme-button-font-size, var(--theme-font-size));
   text-align: center;
   text-decoration: none;
   overflow-wrap: anywhere;
-  cursor: pointer;
-  background: var(--flair-button-background, var(--flair-color-surface));
-  color: var(--flair-button-text, var(--flair-color-text));
-  font-weight: var(--flair-button-weight, var(--flair-label-weight));
+  cursor: var(--theme-button-cursor, pointer);
+  background: var(--theme-button-background, var(--theme-color-surface));
+  color: var(--theme-button-text, var(--theme-color-text));
+  box-shadow: var(--theme-button-shadow, none);
+  font-weight: var(--theme-button-weight, var(--theme-label-weight));
 }
-:hover:not(:disabled):where(button,
+:any-link:where(button,
 input[type=button],
 input[type=submit],
-input[type=reset]), #single-counter > .actions > :hover:not(:disabled):where(button, input[type=submit], input[type=reset]), #counter-a > .actions > :hover:not(:disabled):where(button, input[type=submit], input[type=reset]), #counter-b > .actions > :hover:not(:disabled):where(button, input[type=submit], input[type=reset]), .actions > .primary:hover:not(:disabled), .sortable-list > li > .row-actions > .primary:hover:not(:disabled), #single-counter > .actions > .primary:hover:not(:disabled), #counter-a > .actions > .primary:hover:not(:disabled), #counter-b > .actions > .primary:hover:not(:disabled) {
-  border-color: var(--flair-button-border-hover, var(--flair-control-border-hover, var(--flair-color-text)));
-  box-shadow: var(--flair-button-shadow-hover, none);
-  background: var(--flair-button-background-hover, var(--flair-color-surface-disabled));
-}
-:active:not(:disabled):where(button,
+input[type=reset]), .sortable-list > li > .row-actions > :any-link:where(button, input[type=submit], input[type=reset]), #single-counter > .actions > :any-link:where(button, input[type=submit], input[type=reset]), #counter-a > .actions > :any-link:where(button, input[type=submit], input[type=reset]), #counter-b > .actions > :any-link:where(button, input[type=submit], input[type=reset]), .fields > .field-row > :where(.field, label) > :any-link:where(button,
 input[type=button],
 input[type=submit],
-input[type=reset]), #single-counter > .actions > :active:not(:disabled):where(button, input[type=submit], input[type=reset]), #counter-a > .actions > :active:not(:disabled):where(button, input[type=submit], input[type=reset]), #counter-b > .actions > :active:not(:disabled):where(button, input[type=submit], input[type=reset]), .actions > .primary:active:not(:disabled), .sortable-list > li > .row-actions > .primary:active:not(:disabled), #single-counter > .actions > .primary:active:not(:disabled), #counter-a > .actions > .primary:active:not(:disabled), #counter-b > .actions > .primary:active:not(:disabled) {
-  background: var(--flair-button-background-active, var(--flair-button-background-hover, var(--flair-color-surface-disabled)));
-  box-shadow: none;
+input[type=reset]), .fields > fieldset > :where(.field, label:not(.choice)) > :any-link:where(button,
+input[type=button],
+input[type=submit],
+input[type=reset]), .actions > .primary:any-link, .sortable-list > li > .row-actions > .primary:any-link, #single-counter > .actions > .primary:any-link, #counter-a > .actions > .primary:any-link, #counter-b > .actions > .primary:any-link {
+  color: var(--theme-button-text, var(--theme-color-text));
+  text-decoration: var(--theme-button-decoration, none);
+}
+:hover:not(:disabled, [aria-disabled=true]):where(button,
+input[type=button],
+input[type=submit],
+input[type=reset]), #single-counter > .actions > :hover:not(:disabled, [aria-disabled=true]):where(button, input[type=submit], input[type=reset]), #counter-a > .actions > :hover:not(:disabled, [aria-disabled=true]):where(button, input[type=submit], input[type=reset]), #counter-b > .actions > :hover:not(:disabled, [aria-disabled=true]):where(button, input[type=submit], input[type=reset]), .actions > .primary:hover:not(:disabled, [aria-disabled=true]), .sortable-list > li > .row-actions > .primary:hover:not(:disabled, [aria-disabled=true]), #single-counter > .actions > .primary:hover:not(:disabled, [aria-disabled=true]), #counter-a > .actions > .primary:hover:not(:disabled, [aria-disabled=true]), #counter-b > .actions > .primary:hover:not(:disabled, [aria-disabled=true]) {
+  border-color: var(--theme-button-border-hover, var(--theme-control-border-hover, var(--theme-color-text)));
+  box-shadow: var(--theme-button-shadow-hover, none);
+  background: var(--theme-button-background-hover, var(--theme-color-surface-disabled));
+  text-decoration: var(--theme-button-decoration-hover, var(--theme-button-decoration, none));
+}
+:active:not(:disabled, [aria-disabled=true]):where(button,
+input[type=button],
+input[type=submit],
+input[type=reset]), #single-counter > .actions > :active:not(:disabled, [aria-disabled=true]):where(button, input[type=submit], input[type=reset]), #counter-a > .actions > :active:not(:disabled, [aria-disabled=true]):where(button, input[type=submit], input[type=reset]), #counter-b > .actions > :active:not(:disabled, [aria-disabled=true]):where(button, input[type=submit], input[type=reset]), .actions > .primary:active:not(:disabled, [aria-disabled=true]), .sortable-list > li > .row-actions > .primary:active:not(:disabled, [aria-disabled=true]), #single-counter > .actions > .primary:active:not(:disabled, [aria-disabled=true]), #counter-a > .actions > .primary:active:not(:disabled, [aria-disabled=true]), #counter-b > .actions > .primary:active:not(:disabled, [aria-disabled=true]) {
+  background: var(--theme-button-background-active, var(--theme-button-background-hover, var(--theme-color-surface-disabled)));
+  box-shadow: var(--theme-button-shadow-active, none);
+}
+@media (min-width: 40rem) {
+  :where(button,
+  input[type=button],
+  input[type=submit],
+  input[type=reset]), .actions > :where(button, input[type=submit], input[type=reset]), .sortable-list > li > .row-actions > :where(button, input[type=submit], input[type=reset]), #single-counter > .actions > :where(button, input[type=submit], input[type=reset]), #counter-a > .actions > :where(button, input[type=submit], input[type=reset]), #counter-b > .actions > :where(button, input[type=submit], input[type=reset]), .fields > .actions > :where(button, input[type=submit], input[type=reset]), .field > :where(button,
+  input[type=button],
+  input[type=submit],
+  input[type=reset]), .fields > :where(.field, label:not(.choice)) > :where(button,
+  input[type=button],
+  input[type=submit],
+  input[type=reset]), .fields > .field-row > :where(.field, label) > :where(button,
+  input[type=button],
+  input[type=submit],
+  input[type=reset]), .fields > fieldset > :where(.field, label:not(.choice)) > :where(button,
+  input[type=button],
+  input[type=submit],
+  input[type=reset]), .actions > .primary, .sortable-list > li > .row-actions > .primary, #single-counter > .actions > .primary, #counter-a > .actions > .primary, #counter-b > .actions > .primary {
+    min-block-size: var(--theme-button-min-height, var(--theme-control-min-height));
+  }
 }
 
-.actions > .primary:not(:disabled), .sortable-list > li > .row-actions > .primary:not(:disabled), #single-counter > .actions > .primary:not(:disabled), #counter-a > .actions > .primary:not(:disabled), #counter-b > .actions > .primary:not(:disabled) {
-  background: var(--flair-button-primary-background, var(--flair-color-accent));
-  color: var(--flair-button-primary-text, var(--flair-color-on-accent));
-  border-color: var(--flair-button-primary-border, var(--flair-button-primary-background, var(--flair-color-accent)));
+.actions > .primary:not(:disabled, [aria-disabled=true]), .sortable-list > li > .row-actions > .primary:not(:disabled, [aria-disabled=true]), #single-counter > .actions > .primary:not(:disabled, [aria-disabled=true]), #counter-a > .actions > .primary:not(:disabled, [aria-disabled=true]), #counter-b > .actions > .primary:not(:disabled, [aria-disabled=true]) {
+  background: var(--theme-button-primary-background, var(--theme-color-primary));
+  color: var(--theme-button-primary-text, var(--theme-color-ui-contrast));
+  border-color: var(--theme-button-primary-border, var(--theme-button-primary-background, var(--theme-color-primary)));
+  box-shadow: var(--theme-button-primary-shadow, var(--theme-button-shadow, none));
 }
-.actions > .primary:hover:not(:disabled), .sortable-list > li > .row-actions > .primary:hover:not(:disabled), #single-counter > .actions > .primary:hover:not(:disabled), #counter-a > .actions > .primary:hover:not(:disabled), #counter-b > .actions > .primary:hover:not(:disabled) {
-  border-color: var(--flair-button-primary-border, var(--flair-button-primary-background, var(--flair-color-accent)));
-  background: var(--flair-button-primary-background-hover, var(--flair-color-text));
-  text-decoration: var(--flair-button-primary-decoration-hover, underline);
+.actions > .primary:hover:not(:disabled, [aria-disabled=true]), .sortable-list > li > .row-actions > .primary:hover:not(:disabled, [aria-disabled=true]), #single-counter > .actions > .primary:hover:not(:disabled, [aria-disabled=true]), #counter-a > .actions > .primary:hover:not(:disabled, [aria-disabled=true]), #counter-b > .actions > .primary:hover:not(:disabled, [aria-disabled=true]) {
+  border-color: var(--theme-button-primary-border, var(--theme-button-primary-background, var(--theme-color-primary)));
+  background: var(--theme-button-primary-background-hover, color-mix(in srgb, var(--theme-color-primary), var(--theme-color-ui-contrast) 15%));
+  box-shadow: var(--theme-button-primary-shadow-hover, var(--theme-button-shadow-hover, none));
+  text-decoration: var(--theme-button-primary-decoration-hover, var(--theme-button-decoration-hover, var(--theme-button-decoration, none)));
 }
-.actions > .primary:active:not(:disabled), .sortable-list > li > .row-actions > .primary:active:not(:disabled), #single-counter > .actions > .primary:active:not(:disabled), #counter-a > .actions > .primary:active:not(:disabled), #counter-b > .actions > .primary:active:not(:disabled) {
-  background: var(--flair-button-primary-background-active, var(--flair-button-primary-background-hover, var(--flair-color-text)));
+.actions > .primary:active:not(:disabled, [aria-disabled=true]), .sortable-list > li > .row-actions > .primary:active:not(:disabled, [aria-disabled=true]), #single-counter > .actions > .primary:active:not(:disabled, [aria-disabled=true]), #counter-a > .actions > .primary:active:not(:disabled, [aria-disabled=true]), #counter-b > .actions > .primary:active:not(:disabled, [aria-disabled=true]) {
+  background: var(--theme-button-primary-background-active, var(--theme-button-primary-background-hover, color-mix(in srgb, var(--theme-color-primary), var(--theme-color-ui-contrast) 25%)));
+  box-shadow: var(--theme-button-primary-shadow-active, none);
 }
 
 .field, .fields > :where(.field, label:not(.choice)), .fields > .field-row > :where(.field, label), .fields > fieldset > :where(.field, label:not(.choice)) {
   display: grid;
   align-content: start;
-  gap: var(--flair-field-gap, var(--flair-space-2));
+  gap: var(--theme-field-gap, var(--theme-space-2));
   min-inline-size: 0;
   margin: 0;
-  color: var(--flair-color-text);
-  font: var(--flair-font-weight) var(--flair-font-size)/var(--flair-line-height) var(--flair-font-body);
+  color: var(--theme-color-text);
+  font: var(--theme-font-weight) var(--theme-font-size)/var(--theme-line-height) var(--theme-font-body);
 }
 .field > :where(label, .field-label, span:first-child), .fields > :where(.field, label:not(.choice)) > :where(label, .field-label, span:first-child), .fields > .field-row > :where(.field, label) > :where(label, .field-label, span:first-child), .fields > fieldset > :where(.field, label:not(.choice)) > :where(label, .field-label, span:first-child) {
-  font-weight: var(--flair-label-weight);
-  font-size: var(--flair-label-font-size, var(--flair-font-size));
+  font-weight: var(--theme-label-weight);
+  font-size: var(--theme-label-font-size, var(--theme-font-size));
 }
 .field > :where(.field-help, .field-error), .fields > :where(.field, label:not(.choice)) > :where(.field-help, .field-error), .fields > .field-row > :where(.field, label) > :where(.field-help, .field-error), .fields > fieldset > :where(.field, label:not(.choice)) > :where(.field-help, .field-error) {
   margin: 0;
   font: inherit;
-  font-size: var(--flair-message-font-size, var(--flair-font-size));
+  font-size: var(--theme-message-font-size, var(--theme-font-size));
 }
 .field > .field-help, .fields > :where(.field, label:not(.choice)) > .field-help, .fields > .field-row > :where(.field, label) > .field-help, .fields > fieldset > :where(.field, label:not(.choice)) > .field-help {
-  color: var(--flair-color-muted);
+  color: var(--theme-color-muted);
 }
 .field > .field-error, .fields > :where(.field, label:not(.choice)) > .field-error, .fields > .field-row > :where(.field, label) > .field-error, .fields > fieldset > :where(.field, label:not(.choice)) > .field-error {
-  color: var(--flair-color-danger);
-  font-weight: var(--flair-label-weight);
+  color: var(--theme-color-danger);
+  font-weight: var(--theme-label-weight);
 }
 
 .fields > .choice, .fields > fieldset > .choice {
   display: grid;
-  grid-template-columns: var(--flair-choice-size) minmax(0, 1fr);
+  grid-template-columns: var(--theme-choice-size) minmax(0, 1fr);
   align-items: start;
-  gap: var(--flair-space-2);
+  gap: var(--theme-space-2);
   min-inline-size: 0;
+  min-block-size: 44px;
   margin: 0;
-  color: var(--flair-color-text);
-  font: var(--flair-font-weight) var(--flair-font-size)/var(--flair-line-height) var(--flair-font-body);
+  color: var(--theme-color-text);
+  font: var(--theme-font-weight) var(--theme-font-size)/var(--theme-line-height) var(--theme-font-body);
 }
 .fields > .choice > :where(input[type=checkbox], input[type=radio]), .fields > fieldset > .choice > :where(input[type=checkbox], input[type=radio]) {
-  margin-block-start: var(--flair-space-1);
+  margin-block-start: var(--theme-space-1);
+}
+@media (min-width: 40rem) {
+  .fields > .choice, .fields > fieldset > .choice {
+    min-block-size: 0;
+  }
 }
 
 .fields > fieldset {
   display: grid;
-  gap: var(--flair-form-gap, var(--flair-space-4));
+  gap: var(--theme-form-gap, var(--theme-space-4));
   min-inline-size: 0;
   margin: 0;
-  padding: var(--flair-fieldset-padding, var(--flair-space-4));
-  border: var(--flair-border-width) solid var(--flair-color-border);
-  border-radius: var(--flair-radius);
-  font: var(--flair-font-weight) var(--flair-font-size)/var(--flair-line-height) var(--flair-font-body);
-  color: var(--flair-color-text);
+  padding: var(--theme-fieldset-padding, var(--theme-space-4));
+  border: var(--theme-border-width) solid var(--theme-color-border);
+  border-radius: var(--theme-radius);
+  font: var(--theme-font-weight) var(--theme-font-size)/var(--theme-line-height) var(--theme-font-body);
+  color: var(--theme-color-text);
 }
 .fields > fieldset > legend {
-  padding-inline: var(--flair-space-2);
-  font-weight: var(--flair-label-weight);
+  padding-inline: var(--theme-space-2);
+  font-weight: var(--theme-label-weight);
 }
 .fields > .field-row {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--flair-form-gap, var(--flair-space-4));
+  gap: var(--theme-form-gap, var(--theme-space-4));
   min-inline-size: 0;
 }
 .fields > .field-row > :where(.field, label) {
-  flex: 1 1 var(--flair-field-min-width);
+  flex: 1 1 var(--theme-field-min-width);
 }
 
 .actions, .sortable-list > li > .row-actions, #single-counter > .actions, #counter-a > .actions, #counter-b > .actions, .fields > .actions {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: var(--flair-actions-align, flex-end);
-  gap: var(--flair-actions-gap, var(--flair-space-3));
-  margin-block-start: var(--flair-actions-margin, var(--flair-space-2));
+  flex-wrap: var(--theme-actions-wrap, wrap);
+  flex-direction: var(--theme-actions-direction, column);
+  align-items: var(--theme-actions-align-items, stretch);
+  justify-content: var(--theme-actions-align, flex-end);
+  gap: var(--theme-actions-gap, var(--theme-space-3));
+  margin-block-start: var(--theme-actions-margin, var(--theme-space-2));
+}
+.actions > :where(button, input[type=submit], input[type=reset]), .sortable-list > li > .row-actions > :where(button, input[type=submit], input[type=reset]), #single-counter > .actions > :where(button, input[type=submit], input[type=reset]), #counter-a > .actions > :where(button, input[type=submit], input[type=reset]), #counter-b > .actions > :where(button, input[type=submit], input[type=reset]), .fields > .actions > :where(button, input[type=submit], input[type=reset]) {
+  white-space: var(--theme-action-white-space, normal);
 }
 .actions > .action-start, .sortable-list > li > .row-actions > .action-start, #single-counter > .actions > .action-start, #counter-a > .actions > .action-start, #counter-b > .actions > .action-start {
-  margin-inline-end: auto;
+  margin-inline-end: 0;
+}
+@media (min-width: 40rem) {
+  .actions, .sortable-list > li > .row-actions, #single-counter > .actions, #counter-a > .actions, #counter-b > .actions, .fields > .actions {
+    flex-direction: var(--theme-actions-compact-direction, row);
+    align-items: var(--theme-actions-compact-align-items, center);
+  }
+  .actions > .action-start, .sortable-list > li > .row-actions > .action-start, #single-counter > .actions > .action-start, #counter-a > .actions > .action-start, #counter-b > .actions > .action-start {
+    margin-inline-end: auto;
+  }
 }
 
 .fields {
   display: grid;
-  gap: var(--flair-form-gap, var(--flair-space-4));
+  gap: var(--theme-form-gap, var(--theme-space-4));
   min-inline-size: 0;
   margin: 0;
-  color: var(--flair-color-text);
-  font: var(--flair-font-weight) var(--flair-font-size)/var(--flair-line-height) var(--flair-font-body);
+  color: var(--theme-color-text);
+  font: var(--theme-font-weight) var(--theme-font-size)/var(--theme-line-height) var(--theme-font-body);
 }
 body, .demo {
-  color: var(--flair-color-text);
-  font-family: var(--flair-font-body);
-  font-size: var(--flair-font-size);
-  font-weight: var(--flair-font-weight);
-  line-height: var(--flair-text-leading, 1.6);
+  color: var(--theme-color-text);
+  font-family: var(--theme-font-body);
+  font-size: var(--theme-font-size);
+  font-weight: var(--theme-font-weight);
+  line-height: var(--theme-text-leading, 1.6);
   overflow-wrap: anywhere;
 }
-
 :where(h1, h2, h3, h4, h5, h6), .page-intro > :where(h1, h2, .intro-title), .demo > :where(h2, h3, h4) {
-  font-family: var(--flair-font-heading, var(--flair-font-body));
-  font-weight: var(--flair-heading-weight, 500);
-  line-height: var(--flair-heading-leading, 1.15);
-  letter-spacing: var(--flair-heading-tracking, normal);
+  color: var(--theme-color-heading);
+  font-family: var(--theme-font-heading, var(--theme-font-body));
+  font-weight: var(--theme-heading-weight, 500);
+  line-height: var(--theme-heading-leading, 1.15);
+  letter-spacing: var(--theme-heading-tracking, normal);
   overflow-wrap: anywhere;
 }
-
 .lead, .page-intro > :where(.lead, p:last-child) {
-  font-size: var(--flair-lead-size, 1.25rem);
-  max-inline-size: var(--flair-lead-measure, 55ch);
+  font-size: var(--theme-lead-size, 1.25rem);
 }
-
 .eyebrow {
-  font-size: var(--flair-eyebrow-size, 0.75rem);
-  font-weight: var(--flair-eyebrow-weight, 700);
-  letter-spacing: var(--flair-eyebrow-tracking, 0.12em);
+  font-size: var(--theme-eyebrow-size, 0.75rem);
+  font-weight: var(--theme-eyebrow-weight, 700);
+  letter-spacing: var(--theme-eyebrow-tracking, 0.12em);
   text-transform: uppercase;
 }
 
 .demo {
   display: flex;
   flex-direction: column;
-  gap: var(--flair-stack-gap, var(--flair-space-4));
+  gap: var(--theme-stack-gap, var(--theme-space-4));
   min-inline-size: 0;
 }
 .demo > * {
@@ -713,79 +1104,84 @@ body, .demo {
   margin-block: 0;
 }
 
-.field-state, .site-header, .site-footer, .sortable-list > li {
+.field-state, .site-footer, .site-header, .sortable-list > li {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--flair-cluster-gap, var(--flair-space-3));
+  gap: var(--theme-cluster-gap, var(--theme-space-3));
 }
-.field-state > *, .site-header > *, .site-footer > *, .sortable-list > li > * {
+.field-state > *, .site-footer > *, .site-header > *, .sortable-list > li > * {
   min-inline-size: 0;
 }
 
-.notice, .city-dialog, .source, .demo, #updates-demo .demo-grid > p, .scroll-offset-box, .scroll-passage-box, .scroll-passage-artwork {
-  box-sizing: border-box;
-  min-inline-size: 0;
-  padding: var(--flair-surface-padding, var(--flair-space-6));
-  border: var(--flair-surface-border-width, var(--flair-border-width)) solid var(--flair-color-border);
-  border-radius: var(--flair-surface-radius, var(--flair-radius));
-  background: var(--flair-surface-background, var(--flair-color-surface));
-  color: var(--flair-color-text);
-  box-shadow: var(--flair-surface-shadow, none);
+.notice, .city-dialog, .source, #updates-demo .demo-grid > p, .scroll-offset-box, .scroll-passage-box, .scroll-passage-artwork, .demo {
+  border: var(--theme-surface-border-width, var(--theme-border-width)) solid var(--theme-color-border);
+  border-radius: var(--theme-surface-radius, var(--theme-radius));
+  background: var(--theme-surface-background, var(--theme-color-surface));
+  color: var(--theme-color-text);
+  box-shadow: var(--theme-surface-shadow, none);
 }
 
 :where(a) {
-  color: var(--flair-color-accent);
+  color: var(--theme-link-color, var(--theme-color-accent));
   text-decoration: underline;
-  text-underline-offset: var(--flair-link-offset, 0.2em);
-  text-decoration-thickness: var(--flair-link-thickness, 1px);
+  text-underline-offset: var(--theme-link-offset, 0.2em);
+  text-decoration-thickness: var(--theme-link-thickness, 1px);
   overflow-wrap: anywhere;
 }
 :hover:where(a) {
-  text-decoration-thickness: var(--flair-link-hover-thickness, var(--flair-link-thickness, 1px));
+  text-decoration-thickness: var(--theme-link-hover-thickness, var(--theme-link-thickness, 1px));
 }
 .split, .demo-grid {
   display: grid;
-  gap: var(--flair-grid-gap, var(--flair-space-6));
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, max(var(--flair-grid-min, 16rem), (100% - (var(--flair-grid-columns, 3) - 1) * var(--flair-grid-gap, var(--flair-space-6))) / var(--flair-grid-columns, 3))), 1fr));
+  gap: var(--theme-grid-gap, var(--theme-space-6));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, max(var(--theme-grid-min, 16rem), (100% - (var(--theme-grid-columns, 3) - 1) * var(--theme-grid-gap, var(--theme-space-6))) / var(--theme-grid-columns, 3))), 1fr));
 }
 .split > *, .demo-grid > * {
   min-inline-size: 0;
 }
 
+.demo {
+  box-sizing: border-box;
+  min-inline-size: 0;
+  padding: var(--theme-surface-padding, var(--theme-space-6));
+}
 .demo > :where(h2, h3, h4) {
-  font-size: var(--flair-card-title-size, 1.25rem);
+  font-size: var(--theme-card-title-size, 1.25rem);
 }
 .demo > footer {
   margin-block-start: auto;
-  padding-block-start: var(--flair-space-4);
-  border-block-start: var(--flair-border-width) solid var(--flair-color-border);
+  padding-block-start: var(--theme-space-4);
+  border-block-start: var(--theme-border-width) solid var(--theme-color-border);
 }
 .demo > img {
   inline-size: 100%;
   block-size: auto;
-  border-radius: var(--flair-radius);
+  border-radius: var(--theme-radius);
 }
 
 #updates-demo .demo-grid > p, .scroll-offset-box, .scroll-passage-box, .scroll-passage-artwork {
-  background: var(--flair-inset-background, var(--flair-color-surface-disabled));
+  box-sizing: border-box;
+  min-inline-size: 0;
+  padding: var(--theme-surface-padding, var(--theme-space-6));
+  background: var(--theme-inset-background, var(--theme-color-surface-disabled));
   box-shadow: none;
 }
 
 .city-dialog dl {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--flair-data-min, 14rem)), 1fr));
-  gap: var(--flair-space-4);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--theme-data-min, 14rem)), 1fr));
+  gap: var(--theme-space-4);
   margin: 0;
 }
 .city-dialog dl > div {
   min-inline-size: 0;
-  padding-block: var(--flair-space-3);
-  border-block-end: var(--flair-border-width) solid var(--flair-color-border);
+  padding-block: var(--theme-space-3);
+  border-block-end: var(--theme-border-width) solid var(--theme-color-border);
 }
 .city-dialog dl dt {
-  color: var(--flair-color-muted);
-  font-size: var(--flair-small-size, 0.875rem);
+  color: var(--theme-color-muted);
+  font-size: var(--theme-small-size, 0.875rem);
 }
 .city-dialog dl dd {
   margin: 0;
@@ -799,80 +1195,188 @@ body, .demo {
 }
 .search-results > li, .sortable-list > li {
   margin: 0;
-  padding-block: var(--flair-list-padding, var(--flair-space-4));
+  padding-block: var(--theme-list-padding, var(--theme-space-4));
 }
 .search-results > li + li, .sortable-list > li + li {
-  border-block-start: var(--flair-border-width) solid var(--flair-color-border);
+  border-block-start: var(--theme-border-width) solid var(--theme-color-border);
 }
 
-.site-nav > ul > li > a, .chapter-nav > ul > li > a {
+.chapter-nav > :where(ul, menu) > li > a, .site-nav > :where(ul, menu) > li > a {
   display: block;
-  padding: var(--flair-nav-padding-block, var(--flair-space-3)) var(--flair-nav-padding-inline, var(--flair-space-4));
-  border-radius: var(--flair-nav-radius, var(--flair-radius));
-  color: var(--flair-color-text);
-  font-family: var(--flair-font-body);
+  box-sizing: border-box;
+  min-block-size: max(44px, 2.75rem);
+  padding: var(--theme-nav-padding-block, var(--theme-space-3)) var(--theme-nav-padding-inline, var(--theme-space-4));
+  border-radius: var(--theme-nav-radius, var(--theme-radius));
+  color: var(--theme-nav-text, var(--theme-color-text));
+  font-family: var(--theme-font-body);
   text-decoration: none;
   overflow-wrap: anywhere;
 }
-.site-nav > ul > li > a:hover, .chapter-nav > ul > li > a:hover {
-  background: var(--flair-nav-hover-background, var(--flair-color-surface-disabled));
+.chapter-nav > :where(ul, menu) > li > a:hover, .site-nav > :where(ul, menu) > li > a:hover, .chapter-nav > :where(ul, menu) > li > a:focus-visible, .site-nav > :where(ul, menu) > li > a:focus-visible {
+  background: var(--theme-nav-hover-background, var(--theme-color-surface-disabled));
 }
-.site-nav > ul > li > a[aria-current]:not([aria-current=false]):not([aria-current=""]), .chapter-nav > ul > li > a[aria-current]:not([aria-current=false]):not([aria-current=""]) {
-  background: var(--flair-selected-background, var(--flair-color-surface-disabled));
-  color: var(--flair-selected-text, var(--flair-color-text));
-  font-weight: var(--flair-nav-current-weight, 700);
-  box-shadow: var(--flair-nav-current-shadow, inset 0 -3px var(--flair-color-accent));
+.chapter-nav > :where(ul, menu) > li > a[aria-current]:not([aria-current=false]):not([aria-current=""]), .site-nav > :where(ul, menu) > li > a[aria-current]:not([aria-current=false]):not([aria-current=""]) {
+  background: var(--theme-nav-current-background, var(--theme-selected-background, var(--theme-color-surface-disabled)));
+  color: var(--theme-nav-current-text, var(--theme-selected-text, var(--theme-color-text)));
+  font-weight: var(--theme-nav-current-weight, 700);
+  box-shadow: var(--theme-nav-current-shadow, inset 0 -3px var(--theme-color-accent));
 }
-.chapter-nav > ul, .site-nav > ul {
+.chapter-nav > :where(ul, menu) > li > a[aria-current]:not([aria-current=false]):not([aria-current=""]):hover, .site-nav > :where(ul, menu) > li > a[aria-current]:not([aria-current=false]):not([aria-current=""]):hover, .chapter-nav > :where(ul, menu) > li > a[aria-current]:not([aria-current=false]):not([aria-current=""]):focus-visible, .site-nav > :where(ul, menu) > li > a[aria-current]:not([aria-current=false]):not([aria-current=""]):focus-visible {
+  background: var(--theme-nav-current-hover-background, var(--theme-nav-current-background, var(--theme-selected-background, var(--theme-color-surface-disabled))));
+}
+@media (min-width: 45rem) {
+  .chapter-nav > :where(ul, menu) > li > a, .site-nav > :where(ul, menu) > li > a {
+    min-block-size: 0;
+  }
+}
+
+.chapter-nav > :where(ul, menu), .site-nav > :where(ul, menu) {
   display: flex;
+  flex-direction: column;
   flex-wrap: wrap;
-  gap: var(--flair-nav-gap, var(--flair-space-2));
+  gap: var(--theme-nav-gap, var(--theme-space-2));
   list-style: none;
   margin: 0;
   padding: 0;
 }
-.chapter-nav > ul > li, .site-nav > ul > li {
+.chapter-nav > :where(ul, menu) > li, .site-nav > :where(ul, menu) > li {
   min-inline-size: 0;
   margin: 0;
 }
-.site-nav > ul {
+@media (min-width: 45rem) {
+  .chapter-nav > :where(ul, menu), .site-nav > :where(ul, menu) {
+    flex-direction: row;
+  }
+}
+
+.site-nav > :where(ul, menu) {
   flex-direction: column;
+  margin-block-start: var(--theme-side-nav-margin-block-start, 0);
+}
+.site-nav > :where(ul, menu) > li + li:not(:first-child) {
+  margin-block-start: 0;
+}
+.site-nav > :where(ul, menu) > li > a {
+  position: relative;
+  display: flex;
+  align-items: center;
+  margin: var(--theme-side-nav-link-margin, 0);
+  line-height: var(--theme-side-nav-line-height, inherit);
+  background: var(--theme-side-nav-background, transparent);
+}
+.site-nav > :where(ul, menu) > li > a:focus-visible:not(:hover) {
+  background: var(--theme-side-nav-focus-background, var(--theme-nav-hover-background, var(--theme-color-surface-disabled)));
+}
+.site-nav > :where(ul, menu) > li:hover > a {
+  background: var(--theme-side-nav-hover-background, var(--theme-nav-hover-background, var(--theme-color-surface-disabled)));
+}
+.site-nav > :where(ul, menu) > li[data-end-of-section]::after {
+  content: "";
+  display: block;
+  margin: var(--theme-side-nav-separator-space, var(--theme-space-2)) auto;
+  inline-size: var(--theme-side-nav-separator-width, calc(100% - 2rem));
+  block-size: var(--theme-border-width);
+  background: var(--theme-color-border);
+}
+.site-nav > :where(ul, menu) > li > a[aria-current]:not([aria-current=false]):not([aria-current=""])::after {
+  content: "";
+  position: absolute;
+  inset-block-start: 50%;
+  inset-inline-start: var(--theme-side-nav-marker-offset, 0);
+  translate: 0 -50%;
+  inline-size: var(--theme-side-nav-marker-width, 0);
+  block-size: var(--theme-side-nav-marker-height, 1.5rem);
+  border-radius: var(--theme-side-nav-marker-radius, 999px);
+  background: var(--theme-side-nav-marker-color, var(--theme-color-accent));
+}
+.site-nav > :where(ul, menu) > li > a[aria-current]:not([aria-current=false]):not([aria-current=""]):hover {
+  background: var(--theme-side-nav-current-hover-background, var(--theme-side-nav-hover-background, var(--theme-nav-current-hover-background, var(--theme-nav-current-background, var(--theme-selected-background, var(--theme-color-surface-disabled))))));
+}
+.site-nav > :where(ul, menu) > li > a[aria-current]:not([aria-current=false]):not([aria-current=""]):focus-visible:not(:hover) {
+  background: var(--theme-side-nav-current-focus-background, var(--theme-nav-current-hover-background, var(--theme-nav-current-background, var(--theme-selected-background, var(--theme-color-surface-disabled)))));
+}
+.site-nav > :where(ul, menu) > li > a[aria-current]:not([aria-current=false]):not([aria-current=""]) {
+  box-shadow: var(--theme-side-nav-current-shadow, var(--theme-nav-current-shadow, inset 0 -3px var(--theme-color-accent)));
+}
+@media (min-width: 45rem) {
+  .site-nav > :where(ul, menu) {
+    flex-direction: column;
+  }
+  .site-nav > :where(ul, menu) > li > a {
+    align-items: flex-start;
+  }
 }
 
 .source {
+  box-sizing: border-box;
+  min-inline-size: 0;
+  padding: var(--theme-surface-padding, var(--theme-space-6));
   padding: 0;
+  overflow: hidden;
 }
 .source > summary {
-  padding: var(--flair-disclosure-padding, var(--flair-space-4));
+  min-block-size: 44px;
+  padding: var(--theme-disclosure-padding, var(--theme-space-4));
   border-radius: inherit;
-  background: var(--flair-disclosure-background, transparent);
-  font-weight: var(--flair-heading-weight, 500);
+  background: var(--theme-disclosure-background, transparent);
+  font-weight: var(--theme-disclosure-weight, var(--theme-heading-weight, 500));
   cursor: pointer;
 }
 .source > summary:hover {
-  background: var(--flair-nav-hover-background, var(--flair-color-surface-disabled));
+  background: var(--theme-disclosure-hover-background, var(--theme-nav-hover-background, var(--theme-color-surface-disabled)));
 }
 .source > .disclosure-content {
-  padding: var(--flair-disclosure-padding, var(--flair-space-4));
+  padding: var(--theme-disclosure-padding, var(--theme-space-4));
 }
 [open].source > summary {
-  border-block-end: var(--flair-border-width) solid var(--flair-color-border);
+  border-block-end: var(--theme-border-width) solid var(--theme-color-border);
   border-end-start-radius: 0;
   border-end-end-radius: 0;
 }
+@media (min-width: 40rem) {
+  .source > summary {
+    min-block-size: 0;
+  }
+}
 
 .city-dialog {
-  inline-size: min(var(--flair-dialog-width, 32rem), 100% - 2 * var(--flair-space-4));
-  max-block-size: calc(100% - 2 * var(--flair-space-4));
+  box-sizing: border-box;
+  min-inline-size: 0;
+  padding: var(--theme-surface-padding, var(--theme-space-6));
+  inline-size: min(var(--theme-dialog-width, 32rem), 100% - 2 * var(--theme-space-4));
+  max-block-size: calc(100% - 2 * var(--theme-space-4));
   overflow: auto;
+  overscroll-behavior: contain;
+  overflow-wrap: anywhere;
   margin: auto;
 }
 [open].city-dialog:not(:modal) {
   position: static;
   margin-inline: 0;
 }
+.city-dialog:modal {
+  inline-size: 100%;
+  max-inline-size: none;
+  block-size: 100dvh;
+  max-block-size: 100dvh;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  padding-block: max(var(--theme-surface-padding, var(--theme-space-6)), env(safe-area-inset-top)) max(var(--theme-surface-padding, var(--theme-space-6)), env(safe-area-inset-bottom));
+  padding-inline: max(var(--theme-surface-padding, var(--theme-space-6)), env(safe-area-inset-left)) max(var(--theme-surface-padding, var(--theme-space-6)), env(safe-area-inset-right));
+}
+@media (min-width: 40rem) {
+  .city-dialog:modal {
+    inline-size: min(var(--theme-dialog-width, 32rem), 100% - 2 * var(--theme-space-4));
+    block-size: fit-content;
+    max-block-size: calc(100dvh - 2 * var(--theme-space-4));
+    margin: auto;
+    border: var(--theme-surface-border-width, var(--theme-border-width)) solid var(--theme-color-border);
+    border-radius: var(--theme-surface-radius, var(--theme-radius));
+  }
+}
 .city-dialog::backdrop {
-  background: var(--flair-dialog-backdrop, rgba(0, 0, 0, 0.55));
+  background: var(--theme-dialog-backdrop, rgba(0, 0, 0, 0.55));
 }
 
 .table-scroll {
@@ -882,8 +1386,11 @@ body, .demo {
   overscroll-behavior-inline: contain;
 }
 .notice {
-  border-inline-start: var(--flair-notice-border-width, 4px) solid var(--flair-notice-color, var(--flair-color-accent));
-  background: var(--flair-notice-background, var(--flair-surface-background, var(--flair-color-surface)));
+  box-sizing: border-box;
+  min-inline-size: 0;
+  padding: var(--theme-surface-padding, var(--theme-space-6));
+  border-inline-start: var(--theme-notice-border-width, 4px) solid var(--theme-notice-color, var(--theme-color-accent));
+  background: var(--theme-notice-background, var(--theme-surface-background, var(--theme-color-surface)));
 }
 .notice > :first-child {
   margin-block-start: 0;
@@ -893,41 +1400,43 @@ body, .demo {
 }
 
 .field-state span {
-  display: inline-block;
-  padding: var(--flair-badge-padding-block, var(--flair-space-1)) var(--flair-badge-padding-inline, var(--flair-space-2));
-  border: var(--flair-border-width) solid var(--flair-badge-border, var(--flair-color-border));
-  border-radius: var(--flair-badge-radius, var(--flair-radius));
-  background: var(--flair-badge-background, var(--flair-color-surface-disabled));
-  color: var(--flair-badge-text, var(--flair-color-text));
-  font-size: var(--flair-small-size, 0.875rem);
-  font-weight: var(--flair-label-weight);
-  line-height: 1.4;
+  display: inline-flex;
+  align-items: center;
+  padding-block: var(--theme-badge-padding-block, var(--theme-space-1));
+  padding-inline: var(--theme-badge-padding-inline, var(--theme-space-2));
+  border: var(--theme-border-width) solid var(--theme-badge-border, var(--theme-color-border));
+  border-radius: var(--theme-badge-radius, var(--theme-radius));
+  background: var(--theme-badge-background, var(--theme-color-surface-disabled));
+  color: var(--theme-badge-text, var(--theme-color-text));
+  font-size: var(--theme-small-size, 0.875rem);
+  font-weight: var(--theme-label-weight);
+  line-height: var(--theme-badge-line-height, 1.4);
   overflow-wrap: anywhere;
 }
 
 code {
-  font-family: var(--flair-font-mono, "Ubuntu Mono", monospace);
-  font-size: var(--flair-code-size, 0.95em);
-  background: var(--flair-code-background, var(--flair-color-surface-disabled));
-  color: var(--flair-code-text, var(--flair-color-text));
-  border-radius: var(--flair-code-radius, var(--flair-radius));
-  padding: var(--flair-space-1) var(--flair-space-2);
+  font-family: var(--theme-font-mono, ui-monospace, monospace);
+  font-size: var(--theme-code-size, 0.95em);
+  background: var(--theme-code-background, var(--theme-color-surface-disabled));
+  color: var(--theme-code-text, var(--theme-color-text));
+  border-radius: var(--theme-code-radius, var(--theme-radius));
+  padding: var(--theme-space-1) var(--theme-space-2);
   overflow-wrap: anywhere;
 }
 
 pre {
   margin: 0;
-  padding: var(--flair-code-padding, var(--flair-space-6));
-  border: var(--flair-border-width) solid var(--flair-color-border);
-  border-radius: var(--flair-code-radius, var(--flair-radius));
-  background: var(--flair-code-background, var(--flair-color-surface-disabled));
-  color: var(--flair-code-text, var(--flair-color-text));
-  font-family: var(--flair-font-mono, "Ubuntu Mono", monospace);
-  font-size: var(--flair-code-size, 0.95em);
-  line-height: var(--flair-code-leading, 1.6);
+  padding: var(--theme-code-padding, var(--theme-space-6));
+  border: var(--theme-border-width) solid var(--theme-color-border);
+  border-radius: var(--theme-code-radius, var(--theme-radius));
+  background: var(--theme-code-background, var(--theme-color-surface-disabled));
+  color: var(--theme-code-text, var(--theme-color-text));
+  font-family: var(--theme-font-mono, ui-monospace, monospace);
+  font-size: var(--theme-code-size, 0.95em);
+  line-height: var(--theme-code-leading, 1.6);
   white-space: pre-wrap;
   overflow-wrap: anywhere;
-  tab-size: var(--flair-code-tab-size, 4);
+  tab-size: var(--theme-code-tab-size, 4);
 }
 pre > code {
   font: inherit;
@@ -938,68 +1447,68 @@ pre > code {
 .site-layout {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--flair-layout-gap, var(--flair-space-6));
+  gap: var(--theme-layout-gap, var(--theme-space-6));
   align-items: flex-start;
 }
 .site-layout > aside {
-  flex: 1 1 var(--flair-sidebar-width, 16rem);
+  flex: 1 1 var(--theme-sidebar-width, 16rem);
   min-inline-size: 0;
 }
-.site-layout > .layout-content {
-  flex: 999 1 var(--flair-content-min, 28rem);
-  min-inline-size: min(100%, var(--flair-content-min, 28rem));
+.site-layout > :where(main, article, section, .layout-content) {
+  flex: 999 1 var(--theme-content-min, 28rem);
+  min-inline-size: min(100%, var(--theme-content-min, 28rem));
 }
 
-.big-number, .scroll-offset-readout, .scroll-passage-readout, .gauge-value, #single-counter > :where(output, .metric-value), #counter-a > :where(output, .metric-value), #counter-b > :where(output, .metric-value), .counter-sum > :where(output, .metric-value) {
-  font-size: var(--flair-value-size, 3rem);
-  font-weight: var(--flair-value-weight, 700);
-  line-height: var(--flair-value-leading, 1.2);
+.big-number, .scroll-offset-readout, .scroll-passage-readout, .gauge-value, .counter-sum > :where(output, .metric-value), #single-counter > :where(output, .metric-value), #counter-a > :where(output, .metric-value), #counter-b > :where(output, .metric-value) {
+  font-size: var(--theme-value-size, 3rem);
+  font-weight: var(--theme-value-weight, 700);
+  line-height: var(--theme-value-leading, 1.2);
   font-variant-numeric: tabular-nums;
   overflow-wrap: anywhere;
   min-inline-size: 0;
 }
-.big-number > .metric-unit, .scroll-offset-readout > .metric-unit, .scroll-passage-readout > .metric-unit, .gauge-value > .metric-unit, #single-counter > :where(output, .metric-value) > .metric-unit, #counter-a > :where(output, .metric-value) > .metric-unit, #counter-b > :where(output, .metric-value) > .metric-unit, .counter-sum > :where(output, .metric-value) > .metric-unit {
-  font-size: var(--flair-value-unit-size, 0.5em);
-  font-weight: var(--flair-label-weight);
+.big-number > .metric-unit, .scroll-offset-readout > .metric-unit, .scroll-passage-readout > .metric-unit, .gauge-value > .metric-unit, .counter-sum > :where(output, .metric-value) > .metric-unit, #single-counter > :where(output, .metric-value) > .metric-unit, #counter-a > :where(output, .metric-value) > .metric-unit, #counter-b > :where(output, .metric-value) > .metric-unit {
+  font-size: var(--theme-value-unit-size, 0.5em);
+  font-weight: var(--theme-label-weight);
 }
 
 #single-counter, #counter-a, #counter-b {
   display: grid;
-  gap: var(--flair-metric-gap, var(--flair-space-4));
+  gap: var(--theme-metric-gap, var(--theme-space-4));
   min-inline-size: 0;
-  text-align: var(--flair-metric-align, center);
+  text-align: var(--theme-metric-align, center);
 }
 #single-counter > :where(h2, h3, h4, p, output), #counter-a > :where(h2, h3, h4, p, output), #counter-b > :where(h2, h3, h4, p, output) {
   margin-block: 0;
 }
 #single-counter > .metric-detail, #counter-a > .metric-detail, #counter-b > .metric-detail {
-  color: var(--flair-color-muted);
+  color: var(--theme-color-muted);
 }
 #single-counter > .actions, #counter-a > .actions, #counter-b > .actions {
-  justify-content: var(--flair-metric-align, center);
+  justify-content: var(--theme-metric-align, center);
 }
 
 .counter-sum {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
-  justify-content: var(--flair-metric-align, center);
-  gap: var(--flair-metric-gap, var(--flair-space-4));
-  text-align: var(--flair-metric-align, center);
-  font-size: var(--flair-output-label-size, 1.5rem);
-  font-weight: var(--flair-value-weight, 700);
+  justify-content: var(--theme-metric-align, center);
+  gap: var(--theme-metric-gap, var(--theme-space-4));
+  text-align: var(--theme-metric-align, center);
+  font-size: var(--theme-output-label-size, 1.5rem);
+  font-weight: var(--theme-value-weight, 700);
 }
 .sortable-list > li {
-  gap: var(--flair-row-gap, var(--flair-space-3));
-  background: var(--flair-row-background, var(--flair-color-surface));
+  gap: var(--theme-row-gap, var(--theme-space-3));
+  background: var(--theme-row-background, var(--theme-color-surface));
 }
 .sortable-list > li > .row-content {
-  flex: 1 1 var(--flair-row-content-min, 8rem);
+  flex: 1 1 var(--theme-row-content-min, 8rem);
   overflow-wrap: anywhere;
 }
 .sortable-list > li > .row-actions {
   margin-block-start: 0;
-  gap: var(--flair-row-actions-gap, var(--flair-space-2));
+  gap: var(--theme-row-actions-gap, var(--theme-space-2));
   margin-inline-start: auto;
 }
 .sortable-list > li > .row-actions > form {
@@ -1007,55 +1516,54 @@ pre > code {
 }
 
 .search-results {
-  max-block-size: var(--flair-results-max-height, none);
+  max-block-size: var(--theme-results-max-height, none);
   overflow-y: auto;
   overscroll-behavior: contain;
 }
 .search-results > li > a {
   display: block;
   overflow-wrap: anywhere;
-  padding: var(--flair-result-link-padding, var(--flair-space-2));
+  padding: var(--theme-result-link-padding, var(--theme-space-2));
 }
 .search-results :where(p, .result-detail) {
-  font-size: var(--flair-small-size, 0.875rem);
-  color: var(--flair-color-muted);
-  margin-block: var(--flair-space-1);
+  font-size: var(--theme-small-size, 0.875rem);
+  color: var(--theme-color-muted);
+  margin-block: var(--theme-space-1);
 }
 
 .site-header, .site-footer, .site-layout {
   box-sizing: border-box;
   inline-size: 100%;
-  max-inline-size: var(--flair-page-width, 90rem);
-  margin-inline: auto;
-  padding-block: var(--flair-page-padding-block, var(--flair-space-6));
-  padding-inline: var(--flair-page-gutter, var(--flair-space-6));
+  max-inline-size: var(--theme-page-width, 90rem);
+  margin-inline: var(--theme-page-margin, auto);
+  padding-block: var(--theme-page-padding-block, var(--theme-space-6));
+  padding-inline: var(--theme-page-gutter, var(--theme-space-6));
   min-inline-size: 0;
 }
 
 .site-header {
   justify-content: space-between;
-  padding-block: var(--flair-header-padding-block, var(--flair-space-4));
-  gap: var(--flair-header-gap, var(--flair-space-6));
-  border-block-end: var(--flair-border-width) solid var(--flair-color-border);
+  padding-block: var(--theme-header-padding-block, var(--theme-space-4));
+  gap: var(--theme-header-gap, var(--theme-space-6));
+  border-block-end: var(--theme-border-width) solid var(--theme-color-border);
 }
 .site-header > p {
   margin: 0;
-  font-size: var(--flair-small-size, 0.875rem);
+  font-size: var(--theme-small-size, 0.875rem);
 }
 
 .site-footer {
   justify-content: space-between;
-  padding-block: var(--flair-header-padding-block, var(--flair-space-4));
-  border-block-start: var(--flair-border-width) solid var(--flair-color-border);
-  font-size: var(--flair-small-size, 0.875rem);
+  padding-block: var(--theme-header-padding-block, var(--theme-space-4));
+  border-block-start: var(--theme-border-width) solid var(--theme-color-border);
+  font-size: var(--theme-small-size, 0.875rem);
 }
-
 .page-intro {
-  margin-block-end: var(--flair-intro-space, var(--flair-space-8));
+  margin-block-end: var(--theme-intro-space, var(--theme-space-8));
 }
 .page-intro > :where(h1, h2, .intro-title) {
-  font-size: var(--flair-intro-title-size, clamp(2.5rem, 5vw, 4.75rem));
-  margin-block: var(--flair-space-3) var(--flair-space-4);
+  font-size: var(--theme-intro-title-size, clamp(2.5rem, 5vw, 4.75rem));
+  margin-block: var(--theme-space-3) var(--theme-space-4);
 }
 .visually-hidden {
   position: absolute;
@@ -1069,18 +1577,16 @@ pre > code {
 }
 
 .flux-form-waiting button {
-  opacity: var(--flair-busy-opacity, 0.55);
+  opacity: var(--theme-busy-opacity, 0.55);
 }
-
 .flux-drag-order-dragging {
-  outline: var(--flair-drag-outline-width, 2px) dashed var(--flair-color-accent);
-  opacity: var(--flair-drag-opacity, 0.6);
+  outline: var(--theme-drag-outline-width, 2px) dashed var(--theme-color-accent);
+  opacity: var(--theme-drag-opacity, 0.6);
 }
-
 .demo {
-  opacity: calc(var(--flair-reveal-min-opacity, 0.12) + (1 - var(--flair-reveal-min-opacity, 0.12)) * var(--flair-reveal-progress, 1));
-  translate: 0 calc((1 - var(--flair-reveal-progress, 1)) * var(--flair-reveal-distance, 1.5rem));
-  transition: opacity var(--flair-reveal-duration, 650ms) ease, translate var(--flair-reveal-duration, 650ms) ease;
+  opacity: calc(var(--theme-reveal-min-opacity, 0.12) + (1 - var(--theme-reveal-min-opacity, 0.12)) * var(--theme-reveal-progress, 1));
+  translate: 0 calc((1 - var(--theme-reveal-progress, 1)) * var(--theme-reveal-distance, 1.5rem));
+  transition: opacity var(--theme-reveal-duration, 650ms) ease, translate var(--theme-reveal-duration, 650ms) ease;
 }
 @media (prefers-reduced-motion: reduce), print {
   .demo {
@@ -1092,13 +1598,13 @@ pre > code {
 
 .skip-link {
   position: fixed;
-  inset-block-start: var(--flair-space-4);
-  inset-inline-start: var(--flair-space-4);
-  z-index: var(--flair-skip-link-layer, 100);
-  padding: var(--flair-space-4);
-  background: var(--flair-color-surface);
-  color: var(--flair-color-text);
-  transform: translateY(calc(-100% - var(--flair-space-4)));
+  inset-block-start: var(--theme-space-4);
+  inset-inline-start: var(--theme-space-4);
+  z-index: var(--theme-skip-link-layer, 100);
+  padding: var(--theme-space-4);
+  background: var(--theme-color-surface);
+  color: var(--theme-color-text);
+  transform: translateY(calc(-100% - var(--theme-space-4)));
 }
 .skip-link:focus {
   transform: none;
@@ -1354,7 +1860,7 @@ pre > code {
   place-items: center;
   height: 100%;
   border-radius: 50%;
-  background: var(--flair-color-surface);
+  background: var(--theme-color-surface);
 }
 
 .gauge-value::after {
@@ -1454,14 +1960,14 @@ pre > code {
 .bar {
   display: block;
   height: 0.65rem;
-  background: var(--flair-color-surface-disabled);
+  background: var(--theme-color-surface-disabled);
   overflow: hidden;
 }
 
 .bar > span {
   display: block;
   height: 100%;
-  background: var(--flair-color-accent);
+  background: var(--theme-color-accent);
   transform-origin: left;
 }
 
@@ -1473,7 +1979,7 @@ pre > code {
 }
 
 .column-preview span {
-  background: var(--flair-color-surface-disabled);
+  background: var(--theme-color-surface-disabled);
   padding: 1rem;
 }
 
@@ -1492,7 +1998,7 @@ pre > code {
 }
 
 .field-state {
-  --flair-cluster-gap: var(--flair-space-2);
+  --theme-cluster-gap: var(--theme-space-2);
 }
 
 .field-state span:nth-child(1) {
@@ -1667,11 +2173,11 @@ pre > code {
 }
 
 .scroll-meter {
-  margin-block: var(--flair-space-6);
+  margin-block: var(--theme-space-6);
 }
 
 .scroll-offset-readout, .scroll-passage-readout {
-  --flair-value-size: 2rem;
+  --theme-value-size: 2rem;
   text-align: center;
 }
 
@@ -1706,8 +2212,8 @@ pre > code {
   scale: var(--scroll-passage-reveal);
   display: grid;
   align-content: center;
-  background: color-mix(in srgb, var(--flair-color-surface) calc((1 - clamp(0, var(--flux-scroll-progress-y, 0), 1)) * 100%), var(--flair-color-surface-disabled));
-  border-inline-start: var(--flair-space-2) solid var(--flair-color-accent);
+  background: color-mix(in srgb, var(--theme-color-surface) calc((1 - clamp(0, var(--flux-scroll-progress-y, 0), 1)) * 100%), var(--theme-color-surface-disabled));
+  border-inline-start: var(--theme-space-2) solid var(--theme-color-accent);
 }
 
 .scroll-passage-readout::after {
@@ -1827,97 +2333,169 @@ pre > code {
   }
 }
 :root {
-  --flair-space-1: 0.25rem;
-  --flair-space-2: 0.5rem;
-  --flair-space-3: 0.75rem;
-  --flair-space-4: 1rem;
-  --flair-space-6: 1.5rem;
-  --flair-space-8: 2rem;
-  --flair-color-text: #111;
-  --flair-color-muted: #525252;
-  --flair-color-surface: #fff;
-  --flair-color-surface-disabled: #eee;
-  --flair-color-border: #767676;
-  --flair-color-accent: #111;
-  --flair-color-on-accent: #fff;
-  --flair-color-danger: #111;
-  --flair-font-body: "Ubuntu", sans-serif;
-  --flair-font-size: 1rem;
-  --flair-line-height: 1.5;
-  --flair-font-weight: 400;
-  --flair-label-weight: 500;
-  --flair-border-width: 1px;
-  --flair-radius: 0;
-  --flair-focus-width: 3px;
-  --flair-focus-offset: 2px;
-  --flair-control-min-height: 2.75rem;
-  --flair-choice-size: 1.25rem;
-  --flair-textarea-min-height: 8rem;
-  --flair-field-min-width: 14rem;
-  --flair-font-heading: "Ubuntu Condensed", sans-serif;
-  --flair-font-mono: "Ubuntu Mono", monospace;
-  --flair-heading-weight: 400;
-  --flair-font-body: system-ui, sans-serif;
+  color-scheme: light dark;
+}
+:root:is([data-theme=light], [data-color-scheme=light]) {
+  color-scheme: light;
+}
+:root:is([data-theme=dark], [data-color-scheme=dark]) {
+  color-scheme: dark;
+}
+:root {
+  --pal-1: light-dark(#111, #f5f5f5);
+  --pal-2: light-dark(#fff, #161616);
+  --pal-3: light-dark(#eee, #303030);
+  --pal-4: light-dark(#767676, #999);
+  --pal-5: light-dark(#525252, #bbb);
+  --pal-6: light-dark(#111, #f5f5f5);
+  --pal-7: light-dark(#fff, #111);
+  --pal-8: light-dark(#111, #f5f5f5);
+  --pal-9: light-dark(#111, #f5f5f5);
+  --theme-space-unit: 0.25rem;
+  --theme-space-1: calc(var(--theme-space-unit) * 1);
+  --theme-space-2: calc(var(--theme-space-unit) * 2);
+  --theme-space-3: calc(var(--theme-space-unit) * 3);
+  --theme-space-4: calc(var(--theme-space-unit) * 4);
+  --theme-space-5: calc(var(--theme-space-unit) * 5);
+  --theme-space-6: calc(var(--theme-space-unit) * 6);
+  --theme-space-7: calc(var(--theme-space-unit) * 7);
+  --theme-space-8: calc(var(--theme-space-unit) * 8);
+  --theme-space-9: calc(var(--theme-space-unit) * 9);
+  --theme-space-10: calc(var(--theme-space-unit) * 10);
+  --theme-space-11: calc(var(--theme-space-unit) * 11);
+  --theme-space-12: calc(var(--theme-space-unit) * 12);
+  --theme-color-text: var(--pal-1);
+  --theme-color-heading: var(--theme-color-text);
+  --theme-color-page: var(--pal-2);
+  --theme-color-surface: var(--pal-2);
+  --theme-color-surface-disabled: var(--pal-3);
+  --theme-color-border: var(--pal-4);
+  --theme-color-muted: var(--pal-5);
+  --theme-color-tint: var(--pal-6);
+  --theme-color-primary: var(--pal-6);
+  --theme-color-secondary: var(--theme-color-tint);
+  --theme-color-accent: var(--theme-color-tint);
+  --theme-color-on-accent: var(--pal-7);
+  --theme-color-ui-background: var(--theme-color-primary);
+  --theme-color-ui-preferred: var(--theme-color-on-accent);
+  --theme-color-ui-contrast: var(--theme-color-ui-preferred);
+  --theme-color-success: var(--pal-8);
+  --theme-color-danger: var(--pal-9);
+  --theme-color-warning: var(--theme-color-text);
+  --theme-font-body: system-ui, sans-serif;
+  --theme-font-heading: var(--theme-font-body);
+  --theme-font-mono: ui-monospace, monospace;
+  --theme-font-size: 1rem;
+  --theme-line-height: 1.5;
+  --theme-font-weight: 400;
+  --theme-label-weight: 500;
+  --theme-heading-weight: 600;
+  --theme-border-width: 1px;
+  --theme-radius: 0;
+  --theme-focus-width: 3px;
+  --theme-focus-offset: 2px;
+  --theme-control-min-height: 2.75rem;
+  --theme-choice-size: 1.25rem;
+  --theme-textarea-min-height: 8rem;
+  --theme-field-min-width: 14rem;
+  --theme-control-shadow: none;
+  --theme-control-transition: none;
+  --theme-button-shadow: var(--theme-control-shadow);
+  --theme-button-shadow-hover: var(--theme-button-shadow);
+  --theme-button-shadow-active: var(--theme-button-shadow);
+  --theme-surface-shadow: none;
+  --theme-sidebar-contrast-background: var(--pal-3);
+  --theme-sidebar-contrast-text: var(--pal-1);
+  --theme-sidebar-contrast-hover-background: color-mix(in srgb, var(--pal-3), var(--pal-1) 10%);
+  --theme-sidebar-contrast-current-background: var(--pal-1);
+  --theme-sidebar-contrast-current-text: var(--pal-2);
+  --theme-control-padding: var(--theme-space-3);
+  --theme-control-border-rule: var(--theme-border-width) solid var(--theme-control-border, var(--theme-color-border));
+  --theme-button-border-rule: var(--theme-border-width) solid var(--theme-button-border, var(--theme-color-border));
+  --theme-surface-border: var(--theme-surface-border-width, var(--theme-border-width)) solid var(--theme-color-border);
+  --theme-focus-outline: var(--theme-focus-width) solid var(--theme-focus-color, var(--theme-color-accent));
+  --theme-focus-active-width: 2px;
+  --theme-focus-transition: none;
+  --theme-icon-button-size: 2.75rem;
+  --theme-menu-width: 20rem;
+  --theme-metrics-max: 64rem;
+  --theme-metric-max: 18rem;
+  --theme-centered-panel-width: 32rem;
+  --theme-nav-current-background: var(--theme-color-surface-disabled);
+  --theme-accent-background: var(--theme-color-surface-disabled);
+  --theme-muted-accent-background: var(--theme-color-surface-disabled);
+  --theme-control-background: var(--theme-color-surface);
+  --theme-control-border: var(--theme-color-border);
+  --theme-control-border-hover: var(--theme-color-text);
+  --theme-control-background-active: var(--theme-color-surface-disabled);
+  --theme-button-background: var(--theme-color-surface);
+  --theme-button-background-active: var(--theme-color-surface-disabled);
+  --theme-button-border: var(--theme-color-border);
+  --theme-button-border-hover: var(--theme-color-text);
+  --theme-button-text: var(--theme-color-text);
+  --theme-code-input-border: var(--theme-color-secondary);
+  --theme-interaction-shade: var(--theme-color-secondary);
+  --theme-font-body: system-ui, sans-serif;
 }
 
 :where(h1, h2, h3, h4, h5, h6) {
-  margin-block: var(--flair-space-6) var(--flair-space-3);
+  margin-block: var(--theme-space-6) var(--theme-space-3);
 }
 
 :where(h1) {
-  font-size: var(--flair-heading-1, 2.5rem);
+  font-size: var(--theme-heading-1, 2.5rem);
 }
 
 :where(h2) {
-  font-size: var(--flair-heading-2, 2rem);
+  font-size: var(--theme-heading-2, 2rem);
 }
 
 :where(h3) {
-  font-size: var(--flair-heading-3, 1.5rem);
+  font-size: var(--theme-heading-3, 1.5rem);
 }
 
 :where(h4) {
-  font-size: var(--flair-heading-4, 1.25rem);
+  font-size: var(--theme-heading-4, 1.25rem);
 }
 
 :where(h5, h6) {
-  font-size: var(--flair-font-size);
+  font-size: var(--theme-font-size);
 }
 
 :where(p, ul, ol, dl, blockquote, figure) {
   margin: 0;
-  margin-block-end: var(--flair-space-4);
+  margin-block-end: var(--theme-space-4);
   line-height: inherit;
 }
 
 :where(ul, ol) {
-  padding-inline-start: var(--flair-space-6);
+  padding-inline-start: var(--theme-space-6);
 }
 
 :where(li + li) {
-  margin-block-start: var(--flair-space-2);
+  margin-block-start: var(--theme-space-2);
 }
 
 :where(blockquote) {
-  padding-inline-start: var(--flair-space-4);
-  border-inline-start: var(--flair-quote-border-width, 4px) solid var(--flair-color-accent);
-  color: var(--flair-color-muted);
+  padding-inline-start: var(--theme-space-4);
+  border-inline-start: var(--theme-quote-border-width, 4px) solid var(--theme-color-accent);
+  color: var(--theme-color-muted);
 }
 
 :where(small, figcaption) {
-  font-size: var(--flair-small-size, 0.875rem);
-  color: var(--flair-color-muted);
+  font-size: var(--theme-small-size, 0.875rem);
+  color: var(--theme-color-muted);
 }
 
 :where(mark) {
-  background: var(--flair-selected-background, var(--flair-color-surface-disabled));
-  color: var(--flair-selected-text, var(--flair-color-text));
+  background: var(--theme-selected-background, var(--theme-color-surface-disabled));
+  color: var(--theme-selected-text, var(--theme-color-text));
 }
 
 :where(hr) {
   border: 0;
-  border-block-start: var(--flair-border-width) solid var(--flair-color-border);
-  margin-block: var(--flair-space-6);
+  border-block-start: var(--theme-border-width) solid var(--theme-color-border);
+  margin-block: var(--theme-space-6);
 }
 
 *, *::before, *::after {
@@ -1933,8 +2511,8 @@ body {
 }
 
 body {
-  background: var(--flair-color-surface);
-  color: var(--flair-color-text);
+  background: var(--theme-color-surface);
+  color: var(--theme-color-text);
 }
 
 .wordmark {
@@ -1954,38 +2532,39 @@ body {
 }
 
 .site-layout {
-  --flair-sidebar-width: 13rem;
-  --flair-content-min: 22rem;
-  --flair-layout-gap: 3rem;
-  --flair-page-padding-block: 3rem;
+  --theme-sidebar-width: 13rem;
+  --theme-content-min: 22rem;
+  --theme-layout-gap: 3rem;
+  --theme-page-padding-block: 3rem;
 }
+
 .site-layout > aside {
   position: sticky;
   top: 0;
   align-self: flex-start;
   max-block-size: 100dvh;
   overflow-y: auto;
-  background: var(--flair-color-surface);
+  background: var(--theme-color-surface);
   z-index: 1;
 }
 
 .sidebar-note {
   font-size: 0.8rem;
-  color: var(--flair-color-muted);
+  color: var(--theme-color-muted);
   margin-block: 2rem;
 }
 
 .demo {
-  --flair-reveal-progress: var(--flux-first-visible, 1);
-  --flair-surface-padding: clamp(1.25rem, 3vw, 2.5rem);
-  --flair-card-title-size: 1.8rem;
+  --theme-reveal-progress: var(--flux-first-visible, 1);
+  --theme-surface-padding: clamp(1.25rem, 3vw, 2.5rem);
+  --theme-card-title-size: 1.8rem;
   margin-top: 3rem;
   scroll-margin-top: 1rem;
 }
 
 .split, .demo-grid {
-  --flair-grid-columns: 2;
-  --flair-grid-min: 17rem;
+  --theme-grid-columns: 2;
+  --theme-grid-min: 17rem;
   align-items: start;
 }
 
@@ -1994,12 +2573,12 @@ body {
 }
 
 .demo h2 {
-  --flair-heading-2: 1.8rem;
+  --theme-heading-2: 1.8rem;
 }
 
 .demo h3 {
-  --flair-heading-3: 1.2rem;
-  --flair-card-title-size: 1.2rem;
+  --theme-heading-3: 1.2rem;
+  --theme-card-title-size: 1.2rem;
 }
 
 .source {
@@ -2014,17 +2593,17 @@ pre {
 
 .sortable-list {
   overflow-anchor: none;
-  --flair-list-padding: var(--flair-space-3);
-  margin-block-end: var(--flair-space-6);
+  --theme-list-padding: var(--theme-space-3);
+  margin-block-end: var(--theme-space-6);
 }
 
 .complete .item-text {
   text-decoration: line-through;
-  color: var(--flair-color-muted);
+  color: var(--theme-color-muted);
 }
 
 .item-actions {
-  --flair-button-padding-inline: var(--flair-space-2);
+  --theme-button-padding-inline: var(--theme-space-2);
 }
 
 .drag-handle {
@@ -2050,32 +2629,32 @@ pre {
 }
 
 .counter-sum {
-  --flair-value-size: 4rem;
-  margin-block: var(--flair-space-8);
+  --theme-value-size: 4rem;
+  margin-block: var(--theme-space-8);
 }
 
 .search-results {
-  --flair-list-padding: var(--flair-space-3);
+  --theme-list-padding: var(--theme-space-3);
 }
 
 .chapter {
-  border-block: var(--flair-border-width) solid var(--flair-color-border);
-  padding-block: var(--flair-space-4);
-  margin-block: var(--flair-space-6);
+  border-block: var(--theme-border-width) solid var(--theme-color-border);
+  padding-block: var(--theme-space-4);
+  margin-block: var(--theme-space-6);
 }
 
 .emphasised {
-  color: var(--flair-color-on-accent);
-  background: var(--flair-color-accent);
+  color: var(--theme-color-on-accent);
+  background: var(--theme-color-accent);
 }
 
 .next-steps {
-  padding-block: var(--flair-space-8);
+  padding-block: var(--theme-space-8);
 }
 
 @media (min-width: 70rem) {
   #single-counter {
-    --flair-metric-align: end;
+    --theme-metric-align: end;
   }
 }
 @media print {
@@ -2090,14 +2669,14 @@ pre {
 }
 .board-column {
   min-height: 10rem;
-  border: 1px dashed var(--flair-color-border);
+  border: 1px dashed var(--theme-color-border);
   padding: 0.75rem;
 }
 
 .city-dialog dl {
-  --flair-data-min: 100%;
+  --theme-data-min: 100%;
 }
 
 .city-results {
-  --flair-results-max-height: 22rem;
+  --theme-results-max-height: 22rem;
 }

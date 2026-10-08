@@ -85,7 +85,7 @@ HTML/Sass. Theme presets are reusable Sass mixins; importing the library does no
 load fonts, emit CSS or add a JavaScript dependency.
 
 Flux keeps the application bindings: `--flux-first-visible` supplies
-`--flair-reveal-progress`, and Flux waiting/dragging classes select Flair state
+`--theme-reveal-progress`, and Flux waiting/dragging classes select Flair state
 decorations. Sortable lists disable browser scroll anchoring during DOM reordering.
 Clock geometry, pointer rotations and the illustrative gauge calculations remain
 in this project's example styles. Rebuild the example CSS after changing Flair.

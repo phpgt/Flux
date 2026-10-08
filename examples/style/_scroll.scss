@@ -8,8 +8,8 @@
 }
 .scroll-reading { min-height: 45rem; display: flex; flex-direction: column; }
 .scroll-reading-middle { margin-block: auto; }
-.scroll-meter { margin-block: var(--flair-space-6); }
-.scroll-offset-readout, .scroll-passage-readout { @extend %o-value; --flair-value-size: 2rem; text-align: center; }
+.scroll-meter { margin-block: var(--theme-space-6); }
+.scroll-offset-readout, .scroll-passage-readout { @extend %o-value; --theme-value-size: 2rem; text-align: center; }
 .scroll-offset-readout::after {
 	counter-reset: percent calc(var(--flux-scroll-y, 0) * 100) pixels calc(var(--flux-scroll-y-px, 0));
 	content: counter(percent) '% · ' counter(pixels) 'px';
@@ -30,8 +30,8 @@
 	scale: var(--scroll-passage-reveal);
 	display: grid;
 	align-content: center;
-	background: color-mix(in srgb, var(--flair-color-surface) calc((1 - clamp(0, var(--flux-scroll-progress-y, 0), 1)) * 100%), var(--flair-color-surface-disabled));
-	border-inline-start: var(--flair-space-2) solid var(--flair-color-accent);
+	background: color-mix(in srgb, var(--theme-color-surface) calc((1 - clamp(0, var(--flux-scroll-progress-y, 0), 1)) * 100%), var(--theme-color-surface-disabled));
+	border-inline-start: var(--theme-space-2) solid var(--theme-color-accent);
 }
 .scroll-passage-readout::after {
 	counter-reset: progress calc(var(--flux-scroll-progress-y, 0) * 100);
