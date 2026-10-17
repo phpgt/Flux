@@ -21,3 +21,6 @@ updates:
     day: monday
     time: "06:00"
     timezone: Europe/London
+  groups:
+    github-actions:
+      patterns: ["*"]
