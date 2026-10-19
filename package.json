@@ -3,7 +3,7 @@
 	"exports": "./src/main.es6",
 	"type": "module",
 	"dependencies": {
-		"esbuild": "^0.28.1"
+		"esbuild": "^0.28.2"
 	},
 	"devDependencies": {
 		"vitest": "^5.0.5",
