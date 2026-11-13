@@ -7,7 +7,7 @@ use Behat\Mink\Exception\ExpectationException;
 use Behat\MinkExtension\Context\MinkContext;
 
 class FeatureContext extends MinkContext {
-	private DateTime $rememberedTime;
+	private DateTimeImmutable $rememberedTime;
 
 	/**
 	 * @Given I have a fresh browser session
@@ -453,25 +453,24 @@ class FeatureContext extends MinkContext {
 	 * @When /^I remember the time from the page$/
 	 */
 	public function iRememberTheTimeFromThePage() {
-		$time = $this->findCssElement("time");
-		$timeText = $time->getText();
-		$this->rememberedTime = new DateTime($timeText);
+		$time = $this->findCssElement('time[data-flux="live"]');
+		$this->rememberedTime = new DateTimeImmutable($time->getAttribute("datetime"));
 	}
 
 	/**
 	 * @Then the remembered time should have advanced :numSeconds seconds
 	 */
 	public function theRememberedTimeShouldHaveAdvancedSeconds(int $numSeconds) {
-		$expected = $this->rememberedTime->add(new DateInterval("PT" . $numSeconds . "S"));
-		$expectedDateString = $expected->format("Y-m-d H:i:s");
-		$actualDateString = date("Y-m-d H:i:s");
+		$expectedMilliseconds = ($this->rememberedTime->getTimestamp() + $numSeconds) * 1000;
+		$condition = <<<JS
+		(() => {
+			const clock = document.querySelector('time[data-flux="live"]');
+			return clock && Date.parse(clock.dateTime) >= $expectedMilliseconds;
+		})()
+		JS;
 
-		if($expectedDateString !== $actualDateString) {
-			throw new ExpectationException(
-				sprintf('Expected time to be "%s", got "%s".', $expectedDateString, $actualDateString),
-				$this->getSession(),
-			);
-		}
+		$this->waitForCondition($condition,
+			sprintf("Timed out waiting for the displayed clock to advance %d seconds.", $numSeconds));
 	}
 
 	/**

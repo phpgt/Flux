@@ -10,6 +10,10 @@ const DIRECTIVE_DEFINITIONS = Object.freeze({
 		handler: "autoContainer",
 		description: "Initialise a container element for automatic Flux interactions.",
 	},
+	"submit-queue": {
+		handler: "submitQueue",
+		description: "Serialise form requests and retain one distinct submit action.",
+	},
 	"autosave": {
 		handler: "autoSave",
 		description: "Enable automatic background form submission on change.",

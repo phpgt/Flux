@@ -1,3 +1,5 @@
+import {SubmissionQueue} from "./SubmissionQueue.es6";
+import {DirectiveParser} from "./DirectiveParser.es6";
 import {DomPath} from "./DomPath.es6";
 
 /**
@@ -25,12 +27,20 @@ export class FormHandler {
 		this.now = now;
 		this.domPath = domPath;
 		this.rateLimitState = new Map();
+		this.submissionQueue = new SubmissionQueue(domPath);
 	}
 
 	initAutoContainer = (fluxElement) => {
 		if(fluxElement instanceof HTMLFormElement) {
 			fluxElement.addEventListener("submit", this.formSubmitAutoSave);
 		}
+	}
+
+	initSubmitQueue = (element) => {
+		if(!(element instanceof HTMLFormElement)) {
+			throw new TypeError('data-flux type "submit-queue" must be applied to a form element.');
+		}
+		element.addEventListener("submit", this.formSubmitAutoSave);
 	}
 
 	initAutoSave = (fluxElement) => {
@@ -73,7 +83,8 @@ export class FormHandler {
 		}
 
 		fluxElement.form.dataset["fluxSubmitInit"] = "";
-		fluxElement.form.addEventListener("submit", this.autoSubmit);
+		fluxElement.form.addEventListener("submit", DirectiveParser.has(fluxElement.form, "submit-queue")
+			? this.formSubmitAutoSave : this.autoSubmit);
 	}
 
 	autoSubmit = (e) => {
@@ -110,12 +121,12 @@ export class FormHandler {
 
 		this.focusStateManager.storeFormState(form, currentActiveElement);
 
-		if(form.querySelectorAll(".input-changed").length > 0) {
+		if(!DirectiveParser.has(form, "submit-queue") && form.querySelectorAll(".input-changed").length > 0) {
 			return;
 		}
 
 		let submitter = null;
-		if(e.submitter instanceof HTMLButtonElement) {
+		if(e.submitter instanceof HTMLButtonElement || e.submitter instanceof HTMLInputElement) {
 			submitter = e.submitter;
 		}
 
@@ -123,15 +134,24 @@ export class FormHandler {
 	}
 
 	submitForm(form, submitter) {
+		if(DirectiveParser.has(form, "submit-queue")) {
+			return this.submissionQueue.run(form, submitter, (inspectResponse) => this.sendForm(form, submitter, inspectResponse));
+		}
+		return this.sendForm(form, submitter);
+	}
+
+	sendForm(form, submitter, inspectResponse = null) {
 		if(this.isRateLimited(submitter)) {
 			return Promise.resolve(null);
 		}
 
 		let requestElementState = this.focusStateManager.captureElementState(form);
 		let formData = this.getFormDataForButton(form, "autoSave", submitter);
-		let responseHandler = form.hasAttribute("action")
-			? (newDocument) => this.onNavigationDocument(newDocument, requestElementState)
-			: (newDocument) => this.onDocument(newDocument, requestElementState);
+		let responseHandler = (newDocument) => {
+			inspectResponse?.(newDocument, this.navigationController.isSuccessfulResponse?.(newDocument) ?? true);
+			return form.hasAttribute("action") ? this.onNavigationDocument(newDocument, requestElementState)
+				: this.onDocument(newDocument, requestElementState);
+		};
 		return this.navigationController.submitForm(form, formData, responseHandler, submitter);
 	}
 
@@ -164,7 +184,7 @@ export class FormHandler {
 	getFormDataForButton(form, type, submitter) {
 		let formData = new FormData(form);
 		if(submitter) {
-			formData.set(submitter.name, submitter.value);
+			if(submitter.name) formData.set(submitter.name, submitter.value);
 		}
 		else if(form.fluxObj && form.fluxObj[type]) {
 			formData.set(

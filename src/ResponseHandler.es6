@@ -53,7 +53,7 @@ export class ResponseHandler {
 			return;
 		}
 
-		this.scheduler(() => {
+		return this.render(() => {
 			this.documentUpdater.apply(
 				newDocument,
 				ResponseHandler.DEFAULT_UPDATE_TYPES,
@@ -61,7 +61,7 @@ export class ResponseHandler {
 				requestElementState,
 			);
 			this.onLiveDocumentUsed();
-		}, 0);
+		});
 	}
 
 	handleLinkDocument = (newDocument, requestElementState = null) => {
@@ -71,7 +71,7 @@ export class ResponseHandler {
 
 		let scrollState = this.isScrollState(requestElementState) ? requestElementState : null;
 		let elementState = scrollState ? null : requestElementState;
-		this.scheduler(() => {
+		return this.render(() => {
 			let targetKeys = scrollState?.fluxTargetSelector
 				? this.documentUpdater.getTargetKeysForSelector(scrollState.fluxTargetSelector, ResponseHandler.LINK_UPDATE_TYPES)
 				: undefined;
@@ -84,7 +84,7 @@ export class ResponseHandler {
 			);
 			this.onLiveDocumentUsed();
 			this.scrollAfterPaint(scrollState);
-		}, 0);
+		});
 	}
 
 	handleLiveDocument = (newDocument, allowedTargetKeys = undefined) => {
@@ -95,6 +95,15 @@ export class ResponseHandler {
 		this.scheduler(() => {
 			this.documentUpdater.apply(newDocument, ResponseHandler.LIVE_UPDATE_TYPES, allowedTargetKeys);
 		}, 0);
+	}
+
+	render(update) {
+		return new Promise((resolve, reject) => {
+			this.scheduler(() => {
+				try { update(); resolve(); }
+				catch(error) { reject(error); }
+			}, 0);
+		});
 	}
 
 	isProcessableDocument(newDocument) {

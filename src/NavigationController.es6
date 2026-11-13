@@ -22,6 +22,7 @@ export class NavigationController {
 		this.documentObject = documentObject;
 		this.windowObject = windowObject;
 		this.domPath = domPath;
+		this.successfulResponses = new WeakMap();
 	}
 
 	submitForm(form, formData, onDocument, submitter = null) {
@@ -195,6 +196,7 @@ export class NavigationController {
 
 			let html = await response.text();
 			let document = this.parser.parseFromString(html, "text/html");
+			this.successfulResponses.set(document, response.ok);
 			if(historyState.action && historyState.updateHistory !== false) {
 				this.storeScrollPositionForCurrentEntry(historyState);
 				this.historyObject.pushState(
@@ -205,10 +207,10 @@ export class NavigationController {
 			}
 
 			if(historyState.action === "clickLink") {
-				onDocument(document, this.createHistoryState(historyState));
+				await onDocument(document, this.createHistoryState(historyState));
 			}
 			else {
-				onDocument(document);
+				await onDocument(document);
 			}
 			return document;
 		}
@@ -216,6 +218,10 @@ export class NavigationController {
 			this.logger.error(error);
 			return null;
 		}
+	}
+
+	isSuccessfulResponse(document) {
+		return this.successfulResponses.get(document) !== false;
 	}
 
 	createHistoryState(historyState) {
