@@ -145,6 +145,7 @@ export class Flux {
 			autoContainer: this.initAutoContainer,
 			cssProperties: this.initCssProperties,
 			autoSave: this.formHandler.initAutoSave,
+			submitQueue: this.formHandler.initSubmitQueue,
 			updateOuter: this.storeOuterUpdateElement,
 			updateInner: this.storeInnerUpdateElement,
 			updateLinkOuter: this.storeLinkOuterUpdateElement,

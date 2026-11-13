@@ -40,7 +40,7 @@ export class FocusStateManager {
 
 		let activeElement = document.activeElement;
 		let selection = null;
-		if(activeElement.selectionStart >= 0 && activeElement.selectionEnd >= 0) {
+		if(Number.isInteger(activeElement.selectionStart) && Number.isInteger(activeElement.selectionEnd)) {
 			selection = [activeElement.selectionStart, activeElement.selectionEnd];
 		}
 
