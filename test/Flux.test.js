@@ -2347,7 +2347,10 @@ describe("DragOrderHandler", () => {
 			`;
 
 			let formHandler = {submitForm: vi.fn()};
-			let handler = new DragOrderHandler(formHandler, document);
+			// Preview styling has its own tests; this test checks the dragged item and order.
+			let preview = {create: vi.fn(() => document.createElement("li")), move: vi.fn()};
+			let handler = new DragOrderHandler(formHandler, document,
+				undefined, false, undefined, undefined, preview);
 			let items = [...document.querySelectorAll("[data-id]")];
 			items.forEach(item => handler.initDragOrder(item));
 			let item = document.querySelector("[data-id='1']");
