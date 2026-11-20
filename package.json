@@ -1,6 +1,9 @@
 {
 	"name": "@phpgt/flux",
-	"exports": "./src/main.es6",
+	"exports": {
+		".": "./src/main.es6",
+		"./debug": "./src/debug-entry.es6"
+	},
 	"type": "module",
 	"dependencies": {
 		"esbuild": "^0.28.2"

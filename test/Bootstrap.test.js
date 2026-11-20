@@ -20,4 +20,27 @@ describe("Browser bundle configuration", () => {
 		expect(RuntimeConfig.scrollToTopBehavior).toBe("smooth");
 		expect(Flux).toHaveBeenCalledOnce();
 	});
+	it("enables debug through the dedicated entry point before Flux starts", async () => {
+		vi.stubGlobal("FluxConfig", undefined);
+		await import("../src/debug-entry.es6");
+		await import("../src/main.es6");
+		let {RuntimeConfig} = await import("../src/RuntimeConfig.es6");
+		expect(RuntimeConfig.debug).toBe(true);
+	});
+	it("does not enable debug merely by importing the named export", async () => {
+		vi.stubGlobal("FluxConfig", undefined);
+		const {FluxDebug} = await import("../src/main.es6");
+		let {RuntimeConfig} = await import("../src/RuntimeConfig.es6");
+		expect(RuntimeConfig.debug).toBe(false);
+		FluxDebug.enable();
+		expect(RuntimeConfig.debug).toBe(true);
+	});
+	it("allows explicit configuration to disable the debug entry point", async () => {
+		vi.stubGlobal("FluxConfig", {debug: false});
+		await import("../src/debug-entry.es6");
+		await import("../src/main.es6");
+		let {RuntimeConfig} = await import("../src/RuntimeConfig.es6");
+		expect(RuntimeConfig.debug).toBe(false);
+	});
+
 });

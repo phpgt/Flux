@@ -3893,13 +3893,13 @@ function getScrollStorageKey(url) {
 
 // src/Debug.es6
 var Debug = class {
-  static {
+  static enable() {
     RuntimeConfig.debug = true;
   }
 };
 
 // src/main.es6
-RuntimeConfig.configure({ debug: false, ...globalThis.FluxConfig });
+RuntimeConfig.configure(globalThis.FluxConfig);
 new Flux();
 export {
   Debug,
